@@ -1,8 +1,11 @@
 #!/bin/bash
 
 # application configs
-# must be prefixed with "TWD_"
-export TWD_TWITTER_USER="mchmarny"
+# export T_USERNAME=""
+# export T_CONSUMER_KEY=""
+# export T_CONSUMER_SECRET=""
+# export T_ACCESS_TOKEN=""
+# export T_ACCESS_SECRET=""
 
 
 # setup

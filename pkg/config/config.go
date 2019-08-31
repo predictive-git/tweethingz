@@ -9,24 +9,27 @@ import (
 )
 
 const (
-	appConfigName = "TWD"
+	twitterConfigPrefix = "T"
 )
 
 var (
 	logger = log.New(os.Stdout, "", 0)
 )
 
-// AppConfig defines the active configuration for this service
-type AppConfig struct {
-	// TwitterUser is the twitter username
-	TwitterUser string `envconfig:"twitter_user" required:"true"`
+// TwitterConfig defines the active twiter configuration
+type TwitterConfig struct {
+	Username       string `envconfig:"username" required:"true"`
+	ConsumerKey    string `envconfig:"consumer_key" required:"true"`
+	ConsumerSecret string `envconfig:"consumer_secret" required:"true"`
+	AccessToken    string `envconfig:"access_token" required:"true"`
+	AccessSecret   string `envconfig:"access_secret" required:"true"`
 }
 
-// Read reads config from env vars
-func Read() (cfg *AppConfig, err error) {
-	var c AppConfig
-	if e := envconfig.Process(appConfigName, &c); e != nil {
-		return nil, errors.Wrapf(e, "Error parsing config")
+// GetTwitterConfig reads twitter config from env vars
+func GetTwitterConfig() (cfg *TwitterConfig, err error) {
+	var c TwitterConfig
+	if e := envconfig.Process(twitterConfigPrefix, &c); e != nil {
+		return nil, errors.Wrapf(e, "Error parsing twitter config")
 	}
 	return &c, nil
 }

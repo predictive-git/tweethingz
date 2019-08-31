@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mchmarny/twitterd/pkg/config"
+	"github.com/mchmarny/twitterd/pkg/worker"
 )
 
 var (
@@ -13,14 +13,9 @@ var (
 
 func main() {
 
-	logger.Println("Initializing configuration...")
+	logger.Println("Starting...")
 
-	// read config
-	cfg, err := config.Read()
-	if err != nil {
-		logger.Fatalf("Error reading config: %v", err)
-	}
-	logger.Printf("Config: %+v", cfg)
+	worker.GetFollowers()
 
 	logger.Println("Done")
 }

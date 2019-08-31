@@ -1,0 +1,70 @@
+package worker
+
+import (
+	"log"
+	"os"
+
+	"github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
+	"github.com/mchmarny/twitterd/pkg/config"
+	"github.com/pkg/errors"
+)
+
+var (
+	logger = log.New(os.Stdout, "", 0)
+)
+
+func getClient(cfg *config.TwitterConfig) *twitter.Client {
+	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
+	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
+	httpClient := config.Client(oauth1.NoContext, token)
+	return twitter.NewClient(httpClient)
+}
+
+// GetFollowers retreaves followers for config specified user
+func GetFollowers() error {
+
+	cfg, err := config.GetTwitterConfig()
+	if err != nil {
+		return errors.Wrap(err, "Error getting Twitter config")
+	}
+
+	list, resp, err := getClient(cfg).Followers.List(&twitter.FollowerListParams{
+		ScreenName:          cfg.Username,
+		SkipStatus:          twitter.Bool(true),
+		IncludeUserEntities: twitter.Bool(false),
+	})
+
+	if err != nil {
+		return errors.Wrapf(err, "Error listig followers %s - %v", resp.Status, err)
+	}
+
+	logger.Printf("Results: %v", list.Users)
+
+	return nil
+}
+
+// Search searches twitter for specified query results
+func Search(query string) error {
+
+	cfg, err := config.GetTwitterConfig()
+	if err != nil {
+		return errors.Wrap(err, "Error getting Twitter config")
+	}
+
+	logger.Printf("Starting search for %s", query)
+	list, resp, err := getClient(cfg).Search.Tweets(&twitter.SearchTweetParams{
+		Query:           query,
+		Count:           100,
+		SinceID:         0,
+		IncludeEntities: twitter.Bool(true),
+	})
+
+	if err != nil {
+		return errors.Wrapf(err, "Error executing search %s - %v", resp.Status, err)
+	}
+
+	logger.Printf("Results: %+v", list)
+
+	return nil
+}
