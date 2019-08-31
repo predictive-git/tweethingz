@@ -8,9 +8,4 @@ export GO111MODULE=on
 go mod tidy
 go mod vendor
 
-export BUCKET="${SRC_BUCKET}"
-export OBJECT="${TEST_OBJECT}"
-export TOPIC="${PUB_TOPIC}"
-export SHUTDOWN="no"
-
-go run *.go -v
+go run ./cmd/server/*.go -v
