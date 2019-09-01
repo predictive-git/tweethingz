@@ -3,6 +3,7 @@ package worker
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -22,26 +23,70 @@ func getClient(cfg *config.TwitterConfig) *twitter.Client {
 }
 
 // GetFollowers retreaves followers for config specified user
-func GetFollowers() error {
+func GetFollowers() (followers []*SimpleTwitterUser, err error) {
 
 	cfg, err := config.GetTwitterConfig()
 	if err != nil {
-		return errors.Wrap(err, "Error getting Twitter config")
+		return nil, errors.Wrap(err, "Error getting Twitter config")
 	}
 
-	list, resp, err := getClient(cfg).Followers.List(&twitter.FollowerListParams{
+	listParam := &twitter.FollowerListParams{
 		ScreenName:          cfg.Username,
 		SkipStatus:          twitter.Bool(true),
-		IncludeUserEntities: twitter.Bool(false),
-	})
-
-	if err != nil {
-		return errors.Wrapf(err, "Error listig followers %s - %v", resp.Status, err)
+		IncludeUserEntities: twitter.Bool(true),
+		Count:               200, // max per page
 	}
 
-	logger.Printf("Results: %v", list.Users)
+	list := []*SimpleTwitterUser{}
 
-	return nil
+	for {
+		page, resp, err := getClient(cfg).Followers.List(listParam)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
+		}
+
+		// debug
+		logger.Printf("%d, Next:%d\n", len(page.Users), page.NextCursor)
+
+		// parse page users
+		for _, u := range page.Users {
+
+			ca, err := time.Parse(time.RubyDate, u.CreatedAt)
+			if err != nil {
+				return nil, errors.Wrapf(err, "Error parsing created timestamp: %s", u.CreatedAt)
+			}
+
+			usr := &SimpleTwitterUser{
+				ID:             u.IDStr,
+				Username:       u.ScreenName,
+				Name:           u.Name,
+				Description:    u.Description,
+				ProfileImage:   u.ProfileImageURLHttps,
+				CreatedAt:      ca,
+				Lang:           u.Lang,
+				Location:       u.Location,
+				Timezone:       u.Timezone,
+				IsFollower:     u.Following,
+				PostCount:      u.StatusesCount,
+				FaveCount:      u.FavouritesCount,
+				FollowingCount: u.FriendsCount,
+				FollowerCount:  u.FollowersCount,
+			}
+
+			list = append(list, usr)
+
+		}
+
+		// check if last page
+		if page.NextCursor < 1 {
+			break
+		}
+
+		// reset cursor
+		listParam.Cursor = page.NextCursor
+	}
+
+	return list, nil
 }
 
 // Search searches twitter for specified query results

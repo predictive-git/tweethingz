@@ -15,7 +15,12 @@ func main() {
 
 	logger.Println("Starting...")
 
-	worker.GetFollowers()
+	list, err := worker.GetFollowers()
+	if err != nil {
+		logger.Fatalf("Error getting followers: %v", err)
+	}
+
+	logger.Printf("Followers: %d", len(list))
 
 	logger.Println("Done")
 }
