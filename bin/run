@@ -8,4 +8,7 @@ export GO111MODULE=on
 go mod tidy
 go mod vendor
 
-go run -v ./cmd/server/*.go -u mchmarny
+# assuming local == twitter username
+go run -v ./cmd/server/*.go
+
+

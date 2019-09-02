@@ -3,11 +3,10 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-export INSTANCE_IP=$(gcloud sql instances describe ${INSTANCE} \
-    --format='value(ipAddresses[0].ipAddress)')
+echo "Configuring ${APP_NAME} schema in ${DB_INSTANCE} (${DB_INSTANCE_IP})..."
 
-mysql --host $INSTANCE_IP \
-      --user $INSTANCE \
-      --password=$(<"${CONF_DIR}/app_password") \
-      $DB_NAME < sql/schema.ddl
+mysql --host $DB_INSTANCE_IP \
+      --user $APP_NAME \
+      --password=$(<"${DB_CONF_DIR}/app_password") \
+      $APP_NAME < sql/schema.ddl
 

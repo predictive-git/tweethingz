@@ -3,4 +3,4 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-gcloud compute instances delete $JOB_NAME --zone $VM_ZONE
+gcloud compute instances delete $DB_INSTANCE --zone $DB_NODE_ZONE

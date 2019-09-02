@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+# SERVICE_URL=$(gcloud beta run services describe ${APP_NAME} \
+#     --region ${APP_REGION} --format="value(status.domain)")
+
+# curl -H "Content-Type: application/json" \
+# 		 -X POST -d '{}' \
+#          "${SERVICE_URL}/v1/followers/${USER}"
+
+curl -H "Content-Type: application/json" \
+		 -X POST -d '{}' \
+         "http://localhost:8080/v1/followers/${USER}"

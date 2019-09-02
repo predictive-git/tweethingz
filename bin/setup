@@ -1,0 +1,88 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+# api
+gcloud services enable --quiet \
+    compute.googleapis.com \
+    cloudbuild.googleapis.com \
+    iam.googleapis.com \
+    containerregistry.googleapis.com \
+    run.googleapis.com \
+    sqladmin.googleapis.com
+
+# passwords
+mkdir -p $DB_CONF_DIR
+echo "$(openssl rand -base64 32)" > "${DB_CONF_DIR}/root_password"
+echo "$(openssl rand -base64 32)" > "${DB_CONF_DIR}/app_password"
+echo "root and app user passwords saved in:"
+echo ${DB_CONF_DIR}
+
+
+
+
+# cloud run running service account
+gcloud iam service-accounts create $APP_NAME \
+    --display-name "service account for ${APP_NAME}"
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+	--member "serviceAccount:${APP_SA}" \
+    --role roles/logging.logWriter
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+	--member "serviceAccount:${APP_SA}" \
+    --role roles/cloudtrace.agent
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+	--member "serviceAccount:${APP_SA}" \
+    --role roles/monitoring.metricWriter
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+	--member "serviceAccount:${APP_SA}" \
+    --role roles/cloudsql.editor
+
+# cloud scheduler executor
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member "serviceAccount:${APP_SA}" \
+    --role roles/cloudscheduler.serviceAgent
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+    --member "serviceAccount:${APP_SA}" \
+    --role roles/run.invoker
+
+
+
+# cloud sql instance
+gcloud sql instances create $DB_INSTANCE \
+    --database-version MYSQL_5_6 \
+    --tier $DB_NODE_TIER \
+    --activation-policy ALWAYS \
+    --availability-type zonal \
+    --zone $DB_NODE_ZONE \
+    --enable-bin-log \
+    --storage-size 40GB \
+    --storage-type SSD \
+    --storage-auto-increase \
+    --backup \
+    --backup-start-time 03:00 \
+    --maintenance-release-channel PRODUCTION \
+    --maintenance-window-day SUN \
+    --maintenance-window-hour 2
+
+
+# database
+gcloud sql databases create $APP_NAME \
+    --instance $DB_INSTANCE
+
+# reset root password
+gcloud sql users set-password root \
+    --instance $DB_INSTANCE \
+    --password=$(<"${DB_CONF_DIR}/root_password") \
+    --host %
+
+# create an app user
+gcloud sql users create $APP_NAME \
+    --instance $DB_INSTANCE \
+    --password=$(<"${DB_CONF_DIR}/app_password") \
+    --host %

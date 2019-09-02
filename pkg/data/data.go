@@ -59,6 +59,10 @@ func GetStopFollowerIDs(username string) (list []int64, err error) {
 // SaveDailyFollowers in single statement saves all followers for this day
 func SaveDailyFollowers(username string, followerIDs []int64) error {
 
+	if len(followerIDs) == 0 {
+		return nil
+	}
+
 	if err := initDB(); err != nil {
 		return err
 	}
@@ -93,6 +97,54 @@ func SaveDailyFollowers(username string, followerIDs []int64) error {
 
 	rowCount, _ := res.RowsAffected()
 	logger.Printf("Saved %d from %d records for %s",
+		rowCount, len(followerIDs), username)
+
+	return nil
+
+}
+
+// SaveFollowerEvents saves follower events for given account
+func SaveFollowerEvents(username, eventType string, followerIDs []int64) error {
+
+	if len(followerIDs) == 0 {
+		return nil
+	}
+
+	if err := initDB(); err != nil {
+		return err
+	}
+
+	sqlStr := `INSERT INTO follower_events
+		(username, on_day, follower_id, event_type) VALUES `
+	prms := []string{}
+	vals := []interface{}{}
+
+	day := time.Now()
+	for _, id := range followerIDs {
+		prms = append(prms, "(?, ?, ?, ?)")
+		vals = append(vals, username, day, id, eventType)
+	}
+
+	prmStr := strings.Join(prms, ",")
+	sqlStr = sqlStr + prmStr + " ON DUPLICATE KEY UPDATE username = username"
+
+	stmt, err := db.Prepare(sqlStr)
+	if err != nil {
+		return errors.Wrap(err, "Error preparing bulk save follower event statement")
+	}
+
+	res, err := stmt.Exec(vals...)
+	if err != nil {
+		return errors.Wrap(err, "Error executing save follower events")
+	}
+
+	err = stmt.Close()
+	if err != nil {
+		return errors.Wrap(err, "Error closing save follower events")
+	}
+
+	rowCount, _ := res.RowsAffected()
+	logger.Printf("Saved %d events from %d records for %s",
 		rowCount, len(followerIDs), username)
 
 	return nil

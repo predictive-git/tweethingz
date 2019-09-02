@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/mchmarny/twitterd/worker"
+	"github.com/mchmarny/twitterd/pkg/worker"
 )
 
 func okHandler(c *gin.Context) {
@@ -14,7 +14,7 @@ func okHandler(c *gin.Context) {
 
 func apiRequestHandler(c *gin.Context) {
 
-	usr := c.Param("u")
+	usr := c.Param("username")
 	logger.Printf("User: %s", usr)
 	if usr == "" {
 		logger.Println("Error on nil usr parameter")
@@ -27,8 +27,8 @@ func apiRequestHandler(c *gin.Context) {
 
 	err := worker.ProcessFollowers(usr)
 	if err != nil {
-		logger.Println("Error processing followers: %v", err)
-		c.JSON(http.StatusBadRequest, gin.H{
+		logger.Printf("Error processing followers: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Internal Error",
 			"status":  http.StatusInternalServerError,
 		})

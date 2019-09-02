@@ -9,6 +9,7 @@ import (
 	"github.com/mchmarny/twitterd/pkg/config"
 	"github.com/pkg/errors"
 
+	// mysql driver
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -46,11 +47,4 @@ func initDB() error {
 
 	return nil
 
-}
-
-// Finalize cleans up all DB resources
-func Finalize() {
-	if db != nil {
-		db.Close()
-	}
 }

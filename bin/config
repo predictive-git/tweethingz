@@ -1,28 +1,30 @@
 #!/bin/bash
 
-# application configs
-# export T_USERNAME=""
+# setup
+export APP_NAME="twitterd"
+export APP_REGION="us-central1"
+export IMAGE_VERSION="0.2.1"
+export DB_INSTANCE=${APP_NAME}
+export DB_NODE_TIER="db-n1-standard-1"
+export DB_NODE_ZONE="${APP_ZONE}-a"
+
+# twitter
 # export T_CONSUMER_KEY=""
 # export T_CONSUMER_SECRET=""
 # export T_ACCESS_TOKEN=""
 # export T_ACCESS_SECRET=""
 
-
-# setup
-export APP_NAME="twitterd"
-export IMAGE_VERSION="0.1.1"
-export JOB_NAME="${APP_NAME}-2"
-export VM_TYPE="n1-standard-1"
-export VM_ZONE="us-central1-c"
-
-# cloud sql config
-export INSTANCE=$APP_NAME
-export NODE_TIER="db-n1-standard-1"
-export NODE_ZONE="us-central1-a"
-
 # derived
-export PROJECT=$(gcloud config get-value project)
-export CONF_DIR="${HOME}/.cloud-sql/${PROJECT}/${INSTANCE}"
+export DB_INSTANCE_IP=$(gcloud sql instances describe ${DB_INSTANCE} \
+    --format='value(ipAddresses[0].ipAddress)')
+export PROJECT_ID=$(gcloud config get-value project)
+export DB_CONF_DIR="${HOME}/.cloud-sql/${PROJECT_ID}/${DB_INSTANCE}"
+export APP_SA="${APP_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+
+
+
+
 
 
 

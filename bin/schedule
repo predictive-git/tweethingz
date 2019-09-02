@@ -1,0 +1,19 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+SERVICE_URL=$(gcloud beta run services describe ${APP_NAME} \
+    --region ${APP_REGION} --format="value(status.domain)")
+
+# 20 past noon
+gcloud beta scheduler jobs create http $APP_NAME \
+    --http-method POST \
+    --schedule "12 20 * * *" \
+    --uri "${SERVICE_URL}/v1/followers/${USER}" \
+    --message-body '{}' \
+    --oidc-service-account-email $APP_SA \
+    --oidc-token-audience "${SERVICE_URL}/v1/followers/${USER}"
+
+
+

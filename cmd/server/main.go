@@ -32,7 +32,7 @@ func main() {
 	// api
 	v1 := r.Group("/v1")
 	{
-		v1.GET("/follower/:u", apiRequestHandler)
+		v1.POST("/followers/:username", apiRequestHandler)
 	}
 
 	// server
