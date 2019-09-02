@@ -1,0 +1,14 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+export INSTANCE_IP=$(gcloud sql instances describe ${INSTANCE} \
+    --format='value(ipAddresses[0].ipAddress)')
+
+echo "Connecting to ${INSTANCE} (${INSTANCE_IP}) as ${INSTANCE}..."
+
+mysql --host $INSTANCE_IP \
+      --user $INSTANCE \
+      --password=$(<"${CONF_DIR}/app_password")
+

@@ -8,19 +8,13 @@ import (
 )
 
 var (
-	logger = log.New(os.Stdout, "", 0)
+	logger = log.New(os.Stdout, "server - ", 0)
 )
 
 func main() {
-
 	logger.Println("Starting...")
-
-	list, err := worker.GetFollowers()
-	if err != nil {
-		logger.Fatalf("Error getting followers: %v", err)
+	if err := worker.Run(); err != nil {
+		logger.Fatalf("Error: %v", err)
 	}
-
-	logger.Printf("Followers: %d", len(list))
-
 	logger.Println("Done")
 }

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+gcloud sql instances create $INSTANCE \
+    --database-version MYSQL_5_6 \
+    --tier $NODE_TIER \
+    --activation-policy ALWAYS \
+    --availability-type zonal \
+    --zone $NODE_ZONE \
+    --enable-bin-log \
+    --storage-size 40GB \
+    --storage-type SSD \
+    --storage-auto-increase \
+    --backup \
+    --backup-start-time 03:00 \
+    --maintenance-release-channel PRODUCTION \
+    --maintenance-window-day SUN \
+    --maintenance-window-hour 2
+
+
+# database
+gcloud sql databases create $INSTANCE \
+    --instance $INSTANCE
+
+# reset root password
+gcloud sql users set-password root \
+    --instance $INSTANCE \
+    --password=$(<"${CONF_DIR}/root_password") \
+    --host %
+
+# create an app user
+gcloud sql users create $INSTANCE \
+    --instance $INSTANCE \
+    --password=$(<"${CONF_DIR}/app_password") \
+    --host %

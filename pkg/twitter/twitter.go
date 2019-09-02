@@ -1,4 +1,4 @@
-package worker
+package twitter
 
 import (
 	"log"
@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	logger = log.New(os.Stdout, "", 0)
+	logger = log.New(os.Stdout, "worker - ", 0)
 )
 
 func getClient(cfg *config.TwitterConfig) *twitter.Client {
@@ -20,6 +20,44 @@ func getClient(cfg *config.TwitterConfig) *twitter.Client {
 	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
 	httpClient := config.Client(oauth1.NoContext, token)
 	return twitter.NewClient(httpClient)
+}
+
+// GetFollowerIDs retreaves follower IDs for config specified user
+func GetFollowerIDs() (ids []int64, err error) {
+
+	cfg, err := config.GetTwitterConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "Error getting Twitter config")
+	}
+
+	listParam := &twitter.FollowerIDParams{
+		ScreenName: cfg.Username,
+		Count:      5000, // max per page
+	}
+
+	list := []int64{}
+
+	for {
+		page, resp, err := getClient(cfg).Followers.IDs(listParam)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error paging follower IDs (%s): %v", resp.Status, err)
+		}
+
+		// debug
+		logger.Printf("Page size:%d, Next:%d\n", len(page.IDs), page.NextCursor)
+
+		list = append(list, page.IDs...)
+
+		// has more IDs?
+		if page.NextCursor < 1 {
+			break
+		}
+
+		// reset cursor
+		listParam.Cursor = page.NextCursor
+	}
+
+	return list, nil
 }
 
 // GetFollowers retreaves followers for config specified user

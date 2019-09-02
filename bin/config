@@ -9,14 +9,20 @@
 
 
 # setup
-export APP_NAME="long-running-job"
-export IMAGE_VERSION="0.4.2"
+export APP_NAME="twitterd"
+export IMAGE_VERSION="0.1.1"
 export JOB_NAME="${APP_NAME}-2"
 export VM_TYPE="n1-standard-1"
 export VM_ZONE="us-central1-c"
 
+# cloud sql config
+export INSTANCE=$APP_NAME
+export NODE_TIER="db-n1-standard-1"
+export NODE_ZONE="us-central1-a"
+
 # derived
 export PROJECT=$(gcloud config get-value project)
+export CONF_DIR="${HOME}/.cloud-sql/${PROJECT}/${INSTANCE}"
 
 
 
