@@ -8,10 +8,10 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -a -tags netgo \
     -ldflags '-w -extldflags "-static"' \
     -mod vendor \
-    -o ./server \
-    ./cmd/server/
+    -o ./service \
+    ./cmd/worker/
 
 FROM gcr.io/distroless/static
-COPY --from=builder /src/server .
+COPY --from=builder /src/service .
 
-ENTRYPOINT ["/server"]
+ENTRYPOINT ["/service"]

@@ -20,8 +20,6 @@ echo "root and app user passwords saved in:"
 echo ${DB_CONF_DIR}
 
 
-
-
 # cloud run running service account
 gcloud iam service-accounts create $APP_NAME \
     --display-name "service account for ${APP_NAME}"
