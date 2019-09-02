@@ -14,7 +14,7 @@ type DataConfig struct {
 	DSN string `envconfig:"dsn" required:"true"`
 }
 
-// GetDataConfig reads data config from env vars
+// GetDataConfig loads db configs
 func GetDataConfig() (cfg *DataConfig, err error) {
 	var c DataConfig
 	if e := envconfig.Process(dbConfigPrefix, &c); e != nil {

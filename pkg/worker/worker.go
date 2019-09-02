@@ -5,38 +5,35 @@ import (
 	"os"
 
 	"github.com/mchmarny/twitterd/pkg/data"
+	"github.com/mchmarny/twitterd/pkg/twitter"
 	"github.com/pkg/errors"
 )
 
 var (
-	logger = log.New(os.Stdout, "worker - ", 0)
+	logger = log.New(os.Stdout, "worker: ", 0)
 )
 
-// Run executes the main worker
-func Run() error {
+// RunDaily executes the main worker
+func RunDaily(username string) error {
 
-	logger.Println("Initializing data...")
-	db, err := data.GetDB()
+	logger.Printf("Starting daily run for %s", username)
+	defer data.Finalize()
+
+	logger.Println("Getting followers...")
+	ids, err := twitter.GetFollowerIDs(username)
 	if err != nil {
-		return errors.Wrap(err, "Error initializing data")
+		return errors.Wrap(err, "Error getting follower IDs")
 	}
-	defer db.Finalize()
 
-	// logger.Println("Getting followers...")
-	// ids, err := twitter.GetFollowerIDs()
-	// if err != nil {
-	// 	return errors.Wrap(err, "Error getting follower IDs")
-	// }
-
-	// logger.Printf("Saving %d followers...", len(ids))
-	// err = db.SaveDailyFollowers(ids)
-	// if err != nil {
-	// 	return errors.Wrap(err, "Error saving followers")
-	// }
+	logger.Printf("Saving %d followers...", len(ids))
+	err = data.SaveDailyFollowers(username, ids)
+	if err != nil {
+		return errors.Wrap(err, "Error saving followers")
+	}
 
 	// new
 	logger.Println("Getting new followes...")
-	list, err := db.GetNewFollowerIDs()
+	list, err := data.GetNewFollowerIDs(username)
 	if err != nil {
 		return errors.Wrap(err, "Error getting new followes")
 	}
@@ -44,7 +41,7 @@ func Run() error {
 
 	// stopped following
 	logger.Println("Getting stopped followes...")
-	list, err = db.GetStopFollowerIDs()
+	list, err = data.GetStopFollowerIDs(username)
 	if err != nil {
 		return errors.Wrap(err, "Error getting stopped followes")
 	}

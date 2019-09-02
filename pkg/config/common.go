@@ -6,5 +6,5 @@ import (
 )
 
 var (
-	logger = log.New(os.Stdout, "config - ", 0)
+	logger = log.New(os.Stdout, "config: ", 0)
 )

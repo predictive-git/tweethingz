@@ -11,14 +11,13 @@ const (
 
 // TwitterConfig defines the active twiter configuration
 type TwitterConfig struct {
-	Username       string `envconfig:"username" required:"true"`
 	ConsumerKey    string `envconfig:"consumer_key" required:"true"`
 	ConsumerSecret string `envconfig:"consumer_secret" required:"true"`
 	AccessToken    string `envconfig:"access_token" required:"true"`
 	AccessSecret   string `envconfig:"access_secret" required:"true"`
 }
 
-// GetTwitterConfig reads twitter config from env vars
+// GetTwitterConfig loads twitter configs
 func GetTwitterConfig() (cfg *TwitterConfig, err error) {
 	var c TwitterConfig
 	if e := envconfig.Process(twitterConfigPrefix, &c); e != nil {

@@ -8,4 +8,4 @@ export GO111MODULE=on
 go mod tidy
 go mod vendor
 
-go run ./cmd/server/*.go -v
+go run -v ./cmd/server/*.go -u mchmarny

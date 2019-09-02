@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"os"
 
@@ -13,8 +14,13 @@ var (
 
 func main() {
 	logger.Println("Starting...")
-	if err := worker.Run(); err != nil {
+
+	usr := flag.String("u", "", "Twitter username")
+	flag.Parse()
+
+	if err := worker.RunDaily(*usr); err != nil {
 		logger.Fatalf("Error: %v", err)
 	}
+
 	logger.Println("Done")
 }

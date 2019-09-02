@@ -1,29 +1,15 @@
 package twitter
 
 import (
-	"log"
-	"os"
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
-	"github.com/dghubble/oauth1"
 	"github.com/mchmarny/twitterd/pkg/config"
 	"github.com/pkg/errors"
 )
 
-var (
-	logger = log.New(os.Stdout, "worker - ", 0)
-)
-
-func getClient(cfg *config.TwitterConfig) *twitter.Client {
-	config := oauth1.NewConfig(cfg.ConsumerKey, cfg.ConsumerSecret)
-	token := oauth1.NewToken(cfg.AccessToken, cfg.AccessSecret)
-	httpClient := config.Client(oauth1.NoContext, token)
-	return twitter.NewClient(httpClient)
-}
-
 // GetFollowerIDs retreaves follower IDs for config specified user
-func GetFollowerIDs() (ids []int64, err error) {
+func GetFollowerIDs(username string) (ids []int64, err error) {
 
 	cfg, err := config.GetTwitterConfig()
 	if err != nil {
@@ -31,7 +17,7 @@ func GetFollowerIDs() (ids []int64, err error) {
 	}
 
 	listParam := &twitter.FollowerIDParams{
-		ScreenName: cfg.Username,
+		ScreenName: username,
 		Count:      5000, // max per page
 	}
 
@@ -61,7 +47,7 @@ func GetFollowerIDs() (ids []int64, err error) {
 }
 
 // GetFollowers retreaves followers for config specified user
-func GetFollowers() (followers []*SimpleTwitterUser, err error) {
+func GetFollowers(username string) (followers []*SimpleTwitterUser, err error) {
 
 	cfg, err := config.GetTwitterConfig()
 	if err != nil {
@@ -69,7 +55,7 @@ func GetFollowers() (followers []*SimpleTwitterUser, err error) {
 	}
 
 	listParam := &twitter.FollowerListParams{
-		ScreenName:          cfg.Username,
+		ScreenName:          username,
 		SkipStatus:          twitter.Bool(true),
 		IncludeUserEntities: twitter.Bool(true),
 		Count:               200, // max per page
