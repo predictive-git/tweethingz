@@ -3,6 +3,7 @@ module github.com/mchmarny/twitterd
 go 1.12
 
 require (
+	github.com/GoogleCloudPlatform/cloudsql-proxy v0.0.0-20190828224159-d93c53a4824c
 	github.com/dghubble/go-twitter v0.0.0-20190719072343-39e5462e111f
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/gin-gonic/gin v1.4.0

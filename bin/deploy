@@ -6,7 +6,7 @@ DIR="$(dirname "$0")"
 # DSN
 VARS="DB_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
-VARS+="@tcp(${DB_INSTANCE_IP}:3306)/${APP_NAME}"
+VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}"
 
 # TW
 VARS+=",T_CONSUMER_KEY=${T_CONSUMER_KEY}"
@@ -20,4 +20,5 @@ gcloud beta run deploy $APP_NAME \
 	--no-allow-unauthenticated \
 	--platform managed \
 	--region $APP_REGION \
+	--set-cloudsql-instances $DB_INSTANCE \
 	--set-env-vars $VARS
