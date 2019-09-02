@@ -7,5 +7,12 @@ DIR="$(dirname "$0")"
 go mod tidy
 go mod vendor
 
-gcloud builds submit \
-    --tag "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}"
+# worker
+docker build -f Dockerfile.worker \
+    -t "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}" .
+docker push "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}"
+
+# worker
+docker build -f Dockerfile.cli \
+    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}" .
+docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}"
