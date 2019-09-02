@@ -13,8 +13,8 @@ var (
 	logger = log.New(os.Stdout, "worker: ", 0)
 )
 
-// RunDaily executes the main worker
-func RunDaily(username string) error {
+// ProcessFollowers finds new and stopped followers
+func ProcessFollowers(username string) error {
 
 	logger.Printf("Starting daily run for %s", username)
 	defer data.Finalize()
