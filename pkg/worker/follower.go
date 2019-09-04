@@ -1,16 +1,9 @@
 package worker
 
 import (
-	"log"
-	"os"
-
 	"github.com/mchmarny/twitterd/pkg/data"
 	"github.com/mchmarny/twitterd/pkg/twitter"
 	"github.com/pkg/errors"
-)
-
-var (
-	logger = log.New(os.Stdout, "worker: ", 0)
 )
 
 // ProcessFollowers finds new and stopped followers

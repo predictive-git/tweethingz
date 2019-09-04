@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"os"
 
@@ -15,10 +14,7 @@ var (
 func main() {
 	logger.Println("Starting...")
 
-	usr := flag.String("u", "", "Twitter username")
-	flag.Parse()
-
-	if err := worker.ProcessFollowers(*usr); err != nil {
+	if err := worker.BackfillFollowers(); err != nil {
 		logger.Fatalf("Error: %v", err)
 	}
 

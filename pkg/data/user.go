@@ -50,3 +50,33 @@ func SaveUsers(users []*twitter.SimpleTwitterUser) error {
 	return nil
 
 }
+
+// GetUserIDsToBackfill selects users who are in the follower
+// table but who do not have any details
+func GetUserIDsToBackfill() (list []int64, err error) {
+
+	if err := initDB(); err != nil {
+		return nil, err
+	}
+
+	res, err := db.Query(`select distinct follower_id from followers
+						where follower_id not in (select id from users)`)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error executing query")
+	}
+
+	ids := []int64{}
+	for res.Next() {
+		var id int64
+		err := res.Scan(&id)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error parsing results")
+		}
+		ids = append(ids, id)
+	}
+
+	logger.Printf("Found %d records for backfill", len(ids))
+
+	return ids, nil
+
+}
