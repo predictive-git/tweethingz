@@ -32,7 +32,8 @@ func main() {
 	// api
 	v1 := r.Group("/v1")
 	{
-		v1.POST("/followers/:username", apiRequestHandler)
+		v1.POST("/followers/:username", followerScheduleHandler)
+		v1.POST("/backfill", backfillScheduleHandler)
 	}
 
 	// server

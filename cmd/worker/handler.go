@@ -12,8 +12,7 @@ func okHandler(c *gin.Context) {
 	c.String(http.StatusOK, "OK")
 }
 
-func apiRequestHandler(c *gin.Context) {
-
+func followerScheduleHandler(c *gin.Context) {
 	usr := c.Param("username")
 	logger.Printf("User: %s", usr)
 	if usr == "" {
@@ -39,5 +38,21 @@ func apiRequestHandler(c *gin.Context) {
 		"message": "Success",
 		"status":  http.StatusOK,
 	})
+}
 
+func backfillScheduleHandler(c *gin.Context) {
+	err := worker.BackfillFollowers()
+	if err != nil {
+		logger.Printf("Error backfilling: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal Error",
+			"status":  http.StatusInternalServerError,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Success",
+		"status":  http.StatusOK,
+	})
 }

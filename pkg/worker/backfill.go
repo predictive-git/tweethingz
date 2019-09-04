@@ -19,18 +19,25 @@ func BackfillFollowers() error {
 	}
 
 	pageIDs := []int64{}
+
+	// page in 100s
 	for _, id := range ids {
 		pageIDs = append(pageIDs, id)
 		if len(pageIDs) == 100 { //max twitter page size
-			//TODO process
-			logger.Printf("Page: %d", len(pageIDs))
+			err := GetAndSaveUsers(pageIDs)
+			if err != nil {
+				return err
+			}
 			pageIDs = []int64{}
 		}
 	}
 
+	// process left overs
 	if len(pageIDs) > 0 { //are there any left over?
-		//TODO process
-		logger.Printf("Page: %d", len(pageIDs))
+		err := GetAndSaveUsers(pageIDs)
+		if err != nil {
+			return err
+		}
 	}
 
 	logger.Println("Done backfill run")

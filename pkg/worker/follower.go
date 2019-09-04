@@ -66,6 +66,17 @@ func getAndSaveUserDetails(username, eventType string, ids []int64) error {
 		return errors.Wrapf(err, "Error saving events: %s for %s", eventType, username)
 	}
 
+	return GetAndSaveUsers(ids)
+
+}
+
+// GetAndSaveUsers retreaves and saves users
+func GetAndSaveUsers(ids []int64) error {
+
+	if len(ids) == 0 {
+		return nil
+	}
+
 	// details
 	users, err := twitter.GetUsers(ids)
 	if err != nil {
