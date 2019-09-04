@@ -7,15 +7,16 @@ import (
 )
 
 func TestValidLookupUIUser(t *testing.T) {
-	testEmail := "test@domain.com"
-	testUser, err := LookupUIUser(testEmail, "test")
+
+	testUser, err := LookupUIUser("mark@chmarny.com", "test")
+	logger.Printf("User: %s, Error: %v", testUser, err)
 	assert.Nil(t, err)
-	assert.NotNil(t, testUser)
+	assert.NotEmpty(t, testUser)
 }
 
 func TestInvalidLookupUIUser(t *testing.T) {
-	testEmail := "test2@domain.com"
-	testUser, err := LookupUIUser(testEmail, "test")
-	assert.Nil(t, err)
+	testUser, err := LookupUIUser("test2@domain.com", "test")
+	logger.Printf("User: %s, Error: %v", testUser, err)
+	assert.Equal(t, ErrUserNotFound, err, "Should have thrown not found error")
 	assert.Empty(t, testUser)
 }

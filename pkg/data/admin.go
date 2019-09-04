@@ -1,6 +1,7 @@
 package data
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/pkg/errors"
@@ -8,6 +9,11 @@ import (
 
 const (
 	authedEventType = "authed"
+)
+
+var (
+	// ErrUserNotFound represents static error when user is not found
+	ErrUserNotFound = errors.New("User not found")
 )
 
 // LookupUIUser check if the authed email is in UI users and creates UI event
@@ -22,35 +28,23 @@ func LookupUIUser(email, context string) (twitterUsername string, err error) {
 	}
 
 	// select
-	selectStmt, err := db.Prepare("SELECT twitter_username FROM ui_users WHERE email = ?")
-	if err != nil {
-		return "", errors.Wrap(err, "Error preparing select statement")
-	}
-
-	row := selectStmt.QueryRow(email)
-	if row != nil {
-		return "", errors.Wrapf(err, "Error while selecting row for %s", email)
-	}
+	logger.Printf("Quering for: %s", email)
+	row := db.QueryRow("SELECT twitter_username FROM ui_users WHERE email = ?;", email)
 
 	var twUsername string
-	if err := row.Scan(&twUsername); err != nil {
-		return "", errors.Wrap(err, "Error parsing session incrementing results")
+	err = row.Scan(&twUsername)
+	if err != nil && err != sql.ErrNoRows {
+		return "", errors.Wrap(err, "Error parsing select results")
 	}
 
 	if twUsername == "" {
-		return "", nil
+		return "", ErrUserNotFound
 	}
 
 	// insert event
-	insertStmt, err := db.Prepare(`INSERT INTO ui_events (
-			email, event_at, event_type, description) VALUES (?, ?, ?, ?)`)
-	if err != nil {
-		return "", errors.Wrap(err, "Error preparing insert statement")
-	}
-	defer insertStmt.Close()
-
-	_, err = insertStmt.Exec(email, time.Now().Format("2006-01-02 15:04:05"),
-		authedEventType, context)
+	_, err = db.Exec(`INSERT INTO ui_events
+		(email, event_at, event_type, description) VALUES (?, ?, ?, ?)`,
+		email, time.Now().Format("2006-01-02 15:04:05"), authedEventType, context)
 	if err != nil {
 		return "", errors.Wrap(err, "Error executing event insert")
 	}

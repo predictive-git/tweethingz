@@ -68,6 +68,8 @@ func authLoginHandler(w http.ResponseWriter, r *http.Request) {
 		logger.Printf("User ID from previous visit: %s", uid)
 	}
 
+	logger.Printf("Auth handled: %s", uid)
+
 	u := getOAuthConfig(r).AuthCodeURL(generateStateOauthCookie(w))
 	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
 }
@@ -104,6 +106,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return
 	}
+	logger.Printf("Twitter UI User: %s", twUser)
 
 	// set cookie for 30 days
 	cookie := http.Cookie{
