@@ -3,17 +3,32 @@
 {{ template "header" . }}
 
 
+<div id="numbers-section">
+
+    <div class="number-item" id="username-text">
+        <div>Username</div>
+        <div class="data a"></div>
+    </div>
+
+    <div class="number-item" id="follower-count">
+        <div>Followers</div>
+        <div class="data b"></div>
+    </div>
+
+    <div class="number-item" id="d-count">
+        <div>C:</div>
+        <div class="data c"></div>
+    </div>
+
+    <div class="number-item" id="d-count">
+        <div>D:</div>
+        <div class="data d"></div>
+    </div>
+
+</div>
+
+
 <div id="middle-section">
-
-    <div class="data-tile" id="username">
-        <b></b>
-    </div>
-
-    <div class="data-tile" id="follower-count">
-        <div>Followers:</div>
-        <b></b>
-        <p></p>
-    </div>
 
     <div class="chart-wrapper">
         <canvas class="chart-series" id="follower-count-series"></canvas>

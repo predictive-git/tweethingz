@@ -11,8 +11,9 @@ import (
 )
 
 var (
-	logger = log.New(os.Stdout, "", 0)
-	port   = ev.MustGetEnvVar("PORT", "8080")
+	logger  = log.New(os.Stdout, "", 0)
+	port    = ev.MustGetEnvVar("PORT", "8080")
+	version = ev.MustGetEnvVar("RELEASE", "v0.0.1-manual")
 )
 
 func main() {

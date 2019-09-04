@@ -101,6 +101,21 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Printf("Email: %s", email)
 
 	twUser, err := data.LookupUIUser(email, authContext)
+	if err != nil && err == data.ErrUserNotFound {
+		initTemplates()
+		if err := templates.ExecuteTemplate(w, "error", map[string]interface{}{
+			"error": fmt.Sprintf(
+				`Authenticated user ('%s') has not been configured in this system.
+				 Please contact system administrator for access.
+				 Self-enrollment comming soon,`, email), //TODO: externalize
+			"status_code": http.StatusUnauthorized,
+			"status":      http.StatusText(http.StatusUnauthorized),
+		}); err != nil {
+			logger.Printf("Error in error template: %s", err)
+		}
+		return
+	}
+
 	if err != nil {
 		logger.Printf("Error while looking up user: %v", err)
 		errorHandler(w, r, err, http.StatusInternalServerError)

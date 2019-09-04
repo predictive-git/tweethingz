@@ -25,20 +25,58 @@ body {
 	height: 100%;
 	text-align: center;
 	widows: 100%;
+	text-align: center;
 }
 
 #page-header {
-	padding: 0;
-	margin: 10px 0 0 0;
+	padding: 20px;
+	margin: 0;
+	background-color: #333;
 }
 
-#page-header-title {
+#page-header b {
 	color: #999;
 	font-size: 3em;
 }
 
+
+#numbers-section {
+	padding: 20px 0 0 0;
+	display: grid;
+	grid-template-columns: repeat(4, 200px);
+	grid-template-rows: auto;
+	grid-gap: 20px;
+	align-content: space-around;
+	justify-content: space-between;
+	margin: auto;
+  	width: 80%;
+}
+
+#numbers-section .number-item {
+	background-color:rgba(54, 162, 235, 1);
+  	color: #333;
+  	border-radius: 3px;
+  	padding: 20px;
+	font-size: 1em;
+	align-content: center;
+}
+
+#numbers-section:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#numbers-section .data {
+	font-weight: bold;
+	font-size: 1.5em;
+	padding: 10px;
+}
+
+
 #middle-section {
 	text-align: center;
+	margin-top: 20px;
 }
 
 .chart-wrapper {

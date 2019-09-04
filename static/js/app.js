@@ -2,11 +2,8 @@ $(function () {
     $.get("/data", function (data) {
         console.log(data);
 
-        $("#data-tile b").html(data.username);
-
-        $("#follower-count b").html(data.follower_count);
-        $("#follower-count p").html(data.follower_count_on);
-
+        $("#username-text .data").html(data.username);
+        $("#follower-count .data").html(data.follower_count);
 
         // follower count chart
         var followerChart = new Chart($("#follower-count-series")[0].getContext("2d"), {

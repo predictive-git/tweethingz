@@ -9,23 +9,17 @@
     <meta name="keywords" content="twitter, service, api">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="static/img/favicon.ico" rel="shortcut icon" />
-    <link rel="stylesheet" href="static/css/app.css" />
-    <link rel="stylesheet" href="static/css/chart.css" />
-    <script src="static/js/lib.js"></script>
-    <script src="static/js/chart.js"></script>
-    <script src="static/js/app.js"></script>
+    <link rel="stylesheet" href="static/css/app.css?version={{ .version }}" />
+    <link rel="stylesheet" href="static/css/chart.css?version={{ .version }}" />
+    <script src="static/js/lib.js?version={{ .version }}"></script>
+    <script src="static/js/chart.js?version={{ .version }}"></script>
+    <script src="static/js/app.js?version={{ .version }}"></script>
 </head>
 
 <body>
-
     <div id="wrapper">
-
         <!-- Header -->
         <div id="page-header">
-            <div id="page-header-title">
-                twitterd
-            </div>
+            <b>twitterd</b>
         </div>
-
-
         {{end}}
