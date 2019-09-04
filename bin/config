@@ -3,7 +3,7 @@
 # setup
 export APP_NAME="twitterd"
 export APP_REGION="us-central1"
-export IMAGE_VERSION="0.2.3"
+export IMAGE_VERSION="0.3.1"
 export DB_INSTANCE=${APP_NAME}
 export DB_NODE_TIER="db-n1-standard-1"
 export DB_NODE_ZONE="${APP_ZONE}-a"

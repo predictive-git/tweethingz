@@ -9,11 +9,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	newFollowerEvent      = "followed"
-	stoppedFollowingEvent = "unhallowed"
-)
-
 var (
 	logger = log.New(os.Stdout, "worker: ", 0)
 )
@@ -45,7 +40,7 @@ func ProcessFollowers(username string) error {
 	logger.Printf("Found %d new followers", len(list))
 
 	if len(list) > 0 {
-		err = getAndSaveUserDetails(username, newFollowerEvent, list)
+		err = getAndSaveUserDetails(username, data.EventNewFollower, list)
 		if err != nil {
 			return errors.Wrap(err, "Error saving users details")
 		}
@@ -60,7 +55,7 @@ func ProcessFollowers(username string) error {
 	logger.Printf("Found %d stopped followers", len(list))
 
 	if len(list) > 0 {
-		err = getAndSaveUserDetails(username, stoppedFollowingEvent, list)
+		err = getAndSaveUserDetails(username, data.EventUnFollowing, list)
 		if err != nil {
 			return errors.Wrap(err, "Error saving users details")
 		}

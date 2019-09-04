@@ -15,6 +15,11 @@ import (
 
 const (
 	isoDateFormat = "2006-01-02"
+
+	// EventNewFollower event type
+	EventNewFollower = "followed"
+	// EventUnFollowing event type
+	EventUnFollowing = "unfollowed"
 )
 
 var (

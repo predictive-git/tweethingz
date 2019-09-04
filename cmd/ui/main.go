@@ -31,6 +31,7 @@ func main() {
 	mux.HandleFunc("/auth/logout", logOutHandler)
 
 	mux.HandleFunc("/view", viewHandler)
+	mux.HandleFunc("/data", datadHandler)
 
 	mux.HandleFunc("/_health", func(w http.ResponseWriter, _ *http.Request) {
 		fmt.Fprint(w, "ok")
