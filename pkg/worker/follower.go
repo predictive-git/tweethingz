@@ -29,13 +29,14 @@ func ProcessFollowers(username string) error {
 		return errors.Wrap(err, "Error getting follower IDs")
 	}
 
+	// followers right now
 	logger.Printf("Saving %d followers...", len(ids))
 	err = data.SaveDailyFollowers(username, ids)
 	if err != nil {
 		return errors.Wrap(err, "Error saving followers")
 	}
 
-	// new
+	// new followers
 	logger.Println("Getting new followes...")
 	list, err := data.GetNewFollowerIDs(username)
 	if err != nil {
@@ -44,9 +45,9 @@ func ProcessFollowers(username string) error {
 	logger.Printf("Found %d new followers", len(list))
 
 	if len(list) > 0 {
-		err = data.SaveFollowerEvents(username, newFollowerEvent, list)
+		err = getAndSaveUserDetails(username, newFollowerEvent, list)
 		if err != nil {
-			return errors.Wrap(err, "Error saving new follower events")
+			return errors.Wrap(err, "Error saving users details")
 		}
 	}
 
@@ -59,10 +60,34 @@ func ProcessFollowers(username string) error {
 	logger.Printf("Found %d stopped followers", len(list))
 
 	if len(list) > 0 {
-		err = data.SaveFollowerEvents(username, stoppedFollowingEvent, list)
+		err = getAndSaveUserDetails(username, stoppedFollowingEvent, list)
 		if err != nil {
-			return errors.Wrap(err, "Error saving stopped following events")
+			return errors.Wrap(err, "Error saving users details")
 		}
+	}
+
+	return nil
+
+}
+
+func getAndSaveUserDetails(username, eventType string, ids []int64) error {
+
+	// save events
+	err := data.SaveFollowerEvents(username, eventType, ids)
+	if err != nil {
+		return errors.Wrapf(err, "Error saving events: %s for %s", eventType, username)
+	}
+
+	// details
+	users, err := twitter.GetUsers(ids)
+	if err != nil {
+		return errors.Wrap(err, "Error getting users details")
+	}
+
+	// save details
+	err = data.SaveUsers(users)
+	if err != nil {
+		return errors.Wrap(err, "Error saving new follower events")
 	}
 
 	return nil

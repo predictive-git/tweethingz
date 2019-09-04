@@ -8,11 +8,16 @@ go mod tidy
 go mod vendor
 
 # worker
-docker build -f Dockerfile.worker \
+docker build -f ./docker/Dockerfile.worker \
     -t "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}" .
 docker push "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}"
 
-# worker
-docker build -f Dockerfile.cli \
+# cli
+docker build -f ./docker/Dockerfile.cli \
     -t "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}" .
 docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}"
+
+# ui
+docker build -f ./docker/Dockerfile.ui \
+    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" .
+docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}"
