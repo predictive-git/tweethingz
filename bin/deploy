@@ -3,8 +3,10 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+VARS="RELEASE=${IMAGE_VERSION}"
+
 # DSN
-VARS="DB_DSN=${APP_NAME}:"
+VARS+=",DB_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
 VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}"
 
@@ -14,10 +16,24 @@ VARS+=",T_CONSUMER_SECRET=${T_CONSUMER_SECRET}"
 VARS+=",T_ACCESS_TOKEN=${T_ACCESS_TOKEN}"
 VARS+=",T_ACCESS_SECRET=${T_ACCESS_SECRET}"
 
-gcloud beta run deploy $APP_NAME \
+gcloud beta run deploy "${APP_NAME}-worker" \
 	--image "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}" \
 	--service-account $APP_SA \
 	--no-allow-unauthenticated \
+	--platform managed \
+	--region $APP_REGION \
+	--set-cloudsql-instances $DB_INSTANCE \
+	--set-env-vars $VARS
+
+# OAuth (Specific to the UI)
+VARS+=",T_OAUTH_CLIENT_ID=${T_OAUTH_CLIENT_ID}"
+VARS+=",T_OAUTH_CLIENT_SECRET=${T_OAUTH_CLIENT_SECRET}"
+VARS+=",T_OAUTH_FORCE_HTTPS=true"
+
+gcloud beta run deploy "${APP_NAME}-ui" \
+	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" \
+	--service-account $APP_SA \
+	--allow-unauthenticated \
 	--platform managed \
 	--region $APP_REGION \
 	--set-cloudsql-instances $DB_INSTANCE \

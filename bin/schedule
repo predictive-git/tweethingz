@@ -3,17 +3,25 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-SERVICE_URL=$(gcloud beta run services describe ${APP_NAME} \
+SERVICE_URL=$(gcloud beta run services describe ${APP_NAME}-worker \
     --region ${APP_REGION} --format="value(status.domain)")
 
-# 20 past noon
-gcloud beta scheduler jobs create http $APP_NAME \
+
+gcloud beta scheduler jobs create http "${APP_NAME}-${USER}" \
     --http-method POST \
-    --schedule "12 20 * * *" \
+    --schedule "0 */3 * * *" \
     --uri "${SERVICE_URL}/v1/followers/${USER}" \
     --message-body '{}' \
     --oidc-service-account-email $APP_SA \
     --oidc-token-audience "${SERVICE_URL}/v1/followers/${USER}"
+
+gcloud beta scheduler jobs create http "${APP_NAME}-backfill" \
+    --http-method POST \
+    --schedule "0 */1 * * *" \
+    --uri "${SERVICE_URL}/v1/backfill" \
+    --message-body '{}' \
+    --oidc-service-account-email $APP_SA \
+    --oidc-token-audience "${SERVICE_URL}/v1/backfill"
 
 
 
