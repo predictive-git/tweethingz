@@ -37,8 +37,17 @@ func getOAuthConfig(r *http.Request) *oauth2.Config {
 		return oauthConfig
 	}
 
+	// DEBUG
+	// requestDump, err := httputil.DumpRequest(r, false)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// logger.Printf("DEBUG: %s", string(requestDump))
+	// END DEBUG
+
 	// HTTPS or HTTP
-	proto := r.Header.Get("x-forwarded-proto")
+
+	proto := r.Header.Get("X-Forwarded-Proto")
 	if proto == "" {
 		proto = "http"
 	}

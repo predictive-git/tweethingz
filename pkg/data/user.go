@@ -59,16 +59,16 @@ func GetUserIDsToBackfill() (list []int64, err error) {
 		return nil, err
 	}
 
-	res, err := db.Query(`select distinct follower_id from followers
-						where follower_id not in (select id from users)`)
+	rs, err := db.Query(`SELECT DISTINCT follower_id FROM followers
+						 WHERE follower_id NOT IN (SELECT id FROM users)`)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error executing query")
 	}
 
 	ids := []int64{}
-	for res.Next() {
+	for rs.Next() {
 		var id int64
-		err := res.Scan(&id)
+		err := rs.Scan(&id)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing results")
 		}
