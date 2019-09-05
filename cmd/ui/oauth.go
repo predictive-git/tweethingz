@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 	"time"
 
@@ -37,16 +38,7 @@ func getOAuthConfig(r *http.Request) *oauth2.Config {
 		return oauthConfig
 	}
 
-	// DEBUG
-	// requestDump, err := httputil.DumpRequest(r, false)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-	// logger.Printf("DEBUG: %s", string(requestDump))
-	// END DEBUG
-
 	// HTTPS or HTTP
-
 	proto := r.Header.Get("X-Forwarded-Proto")
 	if proto == "" {
 		proto = "http"
@@ -59,6 +51,14 @@ func getOAuthConfig(r *http.Request) *oauth2.Config {
 
 	if cfg.ForceHTTPS {
 		proto = "https"
+	}
+
+	if cfg.Debug {
+		requestDump, err := httputil.DumpRequest(r, false)
+		if err != nil {
+			fmt.Println(err)
+		}
+		logger.Printf("DEBUG: %s", string(requestDump))
 	}
 
 	baseURL := fmt.Sprintf("%s://%s", proto, r.Host)

@@ -5,19 +5,16 @@ import (
 	"github.com/pkg/errors"
 )
 
-const (
-	dbConfigPrefix = "DB"
-)
-
 // DataConfig defines the active data configuration
 type DataConfig struct {
+	CommonConfig
 	DSN string `envconfig:"dsn" required:"true"`
 }
 
 // GetDataConfig loads db configs
 func GetDataConfig() (cfg *DataConfig, err error) {
 	var c DataConfig
-	if e := envconfig.Process(dbConfigPrefix, &c); e != nil {
+	if e := envconfig.Process(appConfigPrefix, &c); e != nil {
 		return nil, errors.Wrap(e, "Error parsing data config")
 	}
 	return &c, nil

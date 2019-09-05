@@ -6,7 +6,7 @@ DIR="$(dirname "$0")"
 VARS="RELEASE=${IMAGE_VERSION}"
 
 # DSN
-VARS+=",DB_DSN=${APP_NAME}:"
+VARS+=",T_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
 VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}"
 
