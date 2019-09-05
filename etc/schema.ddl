@@ -28,8 +28,10 @@ CREATE TABLE IF NOT EXISTS users (
 	post_count INT DEFAULT 0,
 	fave_count INT DEFAULT 0,
 	following_count INT DEFAULT 0,
-	follower_count INT DEFAULT 0
+	follower_count INT DEFAULT 0,
+	updated_on timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE IF NOT EXISTS ui_users (
 	email VARCHAR(250) PRIMARY KEY,
