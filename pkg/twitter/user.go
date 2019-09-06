@@ -9,7 +9,7 @@ import (
 )
 
 // GetUsers retreaves details about the user
-func GetUsers(ids []int64) (users []*SimpleTwitterUser, err error) {
+func GetUsers(ids []int64) (users []*SimpleUser, err error) {
 
 	cfg, err := config.GetTwitterConfig()
 	if err != nil {
@@ -21,7 +21,7 @@ func GetUsers(ids []int64) (users []*SimpleTwitterUser, err error) {
 		IncludeEntities: twitter.Bool(true),
 	}
 
-	list := []*SimpleTwitterUser{}
+	list := []*SimpleUser{}
 
 	items, resp, err := getClient(cfg).Users.Lookup(listParam)
 	if err != nil {
@@ -39,7 +39,7 @@ func GetUsers(ids []int64) (users []*SimpleTwitterUser, err error) {
 			return nil, errors.Wrapf(err, "Error parsing created timestamp: %s", u.CreatedAt)
 		}
 
-		usr := &SimpleTwitterUser{
+		usr := &SimpleUser{
 			ID:             u.IDStr,
 			Username:       u.ScreenName,
 			Name:           u.Name,
@@ -61,8 +61,14 @@ func GetUsers(ids []int64) (users []*SimpleTwitterUser, err error) {
 	return list, nil
 }
 
-// SimpleTwitterUser represents simplified Twitter user
-type SimpleTwitterUser struct {
+// SimpleUserEvent wraps simple twitter user as an time event
+type SimpleUserEvent struct {
+	SimpleUser
+	EventDate time.Time `json:"event_at"`
+}
+
+// SimpleUser represents simplified Twitter user
+type SimpleUser struct {
 
 	// ID is global identifier
 	ID string `json:"id"`

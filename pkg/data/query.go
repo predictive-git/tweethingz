@@ -9,19 +9,19 @@ import (
 
 const (
 	recentUsersDefaultLimit = 10
-	followerCountPageSize   = 100
+	seriesDefaultSize       = 28
 )
 
 // SummaryData represents aggregate data view
 type SummaryData struct {
-	Username              string                       `json:"username"`
-	FollowerCount         int64                        `json:"follower_count"`
-	FollowerCountDate     string                       `json:"follower_count_on"`
-	FollowerCountSeries   map[string]int64             `json:"follower_count_series"`
-	FollowedEventSeries   map[string]int64             `json:"followed_event_series"`
-	UnfollowedEventSeries map[string]int64             `json:"unfollowed_event_series"`
-	RecentFollowers       []*twitter.SimpleTwitterUser `json:"recent_follower_list"`
-	RecentUnfollowers     []*twitter.SimpleTwitterUser `json:"recent_unfollower_list"`
+	Username              string                     `json:"username"`
+	FollowerCount         int64                      `json:"follower_count"`
+	FollowerCountDate     string                     `json:"follower_count_on"`
+	FollowerCountSeries   map[string]int64           `json:"follower_count_series"`
+	FollowedEventSeries   map[string]int64           `json:"followed_event_series"`
+	UnfollowedEventSeries map[string]int64           `json:"unfollowed_event_series"`
+	RecentFollowers       []*twitter.SimpleUserEvent `json:"recent_follower_list"`
+	RecentUnfollowers     []*twitter.SimpleUserEvent `json:"recent_unfollower_list"`
 }
 
 // GetSummaryForUser retreaves all summary data for that user
@@ -40,8 +40,8 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 		FollowerCountSeries:   map[string]int64{},
 		FollowedEventSeries:   map[string]int64{},
 		UnfollowedEventSeries: map[string]int64{},
-		RecentFollowers:       []*twitter.SimpleTwitterUser{},
-		RecentUnfollowers:     []*twitter.SimpleTwitterUser{},
+		RecentFollowers:       []*twitter.SimpleUserEvent{},
+		RecentUnfollowers:     []*twitter.SimpleUserEvent{},
 	}
 
 	// follower counts
@@ -66,7 +66,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 						   WHERE username = ?
 						   GROUP BY count_date
 						   ORDER BY count_date
-						   LIMIT ?`, username, followerCountPageSize)
+						   LIMIT ?`, username, seriesDefaultSize)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Error quering follower count series")
@@ -93,7 +93,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 						GROUP BY
 							count_date
 						ORDER BY count_date
-						LIMIT ?`, EventNewFollower, EventUnFollowing, username, followerCountPageSize)
+						LIMIT ?`, EventNewFollower, EventUnFollowing, username, seriesDefaultSize)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Error quering follower events series")
@@ -130,12 +130,13 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 
 }
 
-func getEventUsers(username, eventType string) (users []*twitter.SimpleTwitterUser, err error) {
+func getEventUsers(username, eventType string) (users []*twitter.SimpleUserEvent, err error) {
 
 	// follower events
 	rows, err := db.Query(`select
-			u.id, u.username, u.name, u.description, u.profile_image, u.created_at, u.lang,
-			u.location, u.timezone, u.post_count, u.fave_count, u.following_count, u.follower_count
+			u.id, u.username, u.name, u.description, u.profile_image, u.created_at,
+			u.lang, u.location, u.timezone, u.post_count, u.fave_count, u.following_count,
+			u.follower_count, e.on_day
 		from users u
 		join follower_events e on u.id = e.follower_id
 		where e.username = ?
@@ -147,12 +148,12 @@ func getEventUsers(username, eventType string) (users []*twitter.SimpleTwitterUs
 		return nil, errors.Wrap(err, "Error quering event users")
 	}
 
-	list := []*twitter.SimpleTwitterUser{}
+	list := []*twitter.SimpleUserEvent{}
 	for rows.Next() {
-		u := &twitter.SimpleTwitterUser{}
+		u := &twitter.SimpleUserEvent{}
 		err := rows.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
 			&u.Lang, &u.Location, &u.Timezone, &u.PostCount, &u.FaveCount, &u.FollowingCount,
-			&u.FollowerCount)
+			&u.FollowerCount, &u.EventDate)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error parsing follower events series")
 		}

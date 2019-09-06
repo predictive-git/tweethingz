@@ -6,7 +6,7 @@ import (
 )
 
 // SaveUsers saves multiple users
-func SaveUsers(users []*twitter.SimpleTwitterUser) error {
+func SaveUsers(users []*twitter.SimpleUser) error {
 
 	if len(users) == 0 {
 		return nil

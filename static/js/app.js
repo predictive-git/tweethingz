@@ -90,12 +90,13 @@ function loadUsers(tbl, list) {
         username: "YouHalal"
         */
 
-
+        var eventDate = new Date(u.event_at);
         var $info = $("<div class='user-info-detail'>").append(
             $("<div class='user-info-name'>").html("<b>" + u.username + "</b> - " + u.name +
                 " (<b>Loc:</b> " + u.location +
                 " <b>Follow:</b> " + u.followers_count + "/" + u.following_count +
-                " <b>Post:</b> " + u.post_count + ")"),
+                " <b>Post:</b> " + u.post_count +
+                " <b>On:</b> " + eventDate.toISOString().substring(0, 10) + ")"),
             $("<div class='user-info-desc'>").text(u.description),
         );
 
