@@ -123,7 +123,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error quering new unfollower event users")
 	}
-	r.RecentFollowers = list
+	r.RecentUnfollowers = list
 
 	// return loaded object
 	return r, err

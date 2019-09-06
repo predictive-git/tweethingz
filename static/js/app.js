@@ -62,6 +62,48 @@ $(function () {
             }
         });
 
+        loadUsers($("#follower-list"), data.recent_follower_list);
+        loadUsers($("#unfollower-list"), data.recent_unfollower_list);
 
     });
 });
+
+
+function loadUsers(tbl, list) {
+
+    $.each(list, function (i, u) {
+        // console.log("User[" + i + "] ID: " + u.id);
+
+        /*
+        created_at: "2018-06-02T00:00:00Z"
+        description: "Future Global #Halal Marketplace"
+        fave_count: 0
+        followers_count: 251
+        following_count: 0
+        id: "1003044630592712704"
+        lang: ""
+        location: "London, England"
+        name: "YouHalal.com"
+        post_count: 102858
+        profile_image: "https://pbs.twimg.com/profile_images/1017890735100780544/TLnzh-nB_normal.jpg"
+        time_zone: ""
+        username: "YouHalal"
+        */
+
+
+        var $info = $("<div class='user-info-detail'>").append(
+            $("<div class='user-info-name'>").html("<b>" + u.username + "</b> - " + u.name +
+                " (<b>Loc:</b> " + u.location +
+                " <b>Follow:</b> " + u.followers_count + "/" + u.following_count +
+                " <b>Post:</b> " + u.post_count + ")"),
+            $("<div class='user-info-desc'>").text(u.description),
+        );
+
+        var $tr = $("<tr class='user-row'>").append(
+            $("<td class='user-img'>").html("<img src='" + u.profile_image + "'/>"),
+            $("<td class='user-info'>").append($info)
+        ).appendTo(tbl);
+    });
+
+
+}

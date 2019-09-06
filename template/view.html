@@ -2,29 +2,23 @@
 
 {{ template "header" . }}
 
-
 <div id="numbers-section">
-
     <div class="number-item" id="username-text">
         <div>Username</div>
         <div class="data a"></div>
     </div>
-
     <div class="number-item" id="follower-count">
         <div>Followers</div>
         <div class="data b"></div>
     </div>
-
     <div class="number-item" id="d-count">
         <div>C:</div>
         <div class="data c"></div>
     </div>
-
     <div class="number-item" id="d-count">
         <div>D:</div>
         <div class="data d"></div>
     </div>
-
 </div>
 
 
@@ -34,14 +28,22 @@
         <canvas class="chart-series" id="follower-count-series"></canvas>
     </div>
 
-
     <div class="chart-wrapper">
         <canvas class="chart-series" id="follower-event-series"></canvas>
     </div>
 
+    <div class="user-table-wrapper">
+        <p>Recent Followers</p>
+        <table id="follower-list" class="user-table"></table>
+    </div>
 
+    <div class="user-table-wrapper">
+        <p>Recent Unfollowers</p>
+        <table id="unfollower-list" class="user-table"></table>
+    </div>
 
 </div>
+
 
 {{ template "footer" . }}
 

@@ -39,6 +39,10 @@ body {
 	font-size: 3em;
 }
 
+#page-footer {
+	margin: 20px 0;
+}
+
 
 #numbers-section {
 	padding: 20px 0 0 0;
@@ -89,4 +93,46 @@ body {
 .chart-series {
 	width: 300px;
 	height: 100px;
+}
+
+.user-table-wrapper {
+	width: 70%;
+	break-after: always;
+	display: inline-block;
+	color: #333;
+}
+
+.user-table-wrapper p {
+	font-size: 1.1em;
+	background-color: rgba(54, 162, 235, 0.3);
+	padding: 3px;
+}
+
+tr.user-row td {
+	border-bottom: 1pt solid #dcdcdc;
+	padding-bottom: 10px;
+}
+
+.user-table {
+	width: 100%;
+}
+
+.user-img {
+	width: 50px;
+	height: 50px;
+	text-align: center;
+}
+
+.user-info {
+	width: 100%;
+	padding: 3px 3px 3px 15px;
+	text-align: left;
+}
+
+.user-info-name {
+	font-size: 0.9em;
+}
+
+.user-info-desc {
+	font-size: 0.8em;
 }
