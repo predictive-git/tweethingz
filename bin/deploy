@@ -8,7 +8,7 @@ VARS="RELEASE=${IMAGE_VERSION}"
 # DSN
 VARS+=",T_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
-VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}"
+VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?parseTime=true"
 
 # TW
 VARS+=",T_CONSUMER_KEY=${T_CONSUMER_KEY}"
