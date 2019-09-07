@@ -54,6 +54,13 @@ func ProcessFollowers(username string) error {
 		}
 	}
 
+	// user details
+	logger.Println("Getting user details...")
+	err = getAndSaveUser(username)
+	if err != nil {
+		return errors.Wrap(err, "Error getting user details")
+	}
+
 	return nil
 
 }
@@ -103,6 +110,27 @@ func GetAndSaveUsers(ids []int64) error {
 
 }
 
+func getAndSaveUser(username string) error {
+
+	if username == "" {
+		return nil
+	}
+
+	users, err := twitter.GetUsersFromUsernames([]string{username})
+	if err != nil {
+		return errors.Wrap(err, "Error getting users details")
+	}
+
+	// save details
+	err = data.SaveUsers(users)
+	if err != nil {
+		return errors.Wrap(err, "Error saving new follower events")
+	}
+
+	return nil
+
+}
+
 func getAndSaveUsersPaged(ids []int64) error {
 
 	if len(ids) == 0 {
@@ -110,7 +138,7 @@ func getAndSaveUsersPaged(ids []int64) error {
 	}
 
 	// details
-	users, err := twitter.GetUsers(ids)
+	users, err := twitter.GetUsersFromIDs(ids)
 	if err != nil {
 		return errors.Wrap(err, "Error getting users details")
 	}

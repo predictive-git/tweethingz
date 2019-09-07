@@ -1,9 +1,17 @@
 $(function () {
+    if ($("#numbers-section").length) {
+        runQuery();
+    }
+});
+
+function runQuery() {
     $.get("/data", function (data) {
         console.log(data);
 
-        $("#username-text .data").html(data.username);
-        $("#follower-count .data").html(data.follower_count);
+        $("#follower-count .data").html(data.user.followers_count);
+        $("#following-count .data").html(data.user.following_count);
+        $("#follower-gained-count .data").html(data.recent_follower_count);
+        $("#follower-lost-count .data").html(data.recent_unfollower_count);
 
         // follower count chart
         var followerChart = new Chart($("#follower-count-series")[0].getContext("2d"), {
@@ -20,15 +28,29 @@ $(function () {
             },
             options: {
                 responsive: true,
-                legend: {
-                    position: 'top',
-                },
+                maintainAspectRatio: false,
                 title: {
                     display: true,
                     text: 'Daily Follower Count'
+                },
+                legend: {
+                    display: true,
+                    position: 'right',
+                    boxWidth: 10
+                },
+                scales: {
+                    yAxes: [
+                        {
+                            ticks: {
+                                stepSize: 5
+                            }
+                        }
+                    ]
                 }
             }
         });
+
+
 
 
         // follower count chart
@@ -52,12 +74,23 @@ $(function () {
             },
             options: {
                 responsive: true,
-                legend: {
-                    position: 'top',
-                },
+                maintainAspectRatio: false,
                 title: {
                     display: true,
                     text: 'Daily Follower Events'
+                },
+                legend: {
+                    display: true,
+                    position: 'right'
+                },
+                scales: {
+                    yAxes: [
+                        {
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }
+                    ]
                 }
             }
         });
@@ -66,7 +99,7 @@ $(function () {
         loadUsers($("#unfollower-list"), data.recent_unfollower_list);
 
     });
-});
+}
 
 
 function loadUsers(tbl, list) {

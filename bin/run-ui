@@ -3,6 +3,7 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+export RELEASE="${IMAGE_VERSION}"
 export GO111MODULE=on
 
 go mod tidy

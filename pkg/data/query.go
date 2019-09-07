@@ -2,26 +2,35 @@ package data
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/mchmarny/tweethingz/pkg/twitter"
 	"github.com/pkg/errors"
 )
 
 const (
-	recentUsersDefaultLimit = 10
-	seriesDefaultSize       = 28
+	recentUsersDefaultLimit  = 10
+	recentEventDefaultPeriod = 7
 )
 
 // SummaryData represents aggregate data view
 type SummaryData struct {
-	Username              string                     `json:"username"`
-	FollowerCount         int64                      `json:"follower_count"`
-	FollowerCountDate     string                     `json:"follower_count_on"`
+	Self                  *twitter.SimpleUser        `json:"user"`
 	FollowerCountSeries   map[string]int64           `json:"follower_count_series"`
 	FollowedEventSeries   map[string]int64           `json:"followed_event_series"`
 	UnfollowedEventSeries map[string]int64           `json:"unfollowed_event_series"`
 	RecentFollowers       []*twitter.SimpleUserEvent `json:"recent_follower_list"`
 	RecentUnfollowers     []*twitter.SimpleUserEvent `json:"recent_unfollower_list"`
+	RecentFollowerCount   int64                      `json:"recent_follower_count"`
+	RecentUnfollowerCount int64                      `json:"recent_unfollower_count"`
+	Meta                  *QueryCriteria             `json:"meta"`
+}
+
+// QueryCriteria represents scope of the query
+// default for now, will pass this in as criteria
+type QueryCriteria struct {
+	NumRecentUsers int `json:"num_recent_users"`
+	NumDaysPeriod  int `json:"num_days_period"`
 }
 
 // GetSummaryForUser retreaves all summary data for that user
@@ -36,28 +45,21 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 	}
 
 	r := &SummaryData{
-		Username:              username,
 		FollowerCountSeries:   map[string]int64{},
 		FollowedEventSeries:   map[string]int64{},
 		UnfollowedEventSeries: map[string]int64{},
-		RecentFollowers:       []*twitter.SimpleUserEvent{},
-		RecentUnfollowers:     []*twitter.SimpleUserEvent{},
+		Meta: &QueryCriteria{
+			NumRecentUsers: recentUsersDefaultLimit,
+			NumDaysPeriod:  recentEventDefaultPeriod,
+		},
 	}
 
-	// follower counts
-	row := db.QueryRow(`SELECT
-							DATE_FORMAT(MAX(on_day), "%Y-%m-%d") as count_date,
-							COUNT(*) as num_of_followers
-						FROM followers
-						WHERE username = ?
-						AND on_day = (
-							SELECT MAX(on_day) FROM followers WHERE username = ?
-						)`, username, username)
-
-	err = row.Scan(&r.FollowerCountDate, &r.FollowerCount)
+	// user details
+	self, err := getUser(username)
 	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrap(err, "Error parsing follower count select results")
+		return nil, errors.Wrap(err, "Error getting user details")
 	}
+	r.Self = self
 
 	// follower count series
 	rows, err := db.Query(`SELECT DATE_FORMAT(on_day, "%Y-%m-%d") as count_date,
@@ -66,8 +68,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 						   WHERE username = ?
 						   GROUP BY count_date
 						   ORDER BY count_date
-						   LIMIT ?`, username, seriesDefaultSize)
-
+						   LIMIT ?`, username, r.Meta.NumDaysPeriod)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error quering follower count series")
 	}
@@ -93,7 +94,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 						GROUP BY
 							count_date
 						ORDER BY count_date
-						LIMIT ?`, EventNewFollower, EventUnFollowing, username, seriesDefaultSize)
+						LIMIT ?`, EventNewFollower, EventUnFollowing, username, r.Meta.NumDaysPeriod)
 
 	if err != nil {
 		return nil, errors.Wrap(err, "Error quering follower events series")
@@ -125,15 +126,36 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 	}
 	r.RecentUnfollowers = list
 
+	// calculate period event counts
+	r.RecentFollowerCount = getRecentEventCount(r.FollowedEventSeries, r.Meta.NumDaysPeriod)
+	r.RecentUnfollowerCount = getRecentEventCount(r.UnfollowedEventSeries, r.Meta.NumDaysPeriod)
+
 	// return loaded object
 	return r, err
 
 }
 
+func getRecentEventCount(events map[string]int64, forLastDays int) int64 {
+
+	if events == nil {
+		return 0
+	}
+
+	var result int64
+	sinceDate := time.Now().AddDate(0, 0, -forLastDays).Format(isoDateFormat)
+	for k, v := range events {
+		if k >= sinceDate {
+			result = result + v
+		}
+	}
+
+	return result
+}
+
 func getEventUsers(username, eventType string) (users []*twitter.SimpleUserEvent, err error) {
 
 	// follower events
-	rows, err := db.Query(`select
+	rows, e := db.Query(`select
 			u.id, u.username, u.name, u.description, u.profile_image, u.created_at,
 			u.lang, u.location, u.timezone, u.post_count, u.fave_count, u.following_count,
 			u.follower_count, e.on_day
@@ -144,21 +166,39 @@ func getEventUsers(username, eventType string) (users []*twitter.SimpleUserEvent
 		order by e.on_day desc
 		limit ?`, username, eventType, recentUsersDefaultLimit)
 
-	if err != nil {
+	if e != nil {
 		return nil, errors.Wrap(err, "Error quering event users")
 	}
 
 	list := []*twitter.SimpleUserEvent{}
 	for rows.Next() {
 		u := &twitter.SimpleUserEvent{}
-		err := rows.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
+		e := rows.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
 			&u.Lang, &u.Location, &u.Timezone, &u.PostCount, &u.FaveCount, &u.FollowingCount,
 			&u.FollowerCount, &u.EventDate)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing follower events series")
+		if e != nil {
+			return nil, errors.Wrap(e, "Error parsing follower events series")
 		}
 		list = append(list, u)
 	}
 
 	return list, nil
+}
+
+func getUser(username string) (user *twitter.SimpleUser, err error) {
+
+	// follower events
+	row := db.QueryRow(`select id, username, name, description, profile_image,
+		created_at, lang, location, timezone, post_count, fave_count,
+		following_count, follower_count from users where username = ?`, username)
+
+	u := &twitter.SimpleUser{}
+	e := row.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
+		&u.Lang, &u.Location, &u.Timezone, &u.PostCount, &u.FaveCount, &u.FollowingCount,
+		&u.FollowerCount)
+	if e != nil {
+		return nil, errors.Wrap(e, "Error parsing user")
+	}
+
+	return u, nil
 }

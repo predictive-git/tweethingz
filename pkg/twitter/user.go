@@ -8,23 +8,32 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetUsers retreaves details about the user
-func GetUsers(ids []int64) (users []*SimpleUser, err error) {
+// GetUsersFromUsernames retreaves details about the user
+func GetUsersFromUsernames(ids []string) (users []*SimpleUser, err error) {
+	logger.Printf("IDs: %d\n", len(ids))
+	return getUsersByParams(&twitter.UserLookupParams{
+		ScreenName:      ids,
+		IncludeEntities: twitter.Bool(true),
+	})
+}
+
+// GetUsersFromIDs retreaves details about the user
+func GetUsersFromIDs(ids []int64) (users []*SimpleUser, err error) {
+	logger.Printf("IDs: %d\n", len(ids))
+	return getUsersByParams(&twitter.UserLookupParams{
+		UserID:          ids,
+		IncludeEntities: twitter.Bool(true),
+	})
+}
+
+func getUsersByParams(listParam *twitter.UserLookupParams) (users []*SimpleUser, err error) {
 
 	cfg, err := config.GetTwitterConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "Error getting Twitter config")
 	}
 
-	logger.Printf("IDs: %d\n", len(ids))
-
-	listParam := &twitter.UserLookupParams{
-		UserID:          ids,
-		IncludeEntities: twitter.Bool(true),
-	}
-
 	list := []*SimpleUser{}
-
 	items, resp, err := getClient(cfg).Users.Lookup(listParam)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
