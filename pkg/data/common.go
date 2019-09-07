@@ -6,7 +6,7 @@ import (
 
 	"database/sql"
 
-	"github.com/mchmarny/twitterd/pkg/config"
+	"github.com/mchmarny/tweethingz/pkg/config"
 	"github.com/pkg/errors"
 
 	// mysql driver

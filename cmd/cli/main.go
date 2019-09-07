@@ -5,7 +5,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/mchmarny/twitterd/pkg/worker"
+	"github.com/mchmarny/tweethingz/pkg/worker"
 )
 
 var (

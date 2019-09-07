@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"github.com/mchmarny/twitterd/pkg/data"
-	"github.com/mchmarny/twitterd/pkg/twitter"
+	"github.com/mchmarny/tweethingz/pkg/data"
+	"github.com/mchmarny/tweethingz/pkg/twitter"
 	"github.com/pkg/errors"
 )
 
@@ -72,6 +72,38 @@ func getAndSaveUserDetails(username, eventType string, ids []int64) error {
 
 // GetAndSaveUsers retreaves and saves users
 func GetAndSaveUsers(ids []int64) error {
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	pageIDs := []int64{}
+
+	// page in 100s
+	for _, id := range ids {
+		pageIDs = append(pageIDs, id)
+		if len(pageIDs) == 100 { //max twitter page size
+			err := getAndSaveUsersPaged(pageIDs)
+			if err != nil {
+				return err
+			}
+			pageIDs = []int64{}
+		}
+	}
+
+	// process left overs
+	if len(pageIDs) > 0 { //are there any left over?
+		err := getAndSaveUsersPaged(pageIDs)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+
+}
+
+func getAndSaveUsersPaged(ids []int64) error {
 
 	if len(ids) == 0 {
 		return nil

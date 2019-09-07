@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
-	"github.com/mchmarny/twitterd/pkg/config"
+	"github.com/mchmarny/tweethingz/pkg/config"
 	"github.com/pkg/errors"
 )
 
@@ -15,6 +15,8 @@ func GetUsers(ids []int64) (users []*SimpleUser, err error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Error getting Twitter config")
 	}
+
+	logger.Printf("IDs: %d\n", len(ids))
 
 	listParam := &twitter.UserLookupParams{
 		UserID:          ids,

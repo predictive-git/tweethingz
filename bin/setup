@@ -3,6 +3,8 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+export PROJECT_ID=$(gcloud config get-value project)
+
 # api
 gcloud services enable --quiet \
     compute.googleapis.com \
@@ -48,7 +50,6 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member "serviceAccount:${APP_SA}" \
     --role roles/run.invoker
-
 
 
 # cloud sql instance

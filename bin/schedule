@@ -7,9 +7,9 @@ SERVICE_URL=$(gcloud beta run services describe ${APP_NAME}-worker \
     --region ${APP_REGION} --format="value(status.domain)")
 
 
-gcloud beta scheduler jobs create http "${APP_NAME}-${USER}" \
+gcloud beta scheduler jobs create http "${APP_NAME}-worker-${USER}" \
     --http-method POST \
-    --schedule "0 */3 * * *" \
+    --schedule "0 */2 * * *" \
     --uri "${SERVICE_URL}/v1/followers/${USER}" \
     --message-body '{}' \
     --oidc-service-account-email $APP_SA \

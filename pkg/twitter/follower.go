@@ -2,7 +2,7 @@ package twitter
 
 import (
 	"github.com/dghubble/go-twitter/twitter"
-	"github.com/mchmarny/twitterd/pkg/config"
+	"github.com/mchmarny/tweethingz/pkg/config"
 	"github.com/pkg/errors"
 )
 

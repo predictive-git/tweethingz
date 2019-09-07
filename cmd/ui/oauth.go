@@ -16,13 +16,13 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 
-	"github.com/mchmarny/twitterd/pkg/config"
-	"github.com/mchmarny/twitterd/pkg/data"
+	"github.com/mchmarny/tweethingz/pkg/config"
+	"github.com/mchmarny/tweethingz/pkg/data"
 )
 
 const (
 	googleOAuthURL   = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
-	stateCookieName  = "twitterd"
+	stateCookieName  = "tweethingz"
 	userIDCookieName = "uid"
 )
 

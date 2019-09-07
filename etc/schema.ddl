@@ -1,4 +1,4 @@
-USE twitterd;
+USE tweethingz;
 
 CREATE TABLE IF NOT EXISTS followers (
 	username VARCHAR(50) NOT NULL,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS ui_events (
 	event_type VARCHAR(50) NOT NULL,
 	description TEXT NOT NULL,
 	PRIMARY KEY (email, event_at),
-	CONSTRAINT fk_ui-user
+	CONSTRAINT fk_ui_user
 		FOREIGN KEY (email)
 		REFERENCES ui_users (email)
 		ON DELETE CASCADE ON UPDATE CASCADE

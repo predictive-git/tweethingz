@@ -1,34 +1,31 @@
 #!/bin/bash
 
 # setup
-export APP_NAME="twitterd"
+export APP_NAME="tweethingz"
 export APP_REGION="us-central1"
-export IMAGE_VERSION="0.4.2"
+export IMAGE_VERSION="0.5.2"
 export DB_INSTANCE=${APP_NAME}
 export DB_NODE_TIER="db-n1-standard-1"
-export DB_NODE_ZONE="${APP_ZONE}-a"
+export DB_NODE_ZONE="${APP_REGION}-a"
 
 # Cloud SQL DB
-# export T_DSN=""
+# export TW_DSN=""
 
 # Twitter API
-# export T_CONSUMER_KEY=""
-# export T_CONSUMER_SECRET=""
-# export T_ACCESS_TOKEN=""
-# export T_ACCESS_SECRET=""
+# export TW_CONSUMER_KEY=""
+# export TW_CONSUMER_SECRET=""
+# export TW_ACCESS_TOKEN=""
+# export TW_ACCESS_SECRET=""
 
 # OAuth (Google)
-# export T_OAUTH_CLIENT_ID=""
-# export T_OAUTH_CLIENT_SECRET=""
-# export T_OAUTH_FORCE_HTTPS=""
+# export TW_OAUTH_CLIENT_ID=""
+# export TW_OAUTH_CLIENT_SECRET=""
+# export TW_OAUTH_FORCE_HTTPS=""
 
 # Global
-export T_DEBUG=true
+export TW_DEBUG=true
 
 # derived
-export DB_INSTANCE_IP=$(gcloud sql instances describe ${DB_INSTANCE} \
-    --format='value(ipAddresses[0].ipAddress)')
-export PROJECT_ID=$(gcloud config get-value project)
 export DB_CONF_DIR="${HOME}/.cloud-sql/${PROJECT_ID}/${DB_INSTANCE}"
 export APP_SA="${APP_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 

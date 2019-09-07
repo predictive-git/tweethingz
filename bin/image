@@ -3,14 +3,15 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+export PROJECT_ID=$(gcloud config get-value project)
 
 go mod tidy
 go mod vendor
 
 # worker
 docker build -f ./docker/Dockerfile.worker \
-    -t "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}" .
-docker push "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}"
+    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}" .
+docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}"
 
 # cli
 docker build -f ./docker/Dockerfile.cli \

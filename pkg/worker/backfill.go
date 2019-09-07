@@ -1,7 +1,7 @@
 package worker
 
 import (
-	"github.com/mchmarny/twitterd/pkg/data"
+	"github.com/mchmarny/tweethingz/pkg/data"
 	"github.com/pkg/errors"
 )
 
@@ -18,26 +18,9 @@ func BackfillFollowers() error {
 		return nil
 	}
 
-	pageIDs := []int64{}
-
-	// page in 100s
-	for _, id := range ids {
-		pageIDs = append(pageIDs, id)
-		if len(pageIDs) == 100 { //max twitter page size
-			err := GetAndSaveUsers(pageIDs)
-			if err != nil {
-				return err
-			}
-			pageIDs = []int64{}
-		}
-	}
-
-	// process left overs
-	if len(pageIDs) > 0 { //are there any left over?
-		err := GetAndSaveUsers(pageIDs)
-		if err != nil {
-			return err
-		}
+	err = GetAndSaveUsers(ids)
+	if err != nil {
+		return err
 	}
 
 	logger.Println("Done backfill run")

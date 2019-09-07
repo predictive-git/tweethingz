@@ -3,6 +3,9 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+export DB_INSTANCE_IP=$(gcloud sql instances describe ${DB_INSTANCE} \
+    --format='value(ipAddresses[0].ipAddress)')
+
 echo "Connecting to ${DB_INSTANCE} (${DB_INSTANCE_IP}) as ${APP_NAME}..."
 
 mysql --host $DB_INSTANCE_IP \

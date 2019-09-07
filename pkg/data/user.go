@@ -1,7 +1,7 @@
 package data
 
 import (
-	"github.com/mchmarny/twitterd/pkg/twitter"
+	"github.com/mchmarny/tweethingz/pkg/twitter"
 	"github.com/pkg/errors"
 )
 

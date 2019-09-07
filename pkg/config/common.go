@@ -10,7 +10,7 @@ var (
 )
 
 const (
-	appConfigPrefix = "T"
+	appConfigPrefix = "TW"
 )
 
 // CommonConfig represents common configuration options

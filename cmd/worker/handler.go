@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/mchmarny/twitterd/pkg/worker"
+	"github.com/mchmarny/tweethingz/pkg/worker"
 )
 
 func okHandler(c *gin.Context) {

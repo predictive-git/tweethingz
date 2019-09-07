@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mchmarny/twitterd/pkg/data"
+	"github.com/mchmarny/tweethingz/pkg/data"
 )
 
 func datadHandler(w http.ResponseWriter, r *http.Request) {

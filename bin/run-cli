@@ -8,8 +8,9 @@ export GO111MODULE=on
 go mod tidy
 go mod vendor
 
-go run -v ./cmd/cli/*.go -u $USER
-# go run -v ./cmd/cli/*.go
+# go run -v ./cmd/cli/*.go -u $USER
+
+go run -v ./cmd/cli/*.go
 
 
 

@@ -7,25 +7,43 @@ import (
 	"github.com/pkg/errors"
 )
 
+func getFollowerDailyCount(username string, day time.Time) (count int64, err error) {
+
+	if err := initDB(); err != nil {
+		return 0, err
+	}
+
+	row := db.QueryRow(`SELECT count(*) FROM followers
+		WHERE username = ? AND on_day = ?`, username, day.Format(isoDateFormat))
+
+	var idCount int64
+	err = row.Scan(&idCount)
+	if err != nil {
+		return 0, errors.Wrap(err, "Error parsing follower count results")
+	}
+
+	return idCount, nil
+
+}
+
 func getFollowerDiff(username string, d1, d2 time.Time) (list []int64, err error) {
 
 	if err := initDB(); err != nil {
 		return nil, err
 	}
 
-	stmt, err := db.Prepare(`SELECT follower_id FROM followers
+	// select all deltas where event has not been captured already
+	res, err := db.Query(`SELECT follower_id FROM followers
 		WHERE username = ? AND on_day = ? AND follower_id NOT IN (
-		SELECT follower_id FROM followers WHERE username = ? AND on_day = ?)`)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error on new followers prepare")
-	}
-
-	res, err := stmt.Query(username, d1.Format(isoDateFormat),
-		username, d2.Format(isoDateFormat))
+		SELECT follower_id FROM followers WHERE username = ? AND on_day = ?)
+		AND follower_id NOT IN (SELECT follower_id FROM follower_events
+			WHERE username = ? AND on_day = ?)`,
+		username, d1.Format(isoDateFormat),
+		username, d2.Format(isoDateFormat),
+		username, time.Now().Format(isoDateFormat))
 	if err != nil {
 		return nil, errors.Wrap(err, "Error executing statement")
 	}
-	defer stmt.Close()
 
 	ids := []int64{}
 	for res.Next() {
@@ -45,11 +63,27 @@ func getFollowerDiff(username string, d1, d2 time.Time) (list []int64, err error
 
 // GetNewFollowerIDs users who started following since yesterday
 func GetNewFollowerIDs(username string) (list []int64, err error) {
-	return getFollowerDiff(username, time.Now(), time.Now().AddDate(0, 0, -1))
+	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterdayFollowers, err := getFollowerDailyCount(username, yesterday)
+	if err != nil {
+		return nil, err
+	}
+	if yesterdayFollowers == 0 {
+		return []int64{}, nil
+	}
+	return getFollowerDiff(username, time.Now(), yesterday)
 }
 
 // GetStopFollowerIDs users who stopped following since yesterday
 func GetStopFollowerIDs(username string) (list []int64, err error) {
+	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterdayFollowers, err := getFollowerDailyCount(username, yesterday)
+	if err != nil {
+		return nil, err
+	}
+	if yesterdayFollowers == 0 {
+		return []int64{}, nil
+	}
 	return getFollowerDiff(username, time.Now().AddDate(0, 0, -1), time.Now())
 }
 

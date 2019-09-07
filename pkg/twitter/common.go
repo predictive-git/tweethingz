@@ -6,7 +6,7 @@ import (
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
-	"github.com/mchmarny/twitterd/pkg/config"
+	"github.com/mchmarny/tweethingz/pkg/config"
 )
 
 var (

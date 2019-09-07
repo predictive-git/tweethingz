@@ -3,21 +3,23 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+export PROJECT_ID=$(gcloud config get-value project)
+
 VARS="RELEASE=${IMAGE_VERSION}"
 
 # DSN
-VARS+=",T_DSN=${APP_NAME}:"
+VARS+=",TW_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
 VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?parseTime=true"
 
 # TW
-VARS+=",T_CONSUMER_KEY=${T_CONSUMER_KEY}"
-VARS+=",T_CONSUMER_SECRET=${T_CONSUMER_SECRET}"
-VARS+=",T_ACCESS_TOKEN=${T_ACCESS_TOKEN}"
-VARS+=",T_ACCESS_SECRET=${T_ACCESS_SECRET}"
+VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
+VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
+VARS+=",TW_ACCESS_TOKEN=${TW_ACCESS_TOKEN}"
+VARS+=",TW_ACCESS_SECRET=${TW_ACCESS_SECRET}"
 
 gcloud beta run deploy "${APP_NAME}-worker" \
-	--image "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}" \
+	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}" \
 	--service-account $APP_SA \
 	--no-allow-unauthenticated \
 	--platform managed \
@@ -26,9 +28,9 @@ gcloud beta run deploy "${APP_NAME}-worker" \
 	--set-env-vars $VARS
 
 # OAuth (Specific to the UI)
-VARS+=",T_OAUTH_CLIENT_ID=${T_OAUTH_CLIENT_ID}"
-VARS+=",T_OAUTH_CLIENT_SECRET=${T_OAUTH_CLIENT_SECRET}"
-VARS+=",T_OAUTH_FORCE_HTTPS=true"
+VARS+=",TW_OAUTH_CLIENT_ID=${TW_OAUTH_CLIENT_ID}"
+VARS+=",TW_OAUTH_CLIENT_SECRET=${TW_OAUTH_CLIENT_SECRET}"
+VARS+=",TW_OAUTH_FORCE_HTTPS=true"
 
 gcloud beta run deploy "${APP_NAME}-ui" \
 	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" \
