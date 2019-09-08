@@ -82,6 +82,16 @@ func refreshUser(forUser *data.AuthedUser, result chan<- *RunItemResult) {
 		return
 	}
 
+	logger.Printf("Refreshing %s followers...", forUser.Username)
+	if err := refreshUserFollowers(forUser); err != nil {
+		result <- &RunItemResult{
+			ForUser: forUser,
+			Error: errors.Wrapf(err, "Error refreshing follower IDs for %s",
+				forUser.Username),
+		}
+		return
+	}
+
 	logger.Printf("Reconciling new followers for %s...", forUser.Username)
 	if err := reconcileNewFollowers(forUser); err != nil {
 		result <- &RunItemResult{
@@ -102,11 +112,11 @@ func refreshUser(forUser *data.AuthedUser, result chan<- *RunItemResult) {
 		return
 	}
 
-	logger.Printf("Refreshing %s followers...", forUser.Username)
-	if err := refreshUserFollowers(forUser); err != nil {
+	logger.Printf("Download missing follower detail for %s...", forUser.Username)
+	if err := downloadMissingFollowerDetail(forUser); err != nil {
 		result <- &RunItemResult{
 			ForUser: forUser,
-			Error: errors.Wrapf(err, "Error refreshing follower IDs for %s",
+			Error: errors.Wrapf(err, "Error downloading missing follower detail for %s",
 				forUser.Username),
 		}
 		return
@@ -117,9 +127,6 @@ func refreshUser(forUser *data.AuthedUser, result chan<- *RunItemResult) {
 		ForUser: forUser,
 		Error:   nil,
 	}
-
-	//TODO: validate that all the new and stopped followers IDs have
-	//      corresponding records in the user table
 
 }
 
@@ -203,6 +210,53 @@ func updateFollowerDetailByEvent(forUser *data.AuthedUser, eventType string, ids
 		return errors.Wrapf(err, "Error saving events: %s for %s", eventType, forUser.Username)
 	}
 
+	return pageDownloadFollowerDetail(forUser, ids)
+
+}
+
+func saveFollowerDetailPage(forUser *data.AuthedUser, ids []int64) error {
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	// details
+	users, err := twitter.GetUsersFromIDs(forUser, ids)
+	if err != nil {
+		return errors.Wrap(err, "Error getting users details")
+	}
+
+	// save details
+	err = data.SaveUsers(users)
+	if err != nil {
+		return errors.Wrap(err, "Error saving new follower events")
+	}
+
+	logger.Printf("Saved %d user details for %s", len(ids), forUser.Username)
+
+	return nil
+}
+
+func downloadMissingFollowerDetail(forUser *data.AuthedUser) error {
+
+	logger.Printf("Getting ids of followers missing detail for %s ...", forUser.Username)
+	ids, err := data.GetFollowersWithoutDetail(forUser.Username)
+	if err != nil {
+		return errors.Wrap(err, "Error getting ids of followers missing detail")
+	}
+
+	logger.Printf("Found %d ids of followers missing detail for %s", len(ids), forUser.Username)
+
+	return pageDownloadFollowerDetail(forUser, ids)
+
+}
+
+func pageDownloadFollowerDetail(forUser *data.AuthedUser, ids []int64) error {
+
+	if len(ids) == 0 {
+		return nil
+	}
+
 	pageIDs := []int64{}
 
 	// page in 100s
@@ -227,25 +281,4 @@ func updateFollowerDetailByEvent(forUser *data.AuthedUser, eventType string, ids
 
 	return nil
 
-}
-
-func saveFollowerDetailPage(forUser *data.AuthedUser, ids []int64) error {
-
-	if len(ids) == 0 {
-		return nil
-	}
-
-	// details
-	users, err := twitter.GetUsersFromIDs(forUser, ids)
-	if err != nil {
-		return errors.Wrap(err, "Error getting users details")
-	}
-
-	// save details
-	err = data.SaveUsers(users)
-	if err != nil {
-		return errors.Wrap(err, "Error saving new follower events")
-	}
-
-	return nil
 }

@@ -50,3 +50,34 @@ func SaveUsers(users []*SimpleUser) error {
 
 }
 
+// GetFollowersWithoutDetail retreaves all followe IDs for  user who
+// do not have details
+func GetFollowersWithoutDetail(username string) (list []int64, err error) {
+
+	if err := initDB(); err != nil {
+		return nil, err
+	}
+
+	// select all deltas where event has not been captured already
+	res, err := db.Query(`SELECT follower_id FROM followers
+						  WHERE username = ? and follower_id NOT IN (
+						  SELECT id FROM users)`, username)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error executing query")
+	}
+
+	ids := []int64{}
+	for res.Next() {
+		var id int64
+		err := res.Scan(&id)
+		if err != nil {
+			return nil, errors.Wrap(err, "Error parsing results")
+		}
+		ids = append(ids, id)
+	}
+
+	logger.Printf("Found %d followers without detail for %s", len(ids), username)
+
+	return ids, nil
+
+}

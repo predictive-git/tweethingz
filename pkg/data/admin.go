@@ -118,10 +118,10 @@ func GetAuthedUser(email string) (user *AuthedUser, err error) {
 		return nil, err
 	}
 
-	row := db.QueryRow(`select username, user_id, access_token_key,
+	row := db.QueryRow(`SELECT username, user_id, access_token_key,
 						access_token_secret, updated_on
-						from authed_users
-						where username = ?`, email)
+						FROM authed_users
+						WHERE username = ?`, email)
 
 	u := &AuthedUser{}
 	err = row.Scan(&u.Username, &u.UserID, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
@@ -140,10 +140,10 @@ func GetAuthedUsers() (users []*AuthedUser, err error) {
 		return nil, err
 	}
 
-	rows, e := db.Query(`select username, user_id, access_token_key,
+	rows, e := db.Query(`SELECT username, user_id, access_token_key,
 						access_token_secret, updated_on
-						from authed_users
-						order by updated_on desc`)
+						FROM authed_users
+						ORDER BY updated_on DESC`)
 	if e != nil {
 		return nil, errors.Wrap(e, "Error quering all authed users")
 	}

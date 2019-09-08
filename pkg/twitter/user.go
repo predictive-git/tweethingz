@@ -39,8 +39,7 @@ func getUsersByParams(byUser *data.AuthedUser, listParam *twitter.UserLookupPara
 		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
 	}
 
-	// debug
-	logger.Printf("Users: %d", len(items))
+	logger.Printf("Found %d users for %s", len(items), byUser.Username)
 
 	// parse page users
 	for _, u := range items {
