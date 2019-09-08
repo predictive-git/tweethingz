@@ -8,14 +8,9 @@ export PROJECT_ID=$(gcloud config get-value project)
 go mod tidy
 go mod vendor
 
-# worker
-docker build -f ./docker/Dockerfile.worker \
-    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}" .
-docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}"
-
 # cli
-docker build -f ./docker/Dockerfile.cli \
-    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}" .
+docker build -f ./docker/Dockerfile.service \
+    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-service:${IMAGE_VERSION}" .
 docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}"
 
 # ui

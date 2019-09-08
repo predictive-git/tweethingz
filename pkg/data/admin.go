@@ -2,13 +2,8 @@ package data
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/pkg/errors"
-)
-
-const (
-	authedEventType = "authed"
 )
 
 var (
@@ -16,39 +11,92 @@ var (
 	ErrUserNotFound = errors.New("User not found")
 )
 
-// LookupUIUser check if the authed email is in UI users and creates UI event
-func LookupUIUser(email, context string) (twitterUsername string, err error) {
+// SaveAuthUser saves multiple users
+func SaveAuthUser(user *AuthedUser) error {
 
-	if email == "" || context == "" {
-		return "", errors.New("Null email or context parameter")
+	if user == nil {
+		return errors.New("Nil user argument")
 	}
 
 	if err := initDB(); err != nil {
-		return "", err
+		return err
 	}
 
-	// select
-	logger.Printf("Quering for: %s", email)
-	row := db.QueryRow("SELECT twitter_username FROM ui_users WHERE email = ?;", email)
+	_, err := db.Exec(`INSERT INTO authed_users (
+			username, user_id, access_token_key, access_token_secret, updated_on
+			) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+			access_token_key = ?, access_token_secret = ?, updated_on = ?`,
+		user.Username, user.UserID, user.AccessTokenKey, user.AccessTokenSecret,
+		user.UpdatedAt, user.AccessTokenKey, user.AccessTokenSecret, user.UpdatedAt)
 
-	var twUsername string
-	err = row.Scan(&twUsername)
-	if err != nil && err != sql.ErrNoRows {
-		return "", errors.Wrap(err, "Error parsing select results")
-	}
-
-	if twUsername == "" {
-		return "", ErrUserNotFound
-	}
-
-	// insert event
-	_, err = db.Exec(`INSERT INTO ui_events
-		(email, event_at, event_type, description) VALUES (?, ?, ?, ?)`,
-		email, time.Now().Format("2006-01-02 15:04:05"), authedEventType, context)
 	if err != nil {
-		return "", errors.Wrap(err, "Error executing event insert")
+		return errors.Wrapf(err, "Error executing save auth user for: %+v", user)
 	}
 
-	return twUsername, nil
+	logger.Printf("Saved authed users: %s", user.Username)
+
+	return nil
 
 }
+
+// GetAuthedUser check if the authed email is in UI users and creates UI event
+func GetAuthedUser(email string) (user *AuthedUser, err error) {
+
+	if email == "" {
+		return nil, errors.New("Null email or context parameter")
+	}
+
+	if err := initDB(); err != nil {
+		return nil, err
+	}
+
+	row := db.QueryRow(`select username, user_id, access_token_key,
+						access_token_secret, updated_on
+						from authed_users
+						where username = ?`, email)
+
+	u := &AuthedUser{}
+	err = row.Scan(&u.Username, &u.UserID, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, ErrUserNotFound
+	}
+	if err != nil {
+		return nil, errors.Wrap(err, "Error parsing authed user")
+	}
+
+	return u, nil
+
+}
+
+
+
+// GetAuthedUsers gets all authed users
+func GetAuthedUsers() (users []*AuthedUser, err error) {
+
+	if err := initDB(); err != nil {
+		return nil, err
+	}
+
+	rows, e := db.Query(`select username, user_id, access_token_key,
+						access_token_secret, updated_on
+						from authed_users
+						order by updated_on desc`)
+	if e != nil {
+		return nil, errors.Wrap(e, "Error quering all authed users")
+	}
+
+	list := []*AuthedUser{}
+	for rows.Next() {
+		u := &AuthedUser{}
+		e = rows.Scan(&u.Username, &u.UserID, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
+		if e != nil {
+			return nil, errors.Wrap(e, "Error parsing authed users")
+		}
+		list = append(list, u)
+	}
+
+	return list, nil
+
+}
+
+

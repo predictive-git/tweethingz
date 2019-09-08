@@ -2,27 +2,27 @@ package twitter
 
 import (
 	"github.com/dghubble/go-twitter/twitter"
-	"github.com/mchmarny/tweethingz/pkg/config"
+	"github.com/mchmarny/tweethingz/pkg/data"
 	"github.com/pkg/errors"
 )
 
 // GetFollowerIDs retreaves follower IDs for config specified user
-func GetFollowerIDs(username string) (ids []int64, err error) {
+func GetFollowerIDs(byUser *data.AuthedUser) (ids []int64, err error) {
 
-	cfg, err := config.GetTwitterConfig()
+	client, err := getClient(byUser)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error getting Twitter config")
+		return nil, errors.Wrap(err, "Error initializing client")
 	}
 
 	listParam := &twitter.FollowerIDParams{
-		ScreenName: username,
+		ScreenName: byUser.Username,
 		Count:      5000, // max per page
 	}
 
 	list := []int64{}
 
 	for {
-		page, resp, err := getClient(cfg).Followers.IDs(listParam)
+		page, resp, err := client.Followers.IDs(listParam)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Error paging follower IDs (%s): %v", resp.Status, err)
 		}

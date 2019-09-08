@@ -1,12 +1,11 @@
 package data
 
 import (
-	"github.com/mchmarny/tweethingz/pkg/twitter"
 	"github.com/pkg/errors"
 )
 
 // SaveUsers saves multiple users
-func SaveUsers(users []*twitter.SimpleUser) error {
+func SaveUsers(users []*SimpleUser) error {
 
 	if len(users) == 0 {
 		return nil
@@ -51,32 +50,3 @@ func SaveUsers(users []*twitter.SimpleUser) error {
 
 }
 
-// GetUserIDsToBackfill selects users who are in the follower
-// table but who do not have any details
-func GetUserIDsToBackfill() (list []int64, err error) {
-
-	if err := initDB(); err != nil {
-		return nil, err
-	}
-
-	rs, err := db.Query(`SELECT DISTINCT follower_id FROM followers
-						 WHERE follower_id NOT IN (SELECT id FROM users)`)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error executing query")
-	}
-
-	ids := []int64{}
-	for rs.Next() {
-		var id int64
-		err := rs.Scan(&id)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error parsing results")
-		}
-		ids = append(ids, id)
-	}
-
-	logger.Printf("Found %d records for backfill", len(ids))
-
-	return ids, nil
-
-}

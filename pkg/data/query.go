@@ -3,8 +3,6 @@ package data
 import (
 	"database/sql"
 	"time"
-
-	"github.com/mchmarny/tweethingz/pkg/twitter"
 	"github.com/pkg/errors"
 )
 
@@ -15,12 +13,12 @@ const (
 
 // SummaryData represents aggregate data view
 type SummaryData struct {
-	Self                  *twitter.SimpleUser        `json:"user"`
+	Self                  *SimpleUser        `json:"user"`
 	FollowerCountSeries   map[string]int64           `json:"follower_count_series"`
 	FollowedEventSeries   map[string]int64           `json:"followed_event_series"`
 	UnfollowedEventSeries map[string]int64           `json:"unfollowed_event_series"`
-	RecentFollowers       []*twitter.SimpleUserEvent `json:"recent_follower_list"`
-	RecentUnfollowers     []*twitter.SimpleUserEvent `json:"recent_unfollower_list"`
+	RecentFollowers       []*SimpleUserEvent `json:"recent_follower_list"`
+	RecentUnfollowers     []*SimpleUserEvent `json:"recent_unfollower_list"`
 	RecentFollowerCount   int64                      `json:"recent_follower_count"`
 	RecentUnfollowerCount int64                      `json:"recent_unfollower_count"`
 	Meta                  *QueryCriteria             `json:"meta"`
@@ -152,7 +150,7 @@ func getRecentEventCount(events map[string]int64, forLastDays int) int64 {
 	return result
 }
 
-func getEventUsers(username, eventType string) (users []*twitter.SimpleUserEvent, err error) {
+func getEventUsers(username, eventType string) (users []*SimpleUserEvent, err error) {
 
 	// follower events
 	rows, e := db.Query(`select
@@ -170,9 +168,9 @@ func getEventUsers(username, eventType string) (users []*twitter.SimpleUserEvent
 		return nil, errors.Wrap(err, "Error quering event users")
 	}
 
-	list := []*twitter.SimpleUserEvent{}
+	list := []*SimpleUserEvent{}
 	for rows.Next() {
-		u := &twitter.SimpleUserEvent{}
+		u := &SimpleUserEvent{}
 		e := rows.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
 			&u.Lang, &u.Location, &u.Timezone, &u.PostCount, &u.FaveCount, &u.FollowingCount,
 			&u.FollowerCount, &u.EventDate)
@@ -185,14 +183,14 @@ func getEventUsers(username, eventType string) (users []*twitter.SimpleUserEvent
 	return list, nil
 }
 
-func getUser(username string) (user *twitter.SimpleUser, err error) {
+func getUser(username string) (user *SimpleUser, err error) {
 
 	// follower events
 	row := db.QueryRow(`select id, username, name, description, profile_image,
 		created_at, lang, location, timezone, post_count, fave_count,
 		following_count, follower_count from users where username = ?`, username)
 
-	u := &twitter.SimpleUser{}
+	u := &SimpleUser{}
 	e := row.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
 		&u.Lang, &u.Location, &u.Timezone, &u.PostCount, &u.FaveCount, &u.FollowingCount,
 		&u.FollowerCount)

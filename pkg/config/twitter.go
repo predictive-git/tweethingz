@@ -10,8 +10,6 @@ type TwitterConfig struct {
 	CommonConfig
 	ConsumerKey    string `envconfig:"consumer_key" required:"true"`
 	ConsumerSecret string `envconfig:"consumer_secret" required:"true"`
-	AccessToken    string `envconfig:"access_token" required:"true"`
-	AccessSecret   string `envconfig:"access_secret" required:"true"`
 }
 
 // GetTwitterConfig loads twitter configs

@@ -1,21 +1,18 @@
 package main
 
 import (
-	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
+	"log"
 	"net/http"
 	"net/http/httputil"
-	"strings"
 	"time"
 
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
+	"github.com/pkg/errors"
 
+	"github.com/kurrik/oauth1a"
 	"github.com/mchmarny/tweethingz/pkg/config"
 	"github.com/mchmarny/tweethingz/pkg/data"
 )
@@ -23,34 +20,29 @@ import (
 const (
 	googleOAuthURL   = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
 	stateCookieName  = "tweethingz"
-	userIDCookieName = "uid"
+	userIDCookieName = "user_id"
+	authIDCookieName = "auth_id"
 )
 
 var (
 	longTimeAgo    = time.Duration(3650 * 24 * time.Hour)
 	cookieDuration = time.Duration(30 * 24 * time.Hour)
-	oauthConfig    *oauth2.Config
+	sessions       = make(map[string]*oauth1a.UserConfig, 0)
+	isSSL          bool
 )
 
-func getOAuthConfig(r *http.Request) *oauth2.Config {
-
-	if oauthConfig != nil {
-		return oauthConfig
-	}
+func getOAuthService(r *http.Request) *oauth1a.Service {
 
 	// HTTPS or HTTP
 	proto := r.Header.Get("X-Forwarded-Proto")
 	if proto == "" {
 		proto = "http"
 	}
+	isSSL = (proto == "https")
 
-	cfg, err := config.GetOAuthConfig()
+	cfg, err := config.GetTwitterConfig()
 	if err != nil {
-		logger.Printf("Error parsing OAith config: %v", err)
-	}
-
-	if cfg.ForceHTTPS {
-		proto = "https"
+		logger.Printf("Error parsing Twitter config: %v", err)
 	}
 
 	if cfg.Debug {
@@ -64,97 +56,120 @@ func getOAuthConfig(r *http.Request) *oauth2.Config {
 	baseURL := fmt.Sprintf("%s://%s", proto, r.Host)
 	logger.Printf("External URL: %s", baseURL)
 
-	oauthConfig = &oauth2.Config{
-		RedirectURL:  fmt.Sprintf("%s/auth/callback", baseURL),
-		ClientID:     cfg.OAuthClientID,
-		ClientSecret: cfg.OAuthClientSecret,
-		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
-		Endpoint:     google.Endpoint,
+	return &oauth1a.Service{
+		RequestURL:   "https://api.twitter.com/oauth/request_token",
+		AuthorizeURL: "https://api.twitter.com/oauth/authorize",
+		AccessURL:    "https://api.twitter.com/oauth/access_token",
+		ClientConfig: &oauth1a.ClientConfig{
+			ConsumerKey:    cfg.ConsumerKey,
+			ConsumerSecret: cfg.ConsumerSecret,
+			CallbackURL:    fmt.Sprintf("%s/auth/callback", baseURL),
+		},
+		Signer: new(oauth1a.HmacSha1Signer),
 	}
-
-	return oauthConfig
 
 }
 
 func authLoginHandler(w http.ResponseWriter, r *http.Request) {
-	uid := getCurrentUserID(r)
+
+	uid := getCurrentUserIDFromCookie(r)
 	if uid != "" {
 		logger.Printf("User ID from previous visit: %s", uid)
+		http.Redirect(w, r, "/view", http.StatusSeeOther)
+		return
 	}
 
 	logger.Printf("Auth handled: %s", uid)
 
-	u := getOAuthConfig(r).AuthCodeURL(generateStateOauthCookie(w))
-	http.Redirect(w, r, u, http.StatusTemporaryRedirect)
+	service := getOAuthService(r)
+
+	httpClient := new(http.Client)
+	userConfig := &oauth1a.UserConfig{}
+	if err := userConfig.GetRequestToken(service, httpClient); err != nil {
+		err := errors.Wrap(err, "Could not get request token")
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	url, err := userConfig.GetAuthorizeURL(service)
+	if err != nil {
+		err := errors.Wrap(err, "Could not get authorization URL")
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	logger.Printf("Redirecting user to %s", url)
+
+	sessionID := getNewSessionID()
+	log.Printf("Starting session %s", sessionID)
+
+	// TODO: Refactor to DB session store
+	sessions[sessionID] = userConfig
+
+	http.SetCookie(w, getSessionStartCookie(sessionID))
+	http.Redirect(w, r, url, http.StatusFound)
 }
 
 func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 
-	oauthState, _ := r.Cookie(stateCookieName)
-
-	// checking state of the callback
-	if r.FormValue("state") != oauthState.Value {
-		err := errors.New("invalid oauth state from Google")
-		errorHandler(w, r, err, http.StatusInternalServerError)
-		return
-	}
-
-	// parsing callback data
-	authData, err := getOAuthedUserData(r)
+	logger.Println("Auth callback...")
+	sessionID, err := setSessionID(r)
 	if err != nil {
-		logger.Printf("Error while parsing user data %v", err)
-		errorHandler(w, r, err, http.StatusInternalServerError)
+		err := errors.Wrap(err, "Error, callback with no session id")
+		errorHandler(w, r, err, http.StatusUnauthorized)
 		return
 	}
 
-	dataMap := make(map[string]interface{})
-	json.Unmarshal(authData, &dataMap)
-
-	email := strings.ToLower(dataMap["email"].(string))
-	authContext := fmt.Sprintf("Google: %s", string(authData))
-	logger.Printf("Email: %s", email)
-
-	twUser, err := data.LookupUIUser(email, authContext)
-	if err != nil && err == data.ErrUserNotFound {
-		initTemplates()
-		if err := templates.ExecuteTemplate(w, "error", map[string]interface{}{
-			"error": fmt.Sprintf(
-				`Authenticated user ('%s') has not been configured in this system.
-				 Please contact system administrator for access.
-				 Self-enrollment comming soon,`, email), //TODO: externalize
-			"status_code": http.StatusUnauthorized,
-			"status":      http.StatusText(http.StatusUnauthorized),
-		}); err != nil {
-			logger.Printf("Error in error template: %s", err)
-		}
+	userConfig, ok := sessions[sessionID]
+	if !ok {
+		err := errors.Wrap(err, "Error, Could not find user config in sesions storage")
+		errorHandler(w, r, err, http.StatusUnauthorized)
 		return
 	}
 
+	service := getOAuthService(r)
+
+	token, verifier, err := userConfig.ParseAuthorize(r, service)
 	if err != nil {
-		logger.Printf("Error while looking up user: %v", err)
+		err := errors.Wrap(err, "Error, Could not parse authorization")
 		errorHandler(w, r, err, http.StatusInternalServerError)
 		return
 	}
-	logger.Printf("Twitter UI User: %s", twUser)
 
-	// set cookie for 30 days
-	cookie := http.Cookie{
-		Name:    userIDCookieName,
-		Path:    "/",
-		Value:   twUser,
-		Expires: time.Now().Add(cookieDuration),
+	httpClient := new(http.Client)
+	if err = userConfig.GetAccessToken(token, verifier, service, httpClient); err != nil {
+		err := errors.Wrap(err, "Error getting access token")
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
 	}
-	http.SetCookie(w, &cookie)
 
-	// redirect on success
+	logger.Printf("Ending session %s", sessionID)
+	delete(sessions, sessionID)
+
+	http.SetCookie(w, getSessionEndCookie())
+
+	authedUser := &data.AuthedUser{
+		Username:          userConfig.AccessValues.Get("screen_name"),
+		UserID:            userConfig.AccessValues.Get("user_id"),
+		AccessTokenKey:    userConfig.AccessTokenKey,
+		AccessTokenSecret: userConfig.AccessTokenSecret,
+		UpdatedAt:         time.Now(),
+	}
+
+	if err = data.SaveAuthUser(authedUser); err != nil {
+		e := errors.Wrap(err, "Error saving authenticated user")
+		errorHandler(w, r, e, http.StatusInternalServerError)
+		return
+	}
+
+	http.SetCookie(w, getUserAuthCookie(authedUser.Username))
+	logger.Printf("Authed User: %+v", authedUser)
+
 	http.Redirect(w, r, "/view", http.StatusSeeOther)
 
 }
 
 func logOutHandler(w http.ResponseWriter, r *http.Request) {
-
-	uid := getCurrentUserID(r)
-	logger.Printf("User logging out: %s", uid)
 
 	cookie := http.Cookie{
 		Name:    userIDCookieName,
@@ -168,41 +183,58 @@ func logOutHandler(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/index", http.StatusSeeOther) // index
 }
 
-func generateStateOauthCookie(w http.ResponseWriter) string {
-
-	b := make([]byte, 16)
-	rand.Read(b)
-	state := base64.URLEncoding.EncodeToString(b)
-	cookie := http.Cookie{
-		Name:    stateCookieName,
-		Value:   state,
-		Expires: time.Now().Add(cookieDuration),
+func getNewSessionID() string {
+	c := 128
+	b := make([]byte, c)
+	n, err := io.ReadFull(rand.Reader, b)
+	if n != len(b) || err != nil {
+		panic("Could not generate random number")
 	}
-	http.SetCookie(w, &cookie)
-
-	return state
+	return base64.URLEncoding.EncodeToString(b)
 }
 
-func getOAuthedUserData(r *http.Request) ([]byte, error) {
-
-	// exchange code
-	token, err := getOAuthConfig(r).Exchange(context.Background(), r.FormValue("code"))
-	if err != nil {
-		return nil, fmt.Errorf("Got wrong exchange code: %v", err)
+func getCurrentUserIDFromCookie(r *http.Request) string {
+	c, _ := r.Cookie(userIDCookieName)
+	if c != nil {
+		return c.Value
 	}
+	return ""
+}
 
-	// user info
-	response, err := http.Get(googleOAuthURL + token.AccessToken)
-	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %v", err)
+func getUserAuthCookie(id string) *http.Cookie {
+	return &http.Cookie{
+		Name:   userIDCookieName,
+		Value:  id,
+		MaxAge: 60,
+		Secure: isSSL,
+		Path:   "/",
 	}
-	defer response.Body.Close()
+}
 
-	// parse body
-	contents, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return nil, fmt.Errorf("Error reading response: %v", err)
+func getSessionStartCookie(id string) *http.Cookie {
+	return &http.Cookie{
+		Name:   authIDCookieName,
+		Value:  id,
+		MaxAge: 60,
+		Secure: isSSL,
+		Path:   "/",
 	}
+}
 
-	return contents, nil
+func getSessionEndCookie() *http.Cookie {
+	return &http.Cookie{
+		Name:   authIDCookieName,
+		Value:  "",
+		MaxAge: 0,
+		Secure: isSSL,
+		Path:   "/",
+	}
+}
+
+func setSessionID(r *http.Request) (id string, err error) {
+	c, e := r.Cookie(authIDCookieName)
+	if err != nil {
+		return "", e
+	}
+	return c.Value, nil
 }

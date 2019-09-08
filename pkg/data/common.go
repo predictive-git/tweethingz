@@ -3,6 +3,7 @@ package data
 import (
 	"log"
 	"os"
+	"time"
 
 	"database/sql"
 
@@ -52,4 +53,51 @@ func initDB() error {
 
 	return nil
 
+}
+
+
+
+// SimpleUserEvent wraps simple twitter user as an time event
+type SimpleUserEvent struct {
+	SimpleUser
+	EventDate time.Time `json:"event_at"`
+}
+
+// SimpleUser represents simplified Twitter user
+type SimpleUser struct {
+
+	// ID is global identifier
+	ID string `json:"id"`
+
+	// User details
+	Username     string    `json:"username"`
+	Name         string    `json:"name"`
+	Description  string    `json:"description"`
+	ProfileImage string    `json:"profile_image"`
+	CreatedAt    time.Time `json:"created_at"`
+
+	// geo
+	Lang     string `json:"lang"`
+	Location string `json:"location"`
+	Timezone string `json:"time_zone"`
+
+	// counts
+	PostCount      int `json:"post_count"`
+	FaveCount      int `json:"fave_count"`
+	FollowingCount int `json:"following_count"`
+	FollowerCount  int `json:"followers_count"`
+}
+
+
+// AuthedUser represents authenticated user
+type AuthedUser struct {
+
+	// User details
+	Username string `json:"username"`
+	UserID   string `json:"user_id"`
+
+	AccessTokenKey    string `json:"access_token_key"`
+	AccessTokenSecret string `json:"access_token_secret"`
+
+	UpdatedAt time.Time `json:"updated_at"`
 }

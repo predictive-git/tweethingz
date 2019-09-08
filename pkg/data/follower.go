@@ -87,8 +87,8 @@ func GetStopFollowerIDs(username string) (list []int64, err error) {
 	return getFollowerDiff(username, time.Now().AddDate(0, 0, -1), time.Now())
 }
 
-// SaveDailyFollowers in single statement saves all followers for this day
-func SaveDailyFollowers(username string, followerIDs []int64) error {
+// SaveUserFollowersIDs in single statement saves all followers for this day
+func SaveUserFollowersIDs(username string, followerIDs []int64) error {
 
 	if len(followerIDs) == 0 {
 		return nil

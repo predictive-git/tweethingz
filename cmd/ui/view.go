@@ -20,14 +20,6 @@ func initTemplates() {
 	templates = tmpls
 }
 
-func getCurrentUserID(r *http.Request) string {
-	c, _ := r.Cookie(userIDCookieName)
-	if c != nil {
-		return c.Value
-	}
-	return ""
-}
-
 func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	initTemplates()
 	data := make(map[string]interface{})
@@ -57,7 +49,7 @@ func errorHandler(w http.ResponseWriter, r *http.Request, err error, code int) {
 
 func viewHandler(w http.ResponseWriter, r *http.Request) {
 	initTemplates()
-	uid := getCurrentUserID(r)
+	uid := getCurrentUserIDFromCookie(r)
 	if uid == "" {
 		http.Redirect(w, r, "/index", http.StatusSeeOther)
 		return

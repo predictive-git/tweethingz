@@ -33,19 +33,10 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 
-CREATE TABLE IF NOT EXISTS ui_users (
-	email VARCHAR(250) PRIMARY KEY,
-	twitter_username VARCHAR(50) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS ui_events (
-	email VARCHAR(250) NOT NULL,
-	event_at TIMESTAMP NOT NULL,
-	event_type VARCHAR(50) NOT NULL,
-	description TEXT NOT NULL,
-	PRIMARY KEY (email, event_at),
-	CONSTRAINT fk_ui_user
-		FOREIGN KEY (email)
-		REFERENCES ui_users (email)
-		ON DELETE CASCADE ON UPDATE CASCADE
+CREATE TABLE IF NOT EXISTS authed_users (
+	username VARCHAR(50) PRIMARY
+	user_id BIGINT NOT NULL,
+	access_token_key VARCHAR(100) NOT NULL,
+	access_token_secret VARCHAR(100) NOT NULL,
+	updated_on timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

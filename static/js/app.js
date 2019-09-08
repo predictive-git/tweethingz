@@ -34,9 +34,7 @@ function runQuery() {
                     text: 'Daily Follower Count'
                 },
                 legend: {
-                    display: true,
-                    position: 'right',
-                    boxWidth: 10
+                    display: false
                 },
                 scales: {
                     yAxes: [
@@ -80,8 +78,7 @@ function runQuery() {
                     text: 'Daily Follower Events'
                 },
                 legend: {
-                    display: true,
-                    position: 'right'
+                    display: false
                 },
                 scales: {
                     yAxes: [

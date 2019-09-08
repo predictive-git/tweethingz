@@ -11,15 +11,12 @@ func datadHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 
-	uid := getCurrentUserID(r)
+	uid := getCurrentUserIDFromCookie(r)
 	if uid == "" {
 		logger.Println("User not authenticated")
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-
-	// imageURL := r.URL.Query().Get("imageUrl")
-	// logger.Printf("Logo request: %s", imageURL)
 
 	result, err := data.GetSummaryForUser(uid)
 	if err != nil {
