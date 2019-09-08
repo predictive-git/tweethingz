@@ -1,0 +1,25 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+
+go mod tidy
+go mod vendor
+
+export GO111MODULE=on
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -a -tags netgo \
+    -ldflags '-w -extldflags "-static"' \
+    -mod vendor \
+    -o "./bin/${APP_NAME}" \
+    ./cmd/service/
+
+gcloud compute scp "./bin/${APP_NAME}" "${APP_NAME}:/home/${USER}" \
+    --zone $VM_ZONE
+
+
+
+
+
+
