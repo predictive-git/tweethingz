@@ -55,8 +55,6 @@ func initDB() error {
 
 }
 
-
-
 // SimpleUserEvent wraps simple twitter user as an time event
 type SimpleUserEvent struct {
 	SimpleUser
@@ -86,8 +84,10 @@ type SimpleUser struct {
 	FaveCount      int `json:"fave_count"`
 	FollowingCount int `json:"following_count"`
 	FollowerCount  int `json:"followers_count"`
-}
 
+	// Meta
+	UpdatedOn time.Time `json:"updated_on"`
+}
 
 // AuthedUser represents authenticated user
 type AuthedUser struct {

@@ -1,6 +1,8 @@
 package data
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 )
 
@@ -21,7 +23,7 @@ func SaveUsers(users []*SimpleUser) error {
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
 			name = ?, description = ?, profile_image = ?, created_at = ?, lang = ?,
 			location = ?, timezone = ?, post_count = ?, fave_count = ?,
-			following_count = ?, follower_count = ?`
+			following_count = ?, follower_count = ?, updated_on = ?`
 
 	stmt, err := db.Prepare(sqlStr)
 	if err != nil {
@@ -33,7 +35,7 @@ func SaveUsers(users []*SimpleUser) error {
 			u.CreatedAt, u.Lang, u.Location, u.Timezone, u.PostCount, u.FaveCount,
 			u.FollowingCount, u.FollowerCount, u.Name, u.Description, u.ProfileImage,
 			u.CreatedAt, u.Lang, u.Location, u.Timezone, u.PostCount, u.FaveCount,
-			u.FollowingCount, u.FollowerCount)
+			u.FollowingCount, u.FollowerCount, time.Now())
 		if err != nil {
 			return errors.Wrap(err, "Error executing save followers")
 		}

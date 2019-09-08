@@ -29,14 +29,14 @@ body {
 }
 
 #page-header {
-	padding: 20px;
+	padding: 10px 5px 15px 5px;
 	margin: 0;
 	background-color: #333;
 }
 
 #page-header b {
 	color: #999;
-	font-size: 3em;
+	font-size: 2em;
 }
 
 #page-footer {
@@ -47,9 +47,9 @@ body {
 #numbers-section {
 	padding: 20px 0 0 0;
 	display: grid;
-	grid-template-columns: repeat(4, 200px);
+	grid-template-columns: repeat(5, 200px);
 	grid-template-rows: auto;
-	grid-gap: 20px;
+	grid-gap: 10px;
 	align-content: space-around;
 	justify-content: space-between;
 	margin: auto;
@@ -73,8 +73,15 @@ body {
 
 #numbers-section .data {
 	font-weight: bold;
-	font-size: 1.5em;
+	font-size: 1.2em;
 	padding: 10px;
+}
+
+#meta-panel {
+	text-align: center;
+	margin: 0;
+	font-size: 0.9em;
+	color: #333;
 }
 
 
@@ -112,13 +119,14 @@ body {
 }
 
 tr.user-row td {
-	padding-bottom: 10px;
+	padding: 5px;
+	border-bottom: 2pt solid #fff;
 }
 
 .user-table {
 	width: 100%;
 	background-color: rgba(54, 162, 235, 0.1);
-	padding: 5px;
+	padding: 0;
 }
 
 .user-img {
@@ -131,13 +139,13 @@ tr.user-row td {
 
 .user-img img {
 	border: 1pt solid #999;
+	margin-top: 5px;
 }
 
 .user-info {
 	width: 100%;
 	padding: 3px 3px 3px 15px;
 	text-align: left;
-	border-bottom: 1pt solid #dcdcdc;
 }
 
 .user-info-name {

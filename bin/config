@@ -4,7 +4,7 @@
 export TW_DEBUG=true
 export APP_NAME="tweethingz"
 export APP_REGION="us-central1"
-export IMAGE_VERSION="0.6.2"
+export IMAGE_VERSION="0.6.3"
 export DB_INSTANCE=${APP_NAME}
 export DB_NODE_TIER="db-n1-standard-1"
 export DB_NODE_ZONE="${APP_REGION}-a"

@@ -25,9 +25,16 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 	data := make(map[string]interface{})
 	data["version"] = version
 
+	uid := getCurrentUserIDFromCookie(r)
+	if uid != "" {
+		http.Redirect(w, r, "/view", http.StatusSeeOther)
+		return
+	}
+
 	if err := templates.ExecuteTemplate(w, "index", data); err != nil {
 		logger.Printf("Error in index template: %s", err)
 	}
+	return
 
 }
 

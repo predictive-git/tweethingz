@@ -5,6 +5,18 @@ DIR="$(dirname "$0")"
 
 export PROJECT_ID=$(gcloud config get-value project)
 
+# build ui image
+
+go mod tidy
+go mod vendor
+
+docker build -f ./docker/Dockerfile \
+    -t "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" .
+docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}"
+
+
+# parse ui service cofnig
+
 VARS="RELEASE=${IMAGE_VERSION}"
 
 # DSN
@@ -16,6 +28,7 @@ VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?p
 VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
 VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
 
+# deploy ui service
 
 gcloud beta run deploy $APP_NAME \
 	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" \

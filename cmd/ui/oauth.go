@@ -26,8 +26,7 @@ const (
 )
 
 var (
-	longTimeAgo    = time.Duration(3650 * 24 * time.Hour)
-	cookieDuration = time.Duration(30 * 24 * time.Hour)
+	authedUserCookieDuration = 30 * 24 * 60
 )
 
 func getOAuthService(r *http.Request) *oauth1a.Service {
@@ -171,12 +170,13 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 
 func logOutHandler(w http.ResponseWriter, r *http.Request) {
 
+	year := time.Duration(365*24 + time.Hour)
 	cookie := http.Cookie{
 		Name:    userIDCookieName,
 		Path:    "/",
 		Value:   "",
 		MaxAge:  -1,
-		Expires: time.Now().Add(-longTimeAgo),
+		Expires: time.Now().Add(-year),
 	}
 
 	http.SetCookie(w, &cookie)
@@ -205,7 +205,7 @@ func getUserAuthCookie(id string) *http.Cookie {
 	return &http.Cookie{
 		Name:   userIDCookieName,
 		Value:  id,
-		MaxAge: 60,
+		MaxAge: authedUserCookieDuration,
 		Secure: false,
 		Path:   "/",
 	}

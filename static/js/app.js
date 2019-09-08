@@ -8,10 +8,19 @@ function runQuery() {
     $.get("/data", function (data) {
         console.log(data);
 
-        $("#follower-count .data").html(data.user.followers_count);
-        $("#following-count .data").html(data.user.following_count);
-        $("#follower-gained-count .data").html(data.recent_follower_count);
-        $("#follower-lost-count .data").html(data.recent_unfollower_count);
+        // numbers
+        $("#follower-count .data").text(data.user.followers_count);
+        $("#following-count .data").text(data.user.following_count);
+        $("#follower-gained-count .data").text(data.recent_follower_count);
+        $("#follower-lost-count .data").text(data.recent_unfollower_count);
+        $("#favorites-count .data").text(data.user.fave_count);
+
+        $("#meta-panel").html("Account: <b>" + data.user.username + "</b>" +
+            " | Time period: <b>Last " + data.meta.num_days_period + "days</b>" +
+            " | Updated on: <b>" + toLongTime(data.user.updated_on) + "</b>" +
+            " | <a href='/auth/logout'>Log out</a>"
+        );
+
 
         // follower count chart
         var followerChart = new Chart($("#follower-count-series")[0].getContext("2d"), {
@@ -98,6 +107,17 @@ function runQuery() {
     });
 }
 
+function toShortDate(v) {
+    var ts = new Date(v)
+    return ts.toISOString().substring(0, 10)
+}
+
+function toLongTime(v) {
+    var ts = new Date(v)
+    return ts.toTimeString()
+}
+
+
 
 function loadUsers(tbl, list) {
 
@@ -120,13 +140,12 @@ function loadUsers(tbl, list) {
         username: "YouHalal"
         */
 
-        var eventDate = new Date(u.event_at);
         var $info = $("<div class='user-info-detail'>").append(
             $("<div class='user-info-name'>").html("<b>" + u.username + "</b> - " + u.name +
                 " (<b>Loc:</b> " + u.location +
                 " <b>Follow:</b> " + u.followers_count + "/" + u.following_count +
                 " <b>Post:</b> " + u.post_count +
-                " <b>On:</b> " + eventDate.toISOString().substring(0, 10) + ")"),
+                " <b>On:</b> " + toShortDate(u.event_at) + ")"),
             $("<div class='user-info-desc'>").text(u.description),
         );
 

@@ -15,11 +15,5 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     -o "./bin/${APP_NAME}" \
     ./cmd/service/
 
-gcloud compute scp "./bin/${APP_NAME}" "${APP_NAME}:/home/${USER}" \
+gcloud compute scp "./bin/${APP_NAME}" "${APP_NAME}:/home/${USER}/tw" \
     --zone $VM_ZONE
-
-
-
-
-
-

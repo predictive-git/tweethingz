@@ -186,14 +186,15 @@ func getEventUsers(username, eventType string) (users []*SimpleUserEvent, err er
 func getUser(username string) (user *SimpleUser, err error) {
 
 	// follower events
-	row := db.QueryRow(`select id, username, name, description, profile_image,
-		created_at, lang, location, timezone, post_count, fave_count,
-		following_count, follower_count from users where username = ?`, username)
+	row := db.QueryRow(`select id, username, name, description,
+		profile_image, created_at, lang, location, timezone,
+		post_count, fave_count, following_count, follower_count, updated_on
+		from users where username = ?`, username)
 
 	u := &SimpleUser{}
 	e := row.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,
 		&u.Lang, &u.Location, &u.Timezone, &u.PostCount, &u.FaveCount, &u.FollowingCount,
-		&u.FollowerCount)
+		&u.FollowerCount, &u.UpdatedOn)
 	if e != nil {
 		return nil, errors.Wrap(e, "Error parsing user")
 	}
