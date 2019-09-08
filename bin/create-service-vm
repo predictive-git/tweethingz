@@ -1,0 +1,19 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+export PROJECT_ID=$(gcloud config get-value project)
+
+
+gcloud beta compute instances create $APP_NAME \
+    --project $PROJECT_ID \
+    --zone $VM_ZONE \
+    --machine-type n1-standard-1 \
+    --network-tier=PREMIUM \
+    --maintenance-policy=MIGRATE \
+    --scopes cloud-platform \
+    --image=ubuntu-1904-disco-v20190903 \
+    --image-project=ubuntu-os-cloud \
+    --boot-disk-size=40GB \
+    --boot-disk-type=pd-ssd

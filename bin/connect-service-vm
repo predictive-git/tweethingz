@@ -1,0 +1,12 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+
+gcloud compute ssh $APP_NAME --zone $VM_ZONE
+
+
+
+
+

@@ -3,29 +3,39 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-export PROJECT_ID=$(gcloud config get-value project)
 
-# SERVICE
-VARS="TW_CONCURENT_REFRESH_LIMIT=${TW_CONCURENT_REFRESH_LIMIT}"
+go mod tidy
+go mod vendor
 
-# DSN
-VARS+=",TW_DSN=${APP_NAME}:"
-VARS+=$(<"${DB_CONF_DIR}/app_password")
-VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?parseTime=true"
+export GO111MODULE=on
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
+    go build -a -tags netgo \
+    -ldflags '-w -extldflags "-static"' \
+    -mod vendor \
+    -o "./bin/${APP_NAME}" \
+    ./cmd/service/
 
-# TWITTER
-VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
-VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
+gcloud compute scp "./bin/${APP_NAME}" "${APP_NAME}:/home/${USER}" --zone $VM_ZONE
 
-gcloud compute instances create-with-container $APP_NAME \
-	--container-image "gcr.io/${PROJECT_ID}/${APP_NAME}-service:${IMAGE_VERSION}" \
-	--machine-type $VM_TYPE \
-	--zone $VM_ZONE \
-	--image-family cos-stable \
-	--image-project cos-cloud \
-	--maintenance-policy MIGRATE \
-	--scopes cloud-platform \
-	--container-privileged \
-	--container-env $VARS \
-	--tags="${APP_NAME},container-vm"
+
+# export PROJECT_ID=$(gcloud config get-value project)
+# export DB_INSTANCE_IP=$(gcloud sql instances describe ${DB_INSTANCE} \
+#     --format='value(ipAddresses[0].ipAddress)')
+
+# # SERVICE
+# VARS="TW_CONCURENT_REFRESH_LIMIT=${TW_CONCURENT_REFRESH_LIMIT}"
+
+# # DSN
+# VARS+=",TW_DSN=${APP_NAME}:"
+# VARS+=$(<"${DB_CONF_DIR}/app_password")
+# VARS+="@tcp(${DB_INSTANCE_IP:3306}})/${APP_NAME}?parseTime=true"
+
+
+# # TWITTER
+# VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
+# VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
+
+
+
+
 
