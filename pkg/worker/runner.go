@@ -3,67 +3,115 @@ package worker
 import (
 	"log"
 	"os"
-	"github.com/pkg/errors"
+
+	"github.com/mchmarny/tweethingz/pkg/config"
 	"github.com/mchmarny/tweethingz/pkg/data"
 	"github.com/mchmarny/tweethingz/pkg/twitter"
+	"github.com/pkg/errors"
+	"golang.org/x/net/context"
 )
 
 var (
 	logger = log.New(os.Stdout, "worker: ", 0)
 )
 
+// RunItemResult represent run item result
+type RunItemResult struct {
+	ForUser *data.AuthedUser
+	Error   error
+}
+
 // Run runs the background service
-func Run() error {
+func Run(ctx context.Context) error {
 
 	logger.Println("Starting service...")
+
+	c, e := config.GetWorkerConfig()
+	if e != nil {
+		return errors.Wrap(e, "Error getting worker config")
+	}
+
+	// users
 	users, err := data.GetAuthedUsers()
 	if err != nil {
 		return errors.Wrap(err, "Error getting authed users")
 	}
 
+	// result
+	resultCh := make(chan *RunItemResult, c.ConcurentRefreshLimit)
+
+	// run
 	for _, u := range users {
-		logger.Printf("Processing user: %s", u.Username)
-		//TODO: go routine with a callback channel
-		refreshUser(u)
+		go refreshUser(u, resultCh)
 	}
 
-	logger.Println("Service done")
-	return nil
+	// wait
+	for {
+		select {
+		case <-ctx.Done():
+			break
+		case r := <-resultCh:
+			logger.Printf("Refresh for %s completed with: %s",
+				r.ForUser.Username, errorToMessage(r.Error))
+		}
+	}
 
 }
 
+func errorToMessage(err error) string {
+	if err == nil {
+		return "success"
+	}
+	return err.Error()
+}
 
-func refreshUser(forUser *data.AuthedUser) error {
+func refreshUser(forUser *data.AuthedUser, result chan<- *RunItemResult) {
 
 	logger.Printf("Starting refresh for %s", forUser.Username)
 
 	logger.Printf("Refreshing %s details...", forUser.Username)
 	if err := refreshUserDetails(forUser); err != nil {
-		return errors.Wrap(err, "Error getting user deails")
+		result <- &RunItemResult{
+			ForUser: forUser,
+			Error: errors.Wrapf(err, "Error getting %s deails",
+				forUser.Username),
+		}
+		return
 	}
 
 	logger.Printf("Reconciling new followers for %s...", forUser.Username)
 	if err := reconcileNewFollowers(forUser); err != nil {
-		return errors.Wrap(err, "Error reconciling new followers")
+		result <- &RunItemResult{
+			ForUser: forUser,
+			Error: errors.Wrapf(err, "Error reconciling new followers for %s",
+				forUser.Username),
+		}
+		return
 	}
 
 	logger.Printf("Reconciling stopped followers for %s...", forUser.Username)
 	if err := reconcileStoppedFollowers(forUser); err != nil {
-		return errors.Wrap(err, "Error reconciling stopped followers")
+		result <- &RunItemResult{
+			ForUser: forUser,
+			Error: errors.Wrapf(err, "Error reconciling stopped followers for %s",
+				forUser.Username),
+		}
+		return
 	}
 
 	logger.Printf("Refreshing %s followers...", forUser.Username)
 	if err := refreshUserFollowers(forUser); err != nil {
-		return errors.Wrap(err, "Error refreshing follower IDs")
+		result <- &RunItemResult{
+			ForUser: forUser,
+			Error: errors.Wrapf(err, "Error refreshing follower IDs for %s",
+				forUser.Username),
+		}
+		return
 	}
-
-	return nil
 
 }
 
-
 func refreshUserDetails(forUser *data.AuthedUser) error {
-
 	// this returns array of 1
 	users, err := twitter.GetUserDetails(forUser)
 	if err != nil {
@@ -117,7 +165,6 @@ func reconcileNewFollowers(forUser *data.AuthedUser) error {
 	return nil
 }
 
-
 func reconcileStoppedFollowers(forUser *data.AuthedUser) error {
 
 	logger.Printf("Getting stopped followes for %s ...", forUser.Username)
@@ -136,10 +183,6 @@ func reconcileStoppedFollowers(forUser *data.AuthedUser) error {
 
 	return nil
 }
-
-
-
-
 
 func updateFollowerDetailByEvent(forUser *data.AuthedUser, eventType string, ids []int64) error {
 
@@ -173,8 +216,6 @@ func updateFollowerDetailByEvent(forUser *data.AuthedUser, eventType string, ids
 	return nil
 
 }
-
-
 
 func saveFollowerDetailPage(forUser *data.AuthedUser, ids []int64) error {
 

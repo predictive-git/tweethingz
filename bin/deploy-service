@@ -5,38 +5,24 @@ DIR="$(dirname "$0")"
 
 export PROJECT_ID=$(gcloud config get-value project)
 
-VARS="RELEASE=${IMAGE_VERSION}"
-
 # DSN
 VARS+=",TW_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
 VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?parseTime=true"
 
-# TW
+# TWITTER
 VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
 VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
-VARS+=",TW_ACCESS_TOKEN=${TW_ACCESS_TOKEN}"
-VARS+=",TW_ACCESS_SECRET=${TW_ACCESS_SECRET}"
 
-gcloud beta run deploy "${APP_NAME}-worker" \
-	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}" \
-	--service-account $APP_SA \
-	--no-allow-unauthenticated \
-	--platform managed \
-	--region $APP_REGION \
-	--set-cloudsql-instances $DB_INSTANCE \
-	--set-env-vars $VARS
+gcloud compute instances create-with-container $APP_NAME \
+	--container-image "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}" \
+	--machine-type $VM_TYPE \
+	--zone $VM_ZONE \
+	--image-family cos-stable \
+	--image-project cos-cloud \
+	--maintenance-policy MIGRATE \
+	--scopes cloud-platform \
+	--container-privileged \
+	--container-env $VARS \
+	--tags="${APP_NAME},demo"
 
-# OAuth (Specific to the UI)
-VARS+=",TW_OAUTH_CLIENT_ID=${TW_OAUTH_CLIENT_ID}"
-VARS+=",TW_OAUTH_CLIENT_SECRET=${TW_OAUTH_CLIENT_SECRET}"
-VARS+=",TW_OAUTH_FORCE_HTTPS=true"
-
-gcloud beta run deploy "${APP_NAME}-ui" \
-	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" \
-	--service-account $APP_SA \
-	--allow-unauthenticated \
-	--platform managed \
-	--region $APP_REGION \
-	--set-cloudsql-instances $DB_INSTANCE \
-	--set-env-vars $VARS

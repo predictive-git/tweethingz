@@ -17,7 +17,7 @@ VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
 VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
 
 
-gcloud beta run deploy "${APP_NAME}-ui" \
+gcloud beta run deploy $APP_NAME \
 	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" \
 	--service-account $APP_SA \
 	--allow-unauthenticated \
