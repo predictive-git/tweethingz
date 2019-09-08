@@ -5,6 +5,9 @@ DIR="$(dirname "$0")"
 
 export PROJECT_ID=$(gcloud config get-value project)
 
+# SERVICE
+VARS="TW_CONCURENT_REFRESH_LIMIT=${TW_CONCURENT_REFRESH_LIMIT}"
+
 # DSN
 VARS+=",TW_DSN=${APP_NAME}:"
 VARS+=$(<"${DB_CONF_DIR}/app_password")
@@ -15,7 +18,7 @@ VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
 VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
 
 gcloud compute instances create-with-container $APP_NAME \
-	--container-image "gcr.io/${PROJECT_ID}/${APP_NAME}-worker:${IMAGE_VERSION}" \
+	--container-image "gcr.io/${PROJECT_ID}/${APP_NAME}-service:${IMAGE_VERSION}" \
 	--machine-type $VM_TYPE \
 	--zone $VM_ZONE \
 	--image-family cos-stable \
@@ -24,5 +27,5 @@ gcloud compute instances create-with-container $APP_NAME \
 	--scopes cloud-platform \
 	--container-privileged \
 	--container-env $VARS \
-	--tags="${APP_NAME},demo"
+	--tags="${APP_NAME},container-vm"
 

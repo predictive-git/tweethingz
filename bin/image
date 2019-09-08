@@ -11,7 +11,7 @@ go mod vendor
 # cli
 docker build -f ./docker/Dockerfile.service \
     -t "gcr.io/${PROJECT_ID}/${APP_NAME}-service:${IMAGE_VERSION}" .
-docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-cli:${IMAGE_VERSION}"
+docker push "gcr.io/${PROJECT_ID}/${APP_NAME}-service:${IMAGE_VERSION}"
 
 # ui
 docker build -f ./docker/Dockerfile.ui \

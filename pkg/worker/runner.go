@@ -109,6 +109,9 @@ func refreshUser(forUser *data.AuthedUser, result chan<- *RunItemResult) {
 		return
 	}
 
+	//TODO: validate that all the new and stopped followers IDs have
+	//      corresponding records in the user table
+
 }
 
 func refreshUserDetails(forUser *data.AuthedUser) error {
@@ -236,5 +239,4 @@ func saveFollowerDetailPage(forUser *data.AuthedUser, ids []int64) error {
 	}
 
 	return nil
-
 }
