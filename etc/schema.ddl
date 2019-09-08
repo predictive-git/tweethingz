@@ -34,9 +34,15 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 CREATE TABLE IF NOT EXISTS authed_users (
-	username VARCHAR(50) PRIMARY
+	username VARCHAR(50) PRIMARY KEY,
 	user_id BIGINT NOT NULL,
 	access_token_key VARCHAR(100) NOT NULL,
 	access_token_secret VARCHAR(100) NOT NULL,
 	updated_on timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+	session_id VARCHAR(250) PRIMARY KEY,
+	auth_config TEXT NOT NULL,
+	created_on timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

@@ -3,11 +3,12 @@ package main
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"net/http/httputil"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,8 +28,6 @@ const (
 var (
 	longTimeAgo    = time.Duration(3650 * 24 * time.Hour)
 	cookieDuration = time.Duration(30 * 24 * time.Hour)
-	sessions       = make(map[string]*oauth1a.UserConfig, 0)
-	isSSL          bool
 )
 
 func getOAuthService(r *http.Request) *oauth1a.Service {
@@ -38,19 +37,10 @@ func getOAuthService(r *http.Request) *oauth1a.Service {
 	if proto == "" {
 		proto = "http"
 	}
-	isSSL = (proto == "https")
 
 	cfg, err := config.GetTwitterConfig()
 	if err != nil {
 		logger.Printf("Error parsing Twitter config: %v", err)
-	}
-
-	if cfg.Debug {
-		requestDump, err := httputil.DumpRequest(r, false)
-		if err != nil {
-			fmt.Println(err)
-		}
-		logger.Printf("DEBUG: %s", string(requestDump))
 	}
 
 	baseURL := fmt.Sprintf("%s://%s", proto, r.Host)
@@ -103,8 +93,7 @@ func authLoginHandler(w http.ResponseWriter, r *http.Request) {
 	sessionID := getNewSessionID()
 	log.Printf("Starting session %s", sessionID)
 
-	// TODO: Refactor to DB session store
-	sessions[sessionID] = userConfig
+	data.SaveAuthSession(sessionID, userConfigToString(userConfig))
 
 	http.SetCookie(w, getSessionStartCookie(sessionID))
 	http.Redirect(w, r, url, http.StatusFound)
@@ -120,9 +109,16 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userConfig, ok := sessions[sessionID]
-	if !ok {
-		err := errors.Wrap(err, "Error, Could not find user config in sesions storage")
+	content, err := data.GetAuthSession(sessionID, 20)
+	if err != nil || content == "" {
+		err := errors.Wrapf(err, "Unable to find auth config for this sessions ID: %s", sessionID)
+		errorHandler(w, r, err, http.StatusUnauthorized)
+		return
+	}
+
+	userConfig, err := userConfigFromString(content)
+	if err != nil {
+		err := errors.New("Error decoding user config in sessions storage")
 		errorHandler(w, r, err, http.StatusUnauthorized)
 		return
 	}
@@ -144,7 +140,11 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Printf("Ending session %s", sessionID)
-	delete(sessions, sessionID)
+	if err := data.DeleteAuthSession(sessionID); err != nil {
+		err := errors.Wrap(err, "Error deleting session")
+		errorHandler(w, r, err, http.StatusInternalServerError)
+		return
+	}
 
 	http.SetCookie(w, getSessionEndCookie())
 
@@ -206,7 +206,7 @@ func getUserAuthCookie(id string) *http.Cookie {
 		Name:   userIDCookieName,
 		Value:  id,
 		MaxAge: 60,
-		Secure: isSSL,
+		Secure: false,
 		Path:   "/",
 	}
 }
@@ -216,7 +216,7 @@ func getSessionStartCookie(id string) *http.Cookie {
 		Name:   authIDCookieName,
 		Value:  id,
 		MaxAge: 60,
-		Secure: isSSL,
+		Secure: false,
 		Path:   "/",
 	}
 }
@@ -226,7 +226,7 @@ func getSessionEndCookie() *http.Cookie {
 		Name:   authIDCookieName,
 		Value:  "",
 		MaxAge: 0,
-		Secure: isSSL,
+		Secure: false,
 		Path:   "/",
 	}
 }
@@ -237,4 +237,22 @@ func setSessionID(r *http.Request) (id string, err error) {
 		return "", e
 	}
 	return c.Value, nil
+}
+
+func userConfigToString(config *oauth1a.UserConfig) string {
+	b, _ := json.Marshal(config)
+	return hex.EncodeToString(b)
+}
+
+func userConfigFromString(content string) (conf *oauth1a.UserConfig, err error) {
+	b, e := hex.DecodeString(content)
+	if e != nil {
+		return nil, e
+	}
+	var c oauth1a.UserConfig
+	if e := json.Unmarshal(b, &c); e != nil {
+		return nil, e
+	}
+
+	return &c, nil
 }

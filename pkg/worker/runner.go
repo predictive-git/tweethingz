@@ -8,7 +8,6 @@ import (
 	"github.com/mchmarny/tweethingz/pkg/data"
 	"github.com/mchmarny/tweethingz/pkg/twitter"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -22,7 +21,7 @@ type RunItemResult struct {
 }
 
 // Run runs the background service
-func Run(ctx context.Context) error {
+func Run() error {
 
 	logger.Println("Starting service...")
 
@@ -41,18 +40,22 @@ func Run(ctx context.Context) error {
 	resultCh := make(chan *RunItemResult, c.ConcurentRefreshLimit)
 
 	// run
+	userJobs := make(map[string]*data.AuthedUser)
 	for _, u := range users {
+		userJobs[u.Username] = u
 		go refreshUser(u, resultCh)
 	}
 
 	// wait
 	for {
 		select {
-		case <-ctx.Done():
-			break
 		case r := <-resultCh:
 			logger.Printf("Refresh for %s completed with: %s",
 				r.ForUser.Username, errorToMessage(r.Error))
+			delete(userJobs, r.ForUser.Username)
+			if len(userJobs) == 0 {
+				return nil
+			}
 		}
 	}
 
@@ -107,6 +110,12 @@ func refreshUser(forUser *data.AuthedUser, result chan<- *RunItemResult) {
 				forUser.Username),
 		}
 		return
+	}
+
+	// final result
+	result <- &RunItemResult{
+		ForUser: forUser,
+		Error:   nil,
 	}
 
 	//TODO: validate that all the new and stopped followers IDs have

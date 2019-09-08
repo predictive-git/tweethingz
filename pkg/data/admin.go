@@ -1,7 +1,7 @@
 package data
 
 import (
-	"database/sql"
+	"time"
 
 	"github.com/pkg/errors"
 )
@@ -10,6 +10,74 @@ var (
 	// ErrUserNotFound represents static error when user is not found
 	ErrUserNotFound = errors.New("User not found")
 )
+
+// SaveAuthSession persists oauth session config
+func SaveAuthSession(id, content string) error {
+
+	if id == "" || content == "" {
+		return errors.New("Nil id or content argument")
+	}
+
+	if err := initDB(); err != nil {
+		return err
+	}
+
+	_, err := db.Exec(`INSERT INTO auth_sessions (session_id, auth_config,
+		created_on) VALUES (?, ?, ?)`, id, content, time.Now())
+
+	if err != nil {
+		return errors.Wrap(err, "Error executing save auth session")
+	}
+
+	return nil
+
+}
+
+// GetAuthSession retreaves previous saved session config
+func GetAuthSession(id string, maxAge int) (content string, err error) {
+
+	if id == "" {
+		return "", errors.New("Null id parameter")
+	}
+
+	if err := initDB(); err != nil {
+		return "", err
+	}
+
+	row := db.QueryRow(`SELECT auth_config
+						FROM auth_sessions
+						WHERE session_id = ?
+						AND TIMESTAMPDIFF(MINUTE,NOW(),created_on) < ?`, id, maxAge)
+
+	var c string
+	err = row.Scan(&c)
+	if err != nil {
+		return "", errors.Wrap(err, "Error parsing authed user")
+	}
+
+	return c, nil
+
+}
+
+// DeleteAuthSession deletes session once it has been used
+func DeleteAuthSession(id string) error {
+
+	if id == "" {
+		return errors.New("Null id parameter")
+	}
+
+	if err := initDB(); err != nil {
+		return err
+	}
+
+	_, e := db.Exec(`DELETE FROM auth_sessions WHERE session_id = ?`, id)
+	if e != nil {
+		return errors.Wrap(e, "Error deleteting session")
+	}
+
+	return nil
+
+}
 
 // SaveAuthUser saves multiple users
 func SaveAuthUser(user *AuthedUser) error {
@@ -57,9 +125,6 @@ func GetAuthedUser(email string) (user *AuthedUser, err error) {
 
 	u := &AuthedUser{}
 	err = row.Scan(&u.Username, &u.UserID, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, ErrUserNotFound
-	}
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing authed user")
 	}
@@ -67,8 +132,6 @@ func GetAuthedUser(email string) (user *AuthedUser, err error) {
 	return u, nil
 
 }
-
-
 
 // GetAuthedUsers gets all authed users
 func GetAuthedUsers() (users []*AuthedUser, err error) {
@@ -98,5 +161,3 @@ func GetAuthedUsers() (users []*AuthedUser, err error) {
 	return list, nil
 
 }
-
-

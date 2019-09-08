@@ -127,7 +127,7 @@ func SaveUserFollowersIDs(username string, followerIDs []int64) error {
 	}
 
 	rowCount, _ := res.RowsAffected()
-	logger.Printf("Saved %d from %d records for %s",
+	logger.Printf("Saved %d new records from %d candidates for %s",
 		rowCount, len(followerIDs), username)
 
 	return nil

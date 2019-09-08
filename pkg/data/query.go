@@ -1,8 +1,8 @@
 package data
 
 import (
-	"database/sql"
 	"time"
+
 	"github.com/pkg/errors"
 )
 
@@ -14,14 +14,14 @@ const (
 // SummaryData represents aggregate data view
 type SummaryData struct {
 	Self                  *SimpleUser        `json:"user"`
-	FollowerCountSeries   map[string]int64           `json:"follower_count_series"`
-	FollowedEventSeries   map[string]int64           `json:"followed_event_series"`
-	UnfollowedEventSeries map[string]int64           `json:"unfollowed_event_series"`
+	FollowerCountSeries   map[string]int64   `json:"follower_count_series"`
+	FollowedEventSeries   map[string]int64   `json:"followed_event_series"`
+	UnfollowedEventSeries map[string]int64   `json:"unfollowed_event_series"`
 	RecentFollowers       []*SimpleUserEvent `json:"recent_follower_list"`
 	RecentUnfollowers     []*SimpleUserEvent `json:"recent_unfollower_list"`
-	RecentFollowerCount   int64                      `json:"recent_follower_count"`
-	RecentUnfollowerCount int64                      `json:"recent_unfollower_count"`
-	Meta                  *QueryCriteria             `json:"meta"`
+	RecentFollowerCount   int64              `json:"recent_follower_count"`
+	RecentUnfollowerCount int64              `json:"recent_unfollower_count"`
+	Meta                  *QueryCriteria     `json:"meta"`
 }
 
 // QueryCriteria represents scope of the query
@@ -54,7 +54,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 
 	// user details
 	self, err := getUser(username)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return nil, errors.Wrap(err, "Error getting user details")
 	}
 	r.Self = self
