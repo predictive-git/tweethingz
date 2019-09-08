@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+export DB_INSTANCE_IP=$(gcloud sql instances describe ${DB_INSTANCE} \
+    --format='value(ipAddresses[0].ipAddress)')
+
+echo "Optimizing ${APP_NAME} db in ${DB_INSTANCE} (${DB_INSTANCE_IP})..."
+
+mysqlcheck -o $APP_NAME \
+      --host $DB_INSTANCE_IP \
+      --user $APP_NAME \
+      --password=$(<"${DB_CONF_DIR}/app_password")
+

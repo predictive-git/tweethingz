@@ -13,7 +13,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
 
 FROM gcr.io/distroless/static
 COPY --from=builder /src/ui .
-COPY --from=builder /src/template/ ./template/
 COPY --from=builder /src/static/ ./static/
+COPY --from=builder /src/template/ ./template/
 
 ENTRYPOINT ["/ui"]
