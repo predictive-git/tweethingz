@@ -47,7 +47,7 @@ body {
 #numbers-section {
 	padding: 20px 0 0 0;
 	display: grid;
-	grid-template-columns: repeat(5, 200px);
+	grid-template-columns: repeat(5, 180px);
 	grid-template-rows: auto;
 	grid-gap: 10px;
 	align-content: space-around;
@@ -57,11 +57,12 @@ body {
 }
 
 #numbers-section .number-item {
-	background-color:rgba(54, 162, 235, 1);
-  	color: #333;
+	background-color: rgba(54, 162, 235, 1);
+  	color: #fff;
   	border-radius: 3px;
   	padding: 20px;
 	font-size: 1em;
+	font-weight: bold;
 	align-content: center;
 }
 
@@ -102,7 +103,7 @@ body {
 }
 
 .user-table-wrapper {
-	width: 70%;
+	width: 80%;
 	break-after: always;
 	display: inline-block;
 	color: #333;
