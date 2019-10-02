@@ -65,7 +65,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 						   FROM followers
 						   WHERE username = ?
 						   GROUP BY count_date
-						   ORDER BY count_date
+						   ORDER BY count_date DESC
 						   LIMIT ?`, username, r.Meta.NumDaysPeriod)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error quering follower count series")
@@ -91,7 +91,7 @@ func GetSummaryForUser(username string) (data *SummaryData, err error) {
 							username = ?
 						GROUP BY
 							count_date
-						ORDER BY count_date
+						ORDER BY count_date DESC
 						LIMIT ?`, EventNewFollower, EventUnFollowing, username, r.Meta.NumDaysPeriod)
 
 	if err != nil {
@@ -153,16 +153,16 @@ func getRecentEventCount(events map[string]int64, forLastDays int) int64 {
 func getEventUsers(username, eventType string) (users []*SimpleUserEvent, err error) {
 
 	// follower events
-	rows, e := db.Query(`select
+	rows, e := db.Query(`SELECT
 			u.id, u.username, u.name, u.description, u.profile_image, u.created_at,
 			u.lang, u.location, u.timezone, u.post_count, u.fave_count, u.following_count,
 			u.follower_count, e.on_day
-		from users u
-		join follower_events e on u.id = e.follower_id
-		where e.username = ?
-		and e.event_type = ?
-		order by e.on_day desc
-		limit ?`, username, eventType, recentUsersDefaultLimit)
+		FROM users u
+		JOIN follower_events e on u.id = e.follower_id
+		WHERE e.username = ?
+		AND e.event_type = ?
+		ORDER by e.on_day desc
+		LIMIT ?`, username, eventType, recentUsersDefaultLimit)
 
 	if e != nil {
 		return nil, errors.Wrap(err, "Error quering event users")
@@ -186,10 +186,10 @@ func getEventUsers(username, eventType string) (users []*SimpleUserEvent, err er
 func getUser(username string) (user *SimpleUser, err error) {
 
 	// follower events
-	row := db.QueryRow(`select id, username, name, description,
+	row := db.QueryRow(`SELECT id, username, name, description,
 		profile_image, created_at, lang, location, timezone,
 		post_count, fave_count, following_count, follower_count, updated_on
-		from users where username = ?`, username)
+		FROM users WHERE username = ?`, username)
 
 	u := &SimpleUser{}
 	e := row.Scan(&u.ID, &u.Username, &u.Name, &u.Description, &u.ProfileImage, &u.CreatedAt,

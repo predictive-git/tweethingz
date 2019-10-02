@@ -13,8 +13,11 @@ func getFollowerDailyCount(username string, day time.Time) (count int64, err err
 		return 0, err
 	}
 
+	yesterday := day.Format(isoDateFormat)
+	logger.Printf("User:%s Yesterday:%s", username, yesterday)
+
 	row := db.QueryRow(`SELECT count(*) FROM followers
-		WHERE username = ? AND on_day = ?`, username, day.Format(isoDateFormat))
+		WHERE username = ? AND on_day = ?`, username, yesterday)
 
 	var idCount int64
 	err = row.Scan(&idCount)
@@ -68,6 +71,7 @@ func GetNewFollowerIDs(username string) (list []int64, err error) {
 	if err != nil {
 		return nil, err
 	}
+	logger.Printf("Yesterday Followers:%d", yesterdayFollowers)
 	if yesterdayFollowers == 0 {
 		return []int64{}, nil
 	}
