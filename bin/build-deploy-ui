@@ -11,7 +11,7 @@ go mod tidy
 go mod vendor
 
 gcloud builds submit \
-    --tag "gcr.io/${PROJECT_ID}/${APP_NAME}:${IMAGE_VERSION}"
+    --tag "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}"
 
 # parse ui service cofnig
 
