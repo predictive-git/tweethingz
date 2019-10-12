@@ -30,8 +30,8 @@ function runQuery() {
                 datasets: [{
                     label: 'Count',
                     data: Object.values(data.follower_count_series),
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(109, 110, 110, 0.4)',
+                    borderColor: 'rgba(109, 110, 110, 1)',
                     borderWidth: 1
                 }]
             },
@@ -40,7 +40,9 @@ function runQuery() {
                 maintainAspectRatio: false,
                 title: {
                     display: true,
-                    text: 'Daily Follower Count'
+                    text: 'Daily Follower Count',
+                    fontColor: 'rgba(250, 250, 250, 0.5)',
+                    fontSize: 16,
                 },
                 legend: {
                     display: false
@@ -49,7 +51,15 @@ function runQuery() {
                     yAxes: [
                         {
                             ticks: {
-                                stepSize: 5
+                                stepSize: 5,
+                                fontColor: 'rgba(250, 250, 250, 0.5)'
+                            }
+                        }
+                    ],
+                    xAxes: [
+                        {
+                            ticks: {
+                                fontColor: 'rgba(250, 250, 250, 0.5)'
                             }
                         }
                     ]
@@ -68,14 +78,14 @@ function runQuery() {
                 datasets: [{
                     label: 'Followed',
                     data: Object.values(data.followed_event_series),
-                    backgroundColor: 'rgba(0,255,0,0.3)',
-                    borderColor: 'rgba(0,255,0,1)',
+                    backgroundColor: 'rgba(127, 201, 143,0.2)',
+                    borderColor: 'rgba(127, 201, 143,0.6)',
                     borderWidth: 1
                 }, {
                     label: 'Unfollowed',
                     data: Object.values(data.unfollowed_event_series),
-                    backgroundColor: 'rgba(255,0,0,0.3)',
-                    borderColor: 'rgba(255,0,0,1)',
+                    backgroundColor: 'rgba(206, 149, 166,0.2)',
+                    borderColor: 'rgba(206, 149, 166,0.6)',
                     borderWidth: 1
                 }]
             },
@@ -84,7 +94,9 @@ function runQuery() {
                 maintainAspectRatio: false,
                 title: {
                     display: true,
-                    text: 'Daily Follower Events'
+                    text: 'Daily Follower Events',
+                    fontColor: 'rgba(250, 250, 250, 0.5)',
+                    fontSize: 16,
                 },
                 legend: {
                     display: false
@@ -93,7 +105,15 @@ function runQuery() {
                     yAxes: [
                         {
                             ticks: {
-                                beginAtZero: true
+                                beginAtZero: true,
+                                fontColor: 'rgba(250, 250, 250, 0.5)'
+                            }
+                        }
+                    ],
+                    xAxes: [
+                        {
+                            ticks: {
+                                fontColor: 'rgba(250, 250, 250, 0.5)'
                             }
                         }
                     ]
