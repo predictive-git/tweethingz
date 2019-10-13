@@ -101,7 +101,7 @@ func SaveAuthUser(user *AuthedUser) error {
 		return errors.Wrapf(err, "Error executing save auth user for: %+v", user)
 	}
 
-	logger.Printf("Saved authed users: %s", user.Username)
+	//logger.Printf("Saved authed users: %s", user.Username)
 
 	return nil
 

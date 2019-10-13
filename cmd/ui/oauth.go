@@ -162,7 +162,7 @@ func authCallbackHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, getUserAuthCookie(authedUser.Username))
-	logger.Printf("Authed User: %+v", authedUser)
+	// logger.Printf("Authed User: %+v", authedUser)
 
 	http.Redirect(w, r, "/view", http.StatusSeeOther)
 

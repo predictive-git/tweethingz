@@ -52,14 +52,16 @@ function runQuery() {
                         {
                             ticks: {
                                 stepSize: 5,
-                                fontColor: 'rgba(250, 250, 250, 0.5)'
+                                fontColor: 'rgba(250, 250, 250, 0.5)',
+                                fontSize: 14
                             }
                         }
                     ],
                     xAxes: [
                         {
                             ticks: {
-                                fontColor: 'rgba(250, 250, 250, 0.5)'
+                                fontColor: 'rgba(250, 250, 250, 0.5)',
+                                fontSize: 14
                             }
                         }
                     ]
@@ -106,14 +108,16 @@ function runQuery() {
                         {
                             ticks: {
                                 beginAtZero: true,
-                                fontColor: 'rgba(250, 250, 250, 0.5)'
+                                fontColor: 'rgba(250, 250, 250, 0.5)',
+                                fontSize: 14
                             }
                         }
                     ],
                     xAxes: [
                         {
                             ticks: {
-                                fontColor: 'rgba(250, 250, 250, 0.5)'
+                                fontColor: 'rgba(250, 250, 250, 0.5)',
+                                fontSize: 14
                             }
                         }
                     ]
@@ -161,7 +165,8 @@ function loadUsers(tbl, list) {
         */
 
         var $info = $("<div class='user-info-detail'>").append(
-            $("<div class='user-info-name'>").html("<b>" + u.username + "</b> - " + u.name +
+            $("<div class='user-info-name'>").html("<a href='https://twitter.com/" +
+                u.username + "' target='_blank'>" + u.username + "</a> - " + u.name +
                 " (<b>Loc:</b> " + u.location +
                 " <b>Follow:</b> " + u.followers_count + "/" + u.following_count +
                 " <b>Post:</b> " + u.post_count +

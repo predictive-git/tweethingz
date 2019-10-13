@@ -52,7 +52,7 @@ a {
 #numbers-section {
 	padding: 20px 0 0 0;
 	display: grid;
-	grid-template-columns: repeat(5, 180px);
+	grid-template-columns: repeat(5, 150px);
 	grid-template-rows: auto;
 	grid-gap: 10px;
 	align-content: space-around;
@@ -66,7 +66,7 @@ a {
 	color: rgb(27, 27, 27);
   	border-radius: 3px;
   	padding: 20px;
-	font-size: 1em;
+	font-size: 0.8em;
 	font-weight: bold;
 	align-content: center;
 }
@@ -79,7 +79,7 @@ a {
 
 #numbers-section .data {
 	font-weight: bold;
-	font-size: 1.2em;
+	font-size: 2.4em;
 	padding: 10px;
 }
 
@@ -134,13 +134,13 @@ tr.user-row td {
 	height: 50px;
 	text-align: center;
 	align-content: center;
-	margin: 3px 0 0 0;
-	filter: grayscale(30%);
+	margin: 0;
 }
 
 .user-img img {
-	border: 1pt solid #999;
-	margin-top: 5px;
+	border: 1pt solid #e4e4e4;
+	margin: 10px 10px 0 0;
+	filter: grayscale(80%);
 }
 
 .user-info {
