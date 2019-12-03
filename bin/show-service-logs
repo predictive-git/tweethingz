@@ -10,8 +10,6 @@ gcloud logging read "resource.type=gce_instance AND \
 	resource.labels.instance_id=${VM_INSTANCE_ID} " \
 	--order="asc"
 
-
-
 # gcloud logging read "resource.type=gce_instance AND \
 # 	resource.labels.instance_id=${VM_INSTANCE_ID} AND \
 # 	jsonPayload.message:\"tweethingz\"" \

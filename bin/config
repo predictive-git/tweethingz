@@ -8,7 +8,6 @@ export IMAGE_VERSION="0.6.6"
 export DB_INSTANCE=${APP_NAME}
 export DB_NODE_TIER="db-n1-standard-1"
 export DB_NODE_ZONE="${APP_REGION}-a"
-
 export VM_TYPE="n1-standard-1"
 export VM_ZONE="${APP_REGION}-a"
 
@@ -21,7 +20,6 @@ export VM_ZONE="${APP_REGION}-a"
 
 # Worker Service
 export TW_CONCURENT_REFRESH_LIMIT=3
-
 
 # Derived
 export DB_CONF_DIR="${HOME}/.cloud-sql/${PROJECT_ID}/${DB_INSTANCE}"

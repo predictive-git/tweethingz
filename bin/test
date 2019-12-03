@@ -9,5 +9,3 @@ go mod tidy
 go mod vendor
 
 go test ./... -v
-
-
