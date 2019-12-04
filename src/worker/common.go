@@ -12,8 +12,8 @@ import (
 
 var (
 	logger         = log.New(os.Stdout, "worker: ", 0)
-	consumerKey    = env.MustGetEnvVar("TCK", "")
-	consumerSecret = env.MustGetEnvVar("TCS", "")
+	consumerKey    = env.MustGetEnvVar("TW_KEY", "")
+	consumerSecret = env.MustGetEnvVar("TW_SECRET", "")
 )
 
 func getClient(byUser *data.AuthedUser) (client *twitter.Client, err error) {

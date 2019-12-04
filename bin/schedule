@@ -1,0 +1,16 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+
+SERVICE_URL=$(gcloud beta run services describe ${SERVICE_NAME} \
+    --region ${SERVICE_REGION} --format="value(status.domain)")
+
+SERVICE_TOKEN=$(<"${CONF_DIR}/service_token")
+
+gcloud scheduler jobs create http "${SERVICE_NAME}-${TW_USER}-worker" \
+    --http-method POST \
+    --schedule "${SERVICE_SCHEDULE}" \
+    --uri "${SERVICE_URL}/v1/worker/${TW_USER}?token=${SERVICE_TOKEN}"
+

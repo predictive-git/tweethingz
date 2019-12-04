@@ -15,9 +15,6 @@ type RunItemResult struct {
 func Run(username string) *RunItemResult {
 
 	logger.Printf("Starting worker for: %s...", username)
-
-	// users
-	// TODO: refactor to return single user based username
 	user, err := data.GetAuthedUser(username)
 	if err != nil {
 		return &RunItemResult{
@@ -26,7 +23,6 @@ func Run(username string) *RunItemResult {
 		}
 	}
 
-	// run
 	return refreshUser(user)
 
 }

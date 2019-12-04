@@ -18,7 +18,7 @@ var (
 
 func main() {
 
-	//gin.SetMode(gin.ReleaseMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	// router
 	r := gin.Default()

@@ -1,19 +1,23 @@
 #!/bin/bash
 
 # Cloud Run
-export APP_NAME="tweethingz"
-export APP_REGION="us-central1"
-export IMAGE_VERSION="0.6.6"
+export SERVICE_REGION="us-central1"
+export SERVICE_VERSION="0.2.2"
+export SERVICE_SCHEDULE="every 30 mins"
 
 # Cloud SQL
-export DB_INSTANCE=${APP_NAME}
-export DB_NODE_TIER="db-n1-standard-1"
-export DB_NODE_ZONE="${APP_REGION}-a"
+export DB_VM="db-n1-standard-1"
+export DB_ZONE="${SERVICE_REGION}-a"
 
 # Twitter API
-export TCK=$TW_CONSUMER_KEY
-export TCS=$TW_CONSUMER_SECRET
+export TW_USER="mchmarny"
+export TW_KEY=$TW_CONSUMER_KEY
+export TW_SECRET=$TW_CONSUMER_SECRET
 
-# Derived (don't edit)
+# ====================================================================#
+# Derived values (don't edit)                                         #
+# ====================================================================#
+export SERVICE_NAME="tweethingz2"
 export PROJECT_ID=$(gcloud config get-value project)
-export APP_SA="${APP_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+export SA_EMAIL="${SERVICE_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+export CONF_DIR="${HOME}/.${SERVICE_NAME}"

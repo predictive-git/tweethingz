@@ -3,8 +3,6 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-export PROJECT_ID=$(gcloud config get-value project)
-
 # api
 gcloud services enable --quiet \
     compute.googleapis.com \
@@ -14,51 +12,51 @@ gcloud services enable --quiet \
     run.googleapis.com \
     sqladmin.googleapis.com
 
-# passwords
-mkdir -p $DB_CONF_DIR
-echo "$(openssl rand -base64 32)" > "${DB_CONF_DIR}/root_password"
-echo "$(openssl rand -base64 32)" > "${DB_CONF_DIR}/app_password"
-echo "root and app user passwords saved in:"
-echo ${DB_CONF_DIR}
+# create passwords and tokens
+mkdir -p $CONF_DIR
+echo "$(openssl rand -base64 32)" > "${CONF_DIR}/db_password"
+echo "$(openssl rand -base64 32)" > "${CONF_DIR}/service_token"
+echo "db password and app token saved in:"
+echo ${CONF_DIR}
 
 
 # cloud run running service account
-gcloud iam service-accounts create $APP_NAME \
-    --display-name "service account for ${APP_NAME}"
+gcloud iam service-accounts create $SERVICE_NAME \
+    --display-name "service account for ${SERVICE_NAME}"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-	--member "serviceAccount:${APP_SA}" \
+	--member "serviceAccount:${SA_EMAIL}" \
     --role roles/logging.logWriter
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-	--member "serviceAccount:${APP_SA}" \
+	--member "serviceAccount:${SA_EMAIL}" \
     --role roles/cloudtrace.agent
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-	--member "serviceAccount:${APP_SA}" \
+	--member "serviceAccount:${SA_EMAIL}" \
     --role roles/monitoring.metricWriter
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-	--member "serviceAccount:${APP_SA}" \
+	--member "serviceAccount:${SA_EMAIL}" \
     --role roles/cloudsql.editor
 
 # cloud scheduler executor
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member "serviceAccount:${APP_SA}" \
+    --member "serviceAccount:${SA_EMAIL}" \
     --role roles/cloudscheduler.serviceAgent
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-    --member "serviceAccount:${APP_SA}" \
+    --member "serviceAccount:${SA_EMAIL}" \
     --role roles/run.invoker
 
 
 # cloud sql instance
-gcloud sql instances create $DB_INSTANCE \
+gcloud sql instances create $SERVICE_NAME \
     --database-version MYSQL_5_6 \
-    --tier $DB_NODE_TIER \
+    --tier $DB_VM \
     --activation-policy ALWAYS \
     --availability-type zonal \
-    --zone $DB_NODE_ZONE \
+    --zone $DB_ZONE \
     --enable-bin-log \
     --storage-size 40GB \
     --storage-type SSD \
@@ -71,17 +69,21 @@ gcloud sql instances create $DB_INSTANCE \
 
 
 # database
-gcloud sql databases create $APP_NAME \
-    --instance $DB_INSTANCE
+gcloud sql databases create tweethingz \
+    --instance $SERVICE_NAME
 
 # reset root password
 gcloud sql users set-password root \
-    --instance $DB_INSTANCE \
-    --password=$(<"${DB_CONF_DIR}/root_password") \
+    --instance $SERVICE_NAME \
+    --password=$(<"${CONF_DIR}/db_password") \
     --host %
 
-# create an app user
-gcloud sql users create $APP_NAME \
-    --instance $DB_INSTANCE \
-    --password=$(<"${DB_CONF_DIR}/app_password") \
-    --host %
+EXTERNAL_ID=$(curl https://ipinfo.io/ip)
+
+echo "
+Add your external IP to the instance network:
+1. Navigate to:
+   https://console.cloud.google.com/sql/instances/${SERVICE_NAME}/connections?project=${PROJECT_ID}
+2. Click add Network and enter this in network field:
+   ${EXTERNAL_ID}/32
+"

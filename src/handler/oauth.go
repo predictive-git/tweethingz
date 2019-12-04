@@ -31,8 +31,8 @@ const (
 var (
 	logger                   = log.New(os.Stdout, "handler: ", 0)
 	authedUserCookieDuration = 30 * 24 * 60
-	consumerKey              = env.MustGetEnvVar("TCK", "")
-	consumerSecret           = env.MustGetEnvVar("TCS", "")
+	consumerKey              = env.MustGetEnvVar("TW_KEY", "")
+	consumerSecret           = env.MustGetEnvVar("TW_SECRET", "")
 )
 
 func getOAuthService(r *http.Request) *oauth1a.Service {

@@ -5,4 +5,4 @@ README.md
 .gitignore
 *_test.go
 coverage.out
-bin/tweethingz
+bin/service
