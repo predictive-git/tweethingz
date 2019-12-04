@@ -1,0 +1,14 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+export RELEASE="${IMAGE_VERSION}"
+export DB_PASSWORD=$(<"${HOME}/.cloud-sql/${PROJECT_ID}/${APP_NAME}/app_password")
+export DSN="${APP_NAME}:${DB_PASSWORD}@tcp(35.239.149.4:3306)/${APP_NAME}?parseTime=true"
+export GO111MODULE=on
+
+go mod tidy
+go mod vendor
+
+go run src/main.go

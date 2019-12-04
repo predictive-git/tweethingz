@@ -1,34 +1,19 @@
 #!/bin/bash
 
-# setup
-export TW_DEBUG=true
+# Cloud Run
 export APP_NAME="tweethingz"
 export APP_REGION="us-central1"
 export IMAGE_VERSION="0.6.6"
+
+# Cloud SQL
 export DB_INSTANCE=${APP_NAME}
 export DB_NODE_TIER="db-n1-standard-1"
 export DB_NODE_ZONE="${APP_REGION}-a"
-export VM_TYPE="n1-standard-1"
-export VM_ZONE="${APP_REGION}-a"
-
-# Cloud SQL DB
-# export TW_DSN=""
 
 # Twitter API
-# export TW_CONSUMER_KEY=""
-# export TW_CONSUMER_SECRET=""
+export TCK=$TW_CONSUMER_KEY
+export TCS=$TW_CONSUMER_SECRET
 
-# Worker Service
-export TW_CONCURENT_REFRESH_LIMIT=3
-
-# Derived
-export DB_CONF_DIR="${HOME}/.cloud-sql/${PROJECT_ID}/${DB_INSTANCE}"
+# Derived (don't edit)
+export PROJECT_ID=$(gcloud config get-value project)
 export APP_SA="${APP_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
-
-
-
-
-
-
-
-

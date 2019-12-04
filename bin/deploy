@@ -1,0 +1,42 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+export PROJECT_ID=$(gcloud config get-value project)
+
+# build ui image
+
+go mod tidy
+go mod vendor
+
+gcloud builds submit \
+    --tag "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}"
+
+# parse ui service cofnig
+
+VARS="RELEASE=${IMAGE_VERSION}"
+
+# DSN
+VARS+=",DSN=${APP_NAME}:"
+VARS+=$(<"${DB_CONF_DIR}/app_password")
+VARS+="@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?parseTime=true"
+
+export DB_PASSWORD=$(<"${HOME}/.cloud-sql/${PROJECT_ID}/${APP_NAME}/app_password")
+export DSN="DSN=${APP_NAME}:${DB_PASSWORD}@unix(/cloudsql/${PROJECT_ID}:${APP_REGION}:${DB_INSTANCE})/${APP_NAME}?parseTime=true"
+
+
+# TW
+VARS+=",TW_CONSUMER_KEY=${TW_CONSUMER_KEY}"
+VARS+=",TW_CONSUMER_SECRET=${TW_CONSUMER_SECRET}"
+
+# deploy ui service
+
+gcloud beta run deploy $APP_NAME \
+	--image "gcr.io/${PROJECT_ID}/${APP_NAME}-ui:${IMAGE_VERSION}" \
+	--service-account $APP_SA \
+	--allow-unauthenticated \
+	--platform managed \
+	--region $APP_REGION \
+	--set-cloudsql-instances $DB_INSTANCE \
+	--set-env-vars $VARS
