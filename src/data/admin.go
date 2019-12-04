@@ -91,10 +91,10 @@ func SaveAuthUser(user *AuthedUser) error {
 	}
 
 	_, err := db.Exec(`INSERT INTO authed_users (
-			username, user_id, access_token_key, access_token_secret, updated_on
-			) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE
+			username, access_token_key, access_token_secret, updated_on
+			) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE
 			access_token_key = ?, access_token_secret = ?, updated_on = ?`,
-		user.Username, user.UserID, user.AccessTokenKey, user.AccessTokenSecret,
+		user.Username, user.AccessTokenKey, user.AccessTokenSecret,
 		user.UpdatedAt, user.AccessTokenKey, user.AccessTokenSecret, user.UpdatedAt)
 
 	if err != nil {
@@ -118,13 +118,13 @@ func GetAuthedUser(email string) (user *AuthedUser, err error) {
 		return nil, err
 	}
 
-	row := db.QueryRow(`SELECT username, user_id, access_token_key,
+	row := db.QueryRow(`SELECT username, access_token_key,
 						access_token_secret, updated_on
 						FROM authed_users
 						WHERE username = ?`, email)
 
 	u := &AuthedUser{}
-	err = row.Scan(&u.Username, &u.UserID, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
+	err = row.Scan(&u.Username, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error parsing authed user")
 	}
@@ -140,7 +140,7 @@ func GetAuthedUsers() (users []*AuthedUser, err error) {
 		return nil, err
 	}
 
-	rows, e := db.Query(`SELECT username, user_id, access_token_key,
+	rows, e := db.Query(`SELECT username, access_token_key,
 						access_token_secret, updated_on
 						FROM authed_users
 						ORDER BY updated_on DESC`)
@@ -151,7 +151,7 @@ func GetAuthedUsers() (users []*AuthedUser, err error) {
 	list := []*AuthedUser{}
 	for rows.Next() {
 		u := &AuthedUser{}
-		e = rows.Scan(&u.Username, &u.UserID, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
+		e = rows.Scan(&u.Username, &u.AccessTokenKey, &u.AccessTokenSecret, &u.UpdatedAt)
 		if e != nil {
 			return nil, errors.Wrap(e, "Error parsing authed users")
 		}

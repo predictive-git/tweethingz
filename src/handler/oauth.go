@@ -109,6 +109,7 @@ func AuthCallbackHandler(c *gin.Context) {
 		return
 	}
 
+	// TODO: make the session age decision here
 	content, err := data.GetAuthSession(sessionID, 20)
 	if err != nil || content == "" {
 		err := errors.Wrapf(err, "Unable to find auth config for this sessions ID: %s", sessionID)
@@ -150,7 +151,6 @@ func AuthCallbackHandler(c *gin.Context) {
 
 	authedUser := &data.AuthedUser{
 		Username:          userConfig.AccessValues.Get("screen_name"),
-		UserID:            userConfig.AccessValues.Get("user_id"),
 		AccessTokenKey:    userConfig.AccessTokenKey,
 		AccessTokenSecret: userConfig.AccessTokenSecret,
 		UpdatedAt:         time.Now(),

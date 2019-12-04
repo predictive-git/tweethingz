@@ -25,9 +25,9 @@ const (
 
 var (
 	logger = log.New(os.Stdout, "data: ", 0)
-	dsn = env.MustGetEnvVar("DSN", "")
+	dsn    = env.MustGetEnvVar("DSN", "")
 
-	db     *sql.DB
+	db *sql.DB
 )
 
 func initDB() error {
@@ -91,7 +91,6 @@ type AuthedUser struct {
 
 	// User details
 	Username string `json:"username"`
-	UserID   string `json:"user_id"`
 
 	AccessTokenKey    string `json:"access_token_key"`
 	AccessTokenSecret string `json:"access_token_secret"`
