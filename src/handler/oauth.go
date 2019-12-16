@@ -16,7 +16,7 @@ import (
 
 	"github.com/kurrik/oauth1a"
 	"github.com/mchmarny/gcputil/env"
-	"github.com/mchmarny/tweethingz/src/data"
+	"github.com/mchmarny/tweethingz/src/store"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,7 +30,8 @@ const (
 
 var (
 	logger                   = log.New(os.Stdout, "handler: ", 0)
-	authedUserCookieDuration = 30 * 24 * 60
+	authedUserCookieDuration = 30 * 24 * 60 // sec
+	maxSessionAge            = 5.0          // min
 	consumerKey              = env.MustGetEnvVar("TW_KEY", "")
 	consumerSecret           = env.MustGetEnvVar("TW_SECRET", "")
 )
@@ -44,7 +45,6 @@ func getOAuthService(r *http.Request) *oauth1a.Service {
 	}
 
 	baseURL := fmt.Sprintf("%s://%s", proto, r.Host)
-	logger.Printf("External URL: %s", baseURL)
 
 	return &oauth1a.Service{
 		RequestURL:   "https://api.twitter.com/oauth/request_token",
@@ -73,26 +73,27 @@ func AuthLoginHandler(c *gin.Context) {
 	httpClient := new(http.Client)
 	userConfig := &oauth1a.UserConfig{}
 	if err := userConfig.GetRequestToken(service, httpClient); err != nil {
-		err := errors.Wrap(err, "Could not get request token")
+		err := errors.Wrap(err, "could not get request token")
 		errorHandler(c, err, http.StatusInternalServerError)
 		return
 	}
 
 	url, err := userConfig.GetAuthorizeURL(service)
 	if err != nil {
-		err := errors.Wrap(err, "Could not get authorization URL")
+		err := errors.Wrap(err, "could not get authorization URL")
 		errorHandler(c, err, http.StatusInternalServerError)
 		return
 	}
 
-	logger.Printf("Redirecting user to %s", url)
+	authSession := &store.AuthSession{
+		ID:     getNewSessionID(),
+		Config: userConfigToString(userConfig),
+		On:     time.Now().UTC(),
+	}
 
-	sessionID := getNewSessionID()
-	log.Printf("Starting session %s", sessionID)
+	store.SaveAuthSession(c.Request.Context(), authSession)
 
-	data.SaveAuthSession(sessionID, userConfigToString(userConfig))
-
-	c.SetCookie(authIDCookieName, sessionID, 60, "/", c.Request.Host, false, true)
+	c.SetCookie(authIDCookieName, authSession.ID, 60, "/", c.Request.Host, false, true)
 
 	c.Redirect(http.StatusFound, url)
 
@@ -101,25 +102,31 @@ func AuthLoginHandler(c *gin.Context) {
 // AuthCallbackHandler ...
 func AuthCallbackHandler(c *gin.Context) {
 
-	logger.Println("Auth callback...")
 	sessionID, err := c.Cookie(authIDCookieName)
 	if err != nil {
-		err := errors.Wrap(err, "Error, callback with no session id")
+		err := errors.Wrap(err, "callback with no session id")
 		errorHandler(c, err, http.StatusUnauthorized)
 		return
 	}
 
 	// TODO: make the session age decision here
-	content, err := data.GetAuthSession(sessionID, 20)
-	if err != nil || content == "" {
-		err := errors.Wrapf(err, "Unable to find auth config for this sessions ID: %s", sessionID)
+	authSession, err := store.GetAuthSession(c.Request.Context(), sessionID)
+	if err != nil || authSession == nil {
+		err := errors.Wrapf(err, "unable to find auth config for this sessions ID: %s", sessionID)
 		errorHandler(c, err, http.StatusUnauthorized)
 		return
 	}
 
-	userConfig, err := userConfigFromString(content)
+	sessionAge := time.Now().UTC().Sub(authSession.On)
+	if sessionAge.Minutes() > maxSessionAge {
+		err := errors.Wrapf(err, "session %s expired. Age %v, expected %f min", sessionAge, maxSessionAge, maxSessionAge)
+		errorHandler(c, err, http.StatusUnauthorized)
+		return
+	}
+
+	userConfig, err := userConfigFromString(authSession.Config)
 	if err != nil {
-		err := errors.New("Error decoding user config in sessions storage")
+		err := errors.New("error decoding user config in sessions storage")
 		errorHandler(c, err, http.StatusUnauthorized)
 		return
 	}
@@ -128,36 +135,35 @@ func AuthCallbackHandler(c *gin.Context) {
 
 	token, verifier, err := userConfig.ParseAuthorize(c.Request, service)
 	if err != nil {
-		err := errors.Wrap(err, "Error, Could not parse authorization")
+		err := errors.Wrap(err, "could not parse authorization")
 		errorHandler(c, err, http.StatusInternalServerError)
 		return
 	}
 
 	httpClient := new(http.Client)
 	if err = userConfig.GetAccessToken(token, verifier, service, httpClient); err != nil {
-		err := errors.Wrap(err, "Error getting access token")
+		err := errors.Wrap(err, "error getting access token")
 		errorHandler(c, err, http.StatusInternalServerError)
 		return
 	}
 
-	logger.Printf("Ending session %s", sessionID)
-	if err := data.DeleteAuthSession(sessionID); err != nil {
-		err := errors.Wrap(err, "Error deleting session")
+	if err := store.DeleteAuthSession(c.Request.Context(), sessionID); err != nil {
+		err := errors.Wrap(err, "error deleting session")
 		errorHandler(c, err, http.StatusInternalServerError)
 		return
 	}
 
 	c.SetCookie(authIDCookieName, "", 0, "/", c.Request.Host, false, true)
 
-	authedUser := &data.AuthedUser{
+	authedUser := &store.AuthedUser{
 		Username:          userConfig.AccessValues.Get("screen_name"),
 		AccessTokenKey:    userConfig.AccessTokenKey,
 		AccessTokenSecret: userConfig.AccessTokenSecret,
 		UpdatedAt:         time.Now(),
 	}
 
-	if err = data.SaveAuthUser(authedUser); err != nil {
-		e := errors.Wrap(err, "Error saving authenticated user")
+	if err = store.SaveAuthUser(c.Request.Context(), authedUser); err != nil {
+		e := errors.Wrap(err, "error saving authenticated user")
 		errorHandler(c, e, http.StatusInternalServerError)
 		return
 	}
@@ -182,7 +188,7 @@ func getNewSessionID() string {
 	b := make([]byte, c)
 	n, err := io.ReadFull(rand.Reader, b)
 	if n != len(b) || err != nil {
-		panic("Could not generate random number")
+		panic("could not generate random number")
 	}
 	return base64.URLEncoding.EncodeToString(b)
 }

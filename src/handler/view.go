@@ -43,14 +43,14 @@ func errorHandler(c *gin.Context, err error, code int) {
 // ViewHandler ...
 func ViewHandler(c *gin.Context) {
 
-	uid, _ := c.Cookie(userIDCookieName)
-	if uid == "" {
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
 		c.Redirect(http.StatusSeeOther, "/")
 		return
 	}
 
 	c.HTML(http.StatusOK, "view", gin.H{
-		"twitter_username": uid,
+		"twitter_username": username,
 		"version":          version,
 	})
 

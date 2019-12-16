@@ -10,11 +10,10 @@ gcloud services enable --quiet \
     iam.googleapis.com \
     containerregistry.googleapis.com \
     run.googleapis.com \
-    sqladmin.googleapis.com
+    firestore.googleapis.com
 
 # create passwords and tokens
 mkdir -p $CONF_DIR
-echo "$(openssl rand -base64 32)" > "${CONF_DIR}/db_password"
 echo "$(openssl rand -base64 32)" > "${CONF_DIR}/service_token"
 echo "db password and app token saved in:"
 echo ${CONF_DIR}
@@ -38,7 +37,7 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
 	--member "serviceAccount:${SA_EMAIL}" \
-    --role roles/cloudsql.editor
+    --role roles/datastore.user
 
 # cloud scheduler executor
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -48,42 +47,3 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member "serviceAccount:${SA_EMAIL}" \
     --role roles/run.invoker
-
-
-# cloud sql instance
-gcloud sql instances create $SERVICE_NAME \
-    --database-version MYSQL_5_6 \
-    --tier $DB_VM \
-    --activation-policy ALWAYS \
-    --availability-type zonal \
-    --zone $DB_ZONE \
-    --enable-bin-log \
-    --storage-size 40GB \
-    --storage-type SSD \
-    --storage-auto-increase \
-    --backup \
-    --backup-start-time 03:00 \
-    --maintenance-release-channel PRODUCTION \
-    --maintenance-window-day SUN \
-    --maintenance-window-hour 2
-
-
-# database
-gcloud sql databases create tweethingz \
-    --instance $SERVICE_NAME
-
-# reset root password
-gcloud sql users set-password root \
-    --instance $SERVICE_NAME \
-    --password=$(<"${CONF_DIR}/db_password") \
-    --host %
-
-EXTERNAL_ID=$(curl https://ipinfo.io/ip)
-
-echo "
-Add your external IP to the instance network:
-1. Navigate to:
-   https://console.cloud.google.com/sql/instances/${SERVICE_NAME}/connections?project=${PROJECT_ID}
-2. Click add Network and enter this in network field:
-   ${EXTERNAL_ID}/32
-"

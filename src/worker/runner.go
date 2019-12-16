@@ -1,105 +1,89 @@
 package worker
 
 import (
-	"github.com/mchmarny/tweethingz/src/data"
+	"context"
+	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/pkg/errors"
+	"time"
 )
 
 // RunItemResult represent run item result
 type RunItemResult struct {
-	ForUser *data.AuthedUser
+	ForUser *store.AuthedUser
 	Error   error
 }
 
 // Run runs the background service
-func Run(username string) *RunItemResult {
+func Run(ctx context.Context, username string) error {
 
-	logger.Printf("Starting worker for: %s...", username)
-	user, err := data.GetAuthedUser(username)
+	logger.Printf("Starting worker for %s...", username)
+	forUser, err := store.GetAuthedUser(ctx, username)
 	if err != nil {
-		return &RunItemResult{
-			Error:   errors.Wrap(err, "Error getting authed users"),
-			ForUser: user,
-		}
+		errors.Wrapf(err, "error getting authed user for: %s", username)
 	}
 
-	return refreshUser(user)
+	logger.Printf("Refreshing twitter details for %s...", forUser.Username)
+	if err := refreshUserDetails(ctx, forUser); err != nil {
+		return errors.Wrapf(err, "error getting twitter %s deails", forUser.Username)
+	}
+
+	logger.Printf("Getting %s twitter followers...", forUser.Username)
+	currentFollowerIDs, err := getFollowerIDs(forUser)
+	if err != nil {
+		return errors.Wrap(err, "error getting follower IDs")
+	}
+
+	logger.Printf("Getting previous day state for %s...", forUser.Username)
+	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterdayState, err := store.GetDailyFollowerState(ctx, forUser.Username, yesterday)
+	if err != nil {
+		return errors.Wrap(err, "error getting yesterday state")
+	}
+
+	logger.Printf("Building current state for %s...", forUser.Username)
+	newDailyState := store.NewDailyFollowerState(forUser.Username, time.Now())
+	newDailyState.Followers = currentFollowerIDs
+	newDailyState.FollowerCount = len(currentFollowerIDs)
+
+	logger.Printf("Deriving new followers for %s...", forUser.Username)
+	newFollowerIDs := getArrayDiff(yesterdayState.Followers, newDailyState.Followers)
+	newDailyState.NewFollowerCount = len(newFollowerIDs)
+
+	logger.Printf("Process new followers for %s...", forUser.Username)
+	if err := pageDownloadFollowerDetail(ctx, forUser, store.FollowedEventType, newFollowerIDs); err != nil {
+		return errors.Wrapf(err, "error downloading new follower detail for %s",
+			forUser.Username)
+	}
+
+	logger.Printf("Deriving unfollowers for %s...", forUser.Username)
+	newUnfollowerIDs := getArrayDiff(newDailyState.Followers, yesterdayState.Followers)
+	newDailyState.UnfollowerCount = len(newUnfollowerIDs)
+
+	logger.Printf("Process unfollowers for %s...", forUser.Username)
+	if err := pageDownloadFollowerDetail(ctx, forUser, store.UnfollowedEventType, newUnfollowerIDs); err != nil {
+		return errors.Wrapf(err, "error downloading unfollower detail for %s",
+			forUser.Username)
+	}
+
+	logger.Printf("Saving current state for %s...", forUser.Username)
+	err = store.SaveDailyFollowerState(ctx, newDailyState)
+	if err != nil {
+		return errors.Wrap(err, "error saving daily state")
+	}
+
+	return nil
 
 }
 
-func errorToMessage(err error) string {
-	if err == nil {
-		return "success"
-	}
-	return err.Error()
-}
-
-func refreshUser(forUser *data.AuthedUser) *RunItemResult {
-
-	logger.Printf("Starting refresh for %s", forUser.Username)
-
-	logger.Printf("Refreshing %s details...", forUser.Username)
-	if err := refreshUserDetails(forUser); err != nil {
-		return &RunItemResult{
-			ForUser: forUser,
-			Error: errors.Wrapf(err, "Error getting %s deails",
-				forUser.Username),
-		}
-	}
-
-	logger.Printf("Refreshing %s followers...", forUser.Username)
-	if err := refreshUserFollowers(forUser); err != nil {
-		return &RunItemResult{
-			ForUser: forUser,
-			Error: errors.Wrapf(err, "Error refreshing follower IDs for %s",
-				forUser.Username),
-		}
-	}
-
-	logger.Printf("Reconciling new followers for %s...", forUser.Username)
-	if err := reconcileNewFollowers(forUser); err != nil {
-		return &RunItemResult{
-			ForUser: forUser,
-			Error: errors.Wrapf(err, "Error reconciling new followers for %s",
-				forUser.Username),
-		}
-	}
-
-	logger.Printf("Reconciling stopped followers for %s...", forUser.Username)
-	if err := reconcileStoppedFollowers(forUser); err != nil {
-		return &RunItemResult{
-			ForUser: forUser,
-			Error: errors.Wrapf(err, "Error reconciling stopped followers for %s",
-				forUser.Username),
-		}
-	}
-
-	logger.Printf("Download missing follower detail for %s...", forUser.Username)
-	if err := downloadMissingFollowerDetail(forUser); err != nil {
-		return &RunItemResult{
-			ForUser: forUser,
-			Error: errors.Wrapf(err, "Error downloading missing follower detail for %s",
-				forUser.Username),
-		}
-	}
-
-	// final result
-	return &RunItemResult{
-		ForUser: forUser,
-		Error:   nil,
-	}
-
-}
-
-func refreshUserDetails(forUser *data.AuthedUser) error {
+func refreshUserDetails(ctx context.Context, forUser *store.AuthedUser) error {
 	// this returns array of 1
 	users, err := GetUserDetails(forUser)
 	if err != nil {
 		return errors.Wrap(err, "Error getting user details")
 	}
 
-	// save details
-	err = data.SaveUsers(users)
+	// save tweeter details for the authed user
+	err = store.SaveUsers(ctx, users)
 	if err != nil {
 		return errors.Wrap(err, "Error saving new follower events")
 	}
@@ -107,112 +91,7 @@ func refreshUserDetails(forUser *data.AuthedUser) error {
 	return nil
 }
 
-func refreshUserFollowers(forUser *data.AuthedUser) error {
-
-	logger.Printf("Getting %s followers...", forUser.Username)
-	ids, err := GetFollowerIDs(forUser)
-	if err != nil {
-		return errors.Wrap(err, "Error getting follower IDs")
-	}
-
-	// followers right now
-	logger.Printf("Saving %d followers for %s...", len(ids), forUser.Username)
-	err = data.SaveUserFollowersIDs(forUser.Username, ids)
-	if err != nil {
-		return errors.Wrap(err, "Error saving followers")
-	}
-
-	return nil
-}
-
-func reconcileNewFollowers(forUser *data.AuthedUser) error {
-
-	logger.Printf("Getting new followes for %s ...", forUser.Username)
-	list, err := data.GetNewFollowerIDs(forUser.Username)
-	if err != nil {
-		return errors.Wrap(err, "Error getting new followes")
-	}
-
-	logger.Printf("Found %d new followers for %s", len(list), forUser.Username)
-
-	if len(list) > 0 {
-		err = updateFollowerDetailByEvent(forUser, data.EventNewFollower, list)
-		if err != nil {
-			return errors.Wrap(err, "Error saving users details")
-		}
-	}
-
-	return nil
-}
-
-func reconcileStoppedFollowers(forUser *data.AuthedUser) error {
-
-	logger.Printf("Getting stopped followes for %s ...", forUser.Username)
-	list, err := data.GetStopFollowerIDs(forUser.Username)
-	if err != nil {
-		return errors.Wrap(err, "Error getting stopped followes")
-	}
-	logger.Printf("Found %d stopped followers for %s", len(list), forUser.Username)
-
-	if len(list) > 0 {
-		err = updateFollowerDetailByEvent(forUser, data.EventUnFollowing, list)
-		if err != nil {
-			return errors.Wrap(err, "Error saving users details")
-		}
-	}
-
-	return nil
-}
-
-func updateFollowerDetailByEvent(forUser *data.AuthedUser, eventType string, ids []int64) error {
-
-	err := data.SaveFollowerEvents(forUser.Username, eventType, ids)
-	if err != nil {
-		return errors.Wrapf(err, "Error saving events: %s for %s", eventType, forUser.Username)
-	}
-
-	return pageDownloadFollowerDetail(forUser, ids)
-
-}
-
-func saveFollowerDetailPage(forUser *data.AuthedUser, ids []int64) error {
-
-	if len(ids) == 0 {
-		return nil
-	}
-
-	// details
-	users, err := GetUsersFromIDs(forUser, ids)
-	if err != nil {
-		return errors.Wrap(err, "Error getting users details")
-	}
-
-	// save details
-	err = data.SaveUsers(users)
-	if err != nil {
-		return errors.Wrap(err, "Error saving new follower events")
-	}
-
-	logger.Printf("Saved %d user details for %s", len(ids), forUser.Username)
-
-	return nil
-}
-
-func downloadMissingFollowerDetail(forUser *data.AuthedUser) error {
-
-	logger.Printf("Getting ids of followers missing detail for %s ...", forUser.Username)
-	ids, err := data.GetFollowersWithoutDetail(forUser.Username)
-	if err != nil {
-		return errors.Wrap(err, "Error getting ids of followers missing detail")
-	}
-
-	logger.Printf("Found %d ids of followers missing detail for %s", len(ids), forUser.Username)
-
-	return pageDownloadFollowerDetail(forUser, ids)
-
-}
-
-func pageDownloadFollowerDetail(forUser *data.AuthedUser, ids []int64) error {
+func pageDownloadFollowerDetail(ctx context.Context, forUser *store.AuthedUser, eventType string, ids []int64) error {
 
 	if len(ids) == 0 {
 		return nil
@@ -224,7 +103,7 @@ func pageDownloadFollowerDetail(forUser *data.AuthedUser, ids []int64) error {
 	for _, id := range ids {
 		pageIDs = append(pageIDs, id)
 		if len(pageIDs) == 100 { //max twitter page size
-			err := saveFollowerDetailPage(forUser, pageIDs)
+			err := saveFollowerDetails(ctx, forUser, eventType, pageIDs)
 			if err != nil {
 				return err
 			}
@@ -234,7 +113,7 @@ func pageDownloadFollowerDetail(forUser *data.AuthedUser, ids []int64) error {
 
 	// process left overs
 	if len(pageIDs) > 0 { //are there any left over?
-		err := saveFollowerDetailPage(forUser, pageIDs)
+		err := saveFollowerDetails(ctx, forUser, eventType, pageIDs)
 		if err != nil {
 			return err
 		}
@@ -242,4 +121,39 @@ func pageDownloadFollowerDetail(forUser *data.AuthedUser, ids []int64) error {
 
 	return nil
 
+}
+
+func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventType string, ids []int64) error {
+
+	if len(ids) == 0 {
+		return nil
+	}
+
+	// details
+	users, err := GetUsersFromIDs(forUser, ids)
+	if err != nil {
+		return errors.Wrap(err, "error getting users details")
+	}
+
+	// save details
+	if err = store.SaveUsers(ctx, users); err != nil {
+		return errors.Wrap(err, "error saving users")
+	}
+
+	events := make([]*store.SimpleUserEvent, 0)
+	for _, u := range users {
+		ue := &store.SimpleUserEvent{
+			EventDate:  time.Now(),
+			EventType:  eventType,
+			SimpleUser: *u,
+		}
+		events = append(events, ue)
+	}
+
+	// save events
+	if err = store.SaveUserEvents(ctx, events); err != nil {
+		return errors.Wrap(err, "error saving events")
+	}
+
+	return nil
 }

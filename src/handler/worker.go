@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/mchmarny/gcputil/env"
 	"github.com/mchmarny/tweethingz/src/worker"
 
@@ -35,9 +36,17 @@ func WorkerHandler(c *gin.Context) {
 	}
 
 	logger.Printf("Starting worker for: %s...", user)
-	result := worker.Run(user)
-	logger.Printf("Result: %+v", result)
+	if err := worker.Run(c.Request.Context(), user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error running worker",
+			"status":  "Internal Error",
+		})
+		return
+	}
 
-	c.JSON(http.StatusOK, result)
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("%s data refreshed", user),
+		"status":  "Success",
+	})
 
 }

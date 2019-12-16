@@ -5,11 +5,11 @@ DIR="$(dirname "$0")"
 
 
 VARS="RELEASE=${SERVICE_VERSION}"
-VARS+=",DSN=${SERVICE_NAME}:"
-VARS+=$(<"${CONF_DIR}/db_password")
-VARS+="@unix(/cloudsql/${PROJECT_ID}:${SERVICE_REGION}:${SERVICE_NAME})/tweethingz?parseTime=true"
-VARS+=",TW_KEY=${TW_KEY}"
-VARS+=",TW_SECRET=${TW_SECRET}"
+VARS+=",TW_KEY=${TW_CONSUMER_KEY}"
+VARS+=",TW_SECRET=${TW_CONSUMER_SECRET}"
+
+SERVICE_TOKEN=$(<"${CONF_DIR}/service_token")
+VARS+=",TOKEN=${SERVICE_TOKEN}"
 
 # deploy
 gcloud beta run deploy $SERVICE_NAME \
@@ -22,7 +22,6 @@ gcloud beta run deploy $SERVICE_NAME \
     --memory 512Mi \
 	--labels "release=${SERVICE_VERSION//./-}" \
 	--region $APP_REGION \
-	--set-cloudsql-instances $SERVICE_NAME \
 	--set-env-vars $VARS
 
 # policy

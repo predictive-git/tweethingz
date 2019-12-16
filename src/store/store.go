@@ -3,59 +3,77 @@ package store
 import (
 	"log"
 	"os"
-	"time"
 
 	"context"
 	"errors"
 	"fmt"
-	"github.com/mchmarny/gcputil/env"
 	"hash/fnv"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 
 	"cloud.google.com/go/firestore"
 	"github.com/mchmarny/gcputil/project"
 )
 
 const (
-	isoDateFormat         = "2006-01-02"
-	collectionDefaultName = "tweethingz"
-	recordIDPrefix        = "id-"
-
-	// EventNewFollower event type
-	EventNewFollower = "followed"
-	// EventUnFollowing event type
-	EventUnFollowing = "unfollowed"
+	isoDateFormat  = "2006-01-02"
+	recordIDPrefix = "id-"
 )
 
 var (
-	logger         = log.New(os.Stdout, "data: ", 0)
-	collectionName = env.MustGetEnvVar("DB_NAME", collectionDefaultName)
-	storePath      = env.MustGetEnvVar("DB_PATH", "")
-	projectID      = project.GetIDOrFail()
-
-	errNilDocRef = errors.New("firestore: nil DocumentRef")
-
+	logger    = log.New(os.Stdout, "data: ", 0)
+	projectID = project.GetIDOrFail()
 	fsClient  *firestore.Client
-	stateColl *firestore.CollectionRef
+
+	// ErrDataNotFound is thrown when query does not find the requested data
+	ErrDataNotFound = errors.New("Data not found")
 )
 
-func initStore(ctx context.Context) error {
+func getClient(ctx context.Context) (client *firestore.Client, err error) {
 
-	c, err := firestore.NewClient(ctx, projectID)
-	if err != nil {
-		return fmt.Errorf("Error while creating Firestore client: %v", err)
+	if fsClient == nil {
+		c, err := firestore.NewClient(ctx, projectID)
+		if err != nil {
+			return nil, fmt.Errorf("Error while creating Firestore client: %v", err)
+		}
+		fsClient = c
 	}
-	fsClient = c
-	stateColl = c.Collection(collectionName)
-	return nil
+
+	return fsClient, nil
 }
 
-func deleteByID(ctx context.Context, id string) error {
+func getCollection(ctx context.Context, name string) (col *firestore.CollectionRef, err error) {
+
+	if name == "" {
+		return nil, errors.New("Nil name")
+	}
+
+	c, err := getClient(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("Error while creating Firestore client: %v", err)
+	}
+
+	return c.Collection(name), nil
+}
+
+func deleteByID(ctx context.Context, col, id string) error {
 
 	if id == "" {
 		return errors.New("Nil id")
 	}
 
-	_, err := stateColl.Doc(id).Delete(ctx)
+	c, err := getCollection(ctx, col)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Doc(id).Delete(ctx)
+
+	if grpc.Code(err) == codes.NotFound {
+		return nil
+	}
+
 	if err != nil {
 		return fmt.Errorf("Error getting state: %v", err)
 	}
@@ -63,31 +81,54 @@ func deleteByID(ctx context.Context, id string) error {
 	return nil
 }
 
-func getByID(ctx context.Context, id string, in interface{}) (out interface{}, err error) {
+// IsDataNotFoundError checks boolions on whether the error is result of data not found
+func IsDataNotFoundError(err error) bool {
+	return err != nil && err.Error() == ErrDataNotFound.Error()
+}
+
+func getByID(ctx context.Context, col, id string, in interface{}) error {
 
 	if id == "" {
-		return nil, errors.New("Nil id")
+		return errors.New("Nil id")
 	}
 
-	d, err := stateColl.Doc(id).Get(ctx)
+	c, err := getCollection(ctx, col)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting state: %v", err)
+		return err
+	}
+
+	d, err := c.Doc(id).Get(ctx)
+	if err != nil {
+		if grpc.Code(err) == codes.NotFound {
+			logger.Printf("unable to find record in %s collection with id: %s", col, id)
+			return ErrDataNotFound
+		}
+		return fmt.Errorf("Error getting state: %v", err)
+	}
+
+	if d == nil || d.Data() == nil {
+		return fmt.Errorf("record with id %s found in %s collection but has not data", id, col)
 	}
 
 	if err := d.DataTo(in); err != nil {
-		return nil, fmt.Errorf("Stored data not user: %v", err)
+		return fmt.Errorf("stored data is not of user type: %v", err)
 	}
 
-	return in, nil
+	return nil
 }
 
-func save(ctx context.Context, id string, in interface{}) error {
+func save(ctx context.Context, col, id string, in interface{}) error {
 
 	if in == nil {
 		return errors.New("Nil state")
 	}
 
-	_, err := stateColl.Doc(id).Set(ctx, in)
+	c, err := getCollection(ctx, col)
+	if err != nil {
+		return err
+	}
+
+	_, err = c.Doc(id).Set(ctx, in)
 	if err != nil {
 		return fmt.Errorf("Error on save: %v", err)
 	}
@@ -98,50 +139,4 @@ func toID(query string) string {
 	h := fnv.New32a()
 	h.Write([]byte(query))
 	return fmt.Sprintf("%s%d", recordIDPrefix, h.Sum32())
-}
-
-// SimpleUserEvent wraps simple twitter user as an time event
-type SimpleUserEvent struct {
-	SimpleUser
-	EventDate time.Time `json:"event_at"`
-}
-
-// SimpleUser represents simplified Twitter user
-type SimpleUser struct {
-
-	// ID is global identifier
-	ID string `json:"id"`
-
-	// User details
-	Username     string    `json:"username"`
-	Name         string    `json:"name"`
-	Description  string    `json:"description"`
-	ProfileImage string    `json:"profile_image"`
-	CreatedAt    time.Time `json:"created_at"`
-
-	// geo
-	Lang     string `json:"lang"`
-	Location string `json:"location"`
-	Timezone string `json:"time_zone"`
-
-	// counts
-	PostCount      int `json:"post_count"`
-	FaveCount      int `json:"fave_count"`
-	FollowingCount int `json:"following_count"`
-	FollowerCount  int `json:"followers_count"`
-
-	// Meta
-	UpdatedOn time.Time `json:"updated_on"`
-}
-
-// AuthedUser represents authenticated user
-type AuthedUser struct {
-
-	// User details
-	Username string `json:"username"`
-
-	AccessTokenKey    string `json:"access_token_key"`
-	AccessTokenSecret string `json:"access_token_secret"`
-
-	UpdatedAt time.Time `json:"updated_at"`
 }

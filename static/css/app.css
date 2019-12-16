@@ -156,3 +156,8 @@ tr.user-row td {
 .user-info-desc {
 	font-size: 0.8em;
 }
+
+.user-message {
+	font-size: 1em;
+	text-align: center;
+}

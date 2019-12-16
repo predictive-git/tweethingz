@@ -4,12 +4,12 @@ import (
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
-	"github.com/mchmarny/tweethingz/src/data"
+	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/pkg/errors"
 )
 
 // GetUserDetails retreaves details about the user
-func GetUserDetails(byUser *data.AuthedUser) (users []*data.SimpleUser, err error) {
+func GetUserDetails(byUser *store.AuthedUser) (users []*store.SimpleUser, err error) {
 	logger.Printf("User: %s", byUser.Username)
 	return getUsersByParams(byUser, &twitter.UserLookupParams{
 		ScreenName:      []string{byUser.Username},
@@ -18,7 +18,7 @@ func GetUserDetails(byUser *data.AuthedUser) (users []*data.SimpleUser, err erro
 }
 
 // GetUsersFromIDs retreaves details about the user
-func GetUsersFromIDs(byUser *data.AuthedUser, ids []int64) (users []*data.SimpleUser, err error) {
+func GetUsersFromIDs(byUser *store.AuthedUser, ids []int64) (users []*store.SimpleUser, err error) {
 	logger.Printf("IDs: %d", len(ids))
 	return getUsersByParams(byUser, &twitter.UserLookupParams{
 		UserID:          ids,
@@ -26,14 +26,14 @@ func GetUsersFromIDs(byUser *data.AuthedUser, ids []int64) (users []*data.Simple
 	})
 }
 
-func getUsersByParams(byUser *data.AuthedUser, listParam *twitter.UserLookupParams) (users []*data.SimpleUser, err error) {
+func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupParams) (users []*store.SimpleUser, err error) {
 
 	client, err := getClient(byUser)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error initializing client")
 	}
 
-	list := []*data.SimpleUser{}
+	list := []*store.SimpleUser{}
 	items, resp, err := client.Users.Lookup(listParam)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
@@ -49,8 +49,7 @@ func getUsersByParams(byUser *data.AuthedUser, listParam *twitter.UserLookupPara
 			return nil, errors.Wrapf(err, "Error parsing created timestamp: %s", u.CreatedAt)
 		}
 
-		usr := &data.SimpleUser{
-			ID:             u.IDStr,
+		usr := &store.SimpleUser{
 			Username:       u.ScreenName,
 			Name:           u.Name,
 			Description:    u.Description,
@@ -67,6 +66,43 @@ func getUsersByParams(byUser *data.AuthedUser, listParam *twitter.UserLookupPara
 
 		list = append(list, usr)
 	} // for users loop
+
+	return list, nil
+}
+
+func getFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
+
+	client, err := getClient(byUser)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error initializing client")
+	}
+
+	listParam := &twitter.FollowerIDParams{
+		ScreenName: byUser.Username,
+		Count:      5000, // max per page
+	}
+
+	list := []int64{}
+
+	for {
+		page, resp, err := client.Followers.IDs(listParam)
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error paging follower IDs (%s): %v", resp.Status, err)
+		}
+
+		// debug
+		logger.Printf("Page size:%d, Next:%d\n", len(page.IDs), page.NextCursor)
+
+		list = append(list, page.IDs...)
+
+		// has more IDs?
+		if page.NextCursor < 1 {
+			break
+		}
+
+		// reset cursor
+		listParam.Cursor = page.NextCursor
+	}
 
 	return list, nil
 }

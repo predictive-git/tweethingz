@@ -7,16 +7,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-var (
-	// ErrUserNotFound represents static error when user is not found
-	ErrUserNotFound = errors.New("User not found")
+const (
+	sessionCollectionName = "tweethingz_session_store"
+	authCollectionName    = "tweethingz_auth_user_store"
 )
 
 // AuthSession represents the authenticated user session
 type AuthSession struct {
-	ID     string    `json:"id"`
-	Config string    `json:"config"`
-	On     time.Time `json:"on"`
+	ID     string    `firestore:"id" json:"id"`
+	Config string    `firestore:"config" json:"config"`
+	On     time.Time `firestore:"on" json:"on"`
+}
+
+// AuthedUser represents authenticated user
+type AuthedUser struct {
+
+	// User details
+	Username string `firestore:"username" json:"username"`
+
+	AccessTokenKey    string `firestore:"access_token_key" json:"access_token_key"`
+	AccessTokenSecret string `firestore:"access_token_secret" json:"access_token_secret"`
+
+	UpdatedAt time.Time `firestore:"updated_at" json:"updated_at"`
 }
 
 // SaveAuthSession persists authenticated user session config
@@ -26,11 +38,7 @@ func SaveAuthSession(ctx context.Context, s *AuthSession) error {
 		return errors.New("Nil auh session")
 	}
 
-	if err := initStore(ctx); err != nil {
-		return err
-	}
-
-	if err := save(ctx, toID(s.ID), s); err != nil {
+	if err := save(ctx, sessionCollectionName, toID(s.ID), s); err != nil {
 		return errors.Wrap(err, "Error executing save auth session")
 	}
 
@@ -45,21 +53,13 @@ func GetAuthSession(ctx context.Context, id string) (content *AuthSession, err e
 		return nil, errors.New("Null id parameter")
 	}
 
-	if err := initStore(ctx); err != nil {
-		return nil, err
-	}
-
-	s, e := getByID(ctx, toID(id), AuthSession{})
+	s := &AuthSession{}
+	e := getByID(ctx, sessionCollectionName, toID(id), s)
 	if e != nil {
 		return nil, errors.Wrap(err, "Error getting session")
 	}
 
-	v, ok := s.(AuthSession)
-	if !ok {
-		return nil, errors.New("Retreaved data is not of the AuthSession type")
-	}
-
-	return &v, nil
+	return s, nil
 
 }
 
@@ -70,11 +70,7 @@ func DeleteAuthSession(ctx context.Context, id string) error {
 		return errors.New("Null id parameter")
 	}
 
-	if err := initStore(ctx); err != nil {
-		return err
-	}
-
-	return deleteByID(ctx, toID(id))
+	return deleteByID(ctx, sessionCollectionName, toID(id))
 
 }
 
@@ -85,11 +81,7 @@ func SaveAuthUser(ctx context.Context, u *AuthedUser) error {
 		return errors.New("Nil user argument")
 	}
 
-	if err := initStore(ctx); err != nil {
-		return err
-	}
-
-	if err := save(ctx, toID(u.Username), u); err != nil {
+	if err := save(ctx, authCollectionName, toID(u.Username), u); err != nil {
 		return errors.Wrap(err, "Error executing save auth session")
 	}
 
@@ -97,27 +89,19 @@ func SaveAuthUser(ctx context.Context, u *AuthedUser) error {
 
 }
 
-// GetAuthedUser check if the authed email is in UI users and creates UI event
-func GetAuthedUser(ctx context.Context, email string) (user *AuthedUser, err error) {
+// GetAuthedUser check if the authed username is in UI users and creates UI event
+func GetAuthedUser(ctx context.Context, username string) (user *AuthedUser, err error) {
 
-	if email == "" {
-		return nil, errors.New("Null email or context parameter")
+	if username == "" {
+		return nil, errors.New("username required")
 	}
 
-	if err := initStore(ctx); err != nil {
-		return nil, err
-	}
-
-	u, e := getByID(ctx, toID(email), AuthedUser{})
+	user = &AuthedUser{}
+	e := getByID(ctx, authCollectionName, toID(username), user)
 	if e != nil {
-		return nil, errors.Wrap(err, "Error getting session")
+		return nil, e
 	}
 
-	v, ok := u.(AuthedUser)
-	if !ok {
-		return nil, errors.New("Retreaved data is not of the AuthSession type")
-	}
-
-	return &v, nil
+	return
 
 }
