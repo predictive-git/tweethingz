@@ -64,13 +64,13 @@ func GetAuthSession(ctx context.Context, id string) (content *AuthSession, err e
 }
 
 // DeleteAuthSession deletes session once it has been used
-func DeleteAuthSession(ctx context.Context, id string) error {
+func DeleteAuthSession(ctx context.Context, username string) error {
 
-	if id == "" {
+	if username == "" {
 		return errors.New("Null id parameter")
 	}
 
-	return deleteByID(ctx, sessionCollectionName, toID(id))
+	return deleteByID(ctx, sessionCollectionName, toID(username))
 
 }
 

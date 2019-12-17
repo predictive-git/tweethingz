@@ -3,14 +3,16 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-export RELEASE="${IMAGE_VERSION}"
+go build -a -tags netgo \
+    -ldflags "-w -extldflags -static" \
+    -mod vendor \
+    -o ./service \
+    ./src/
+
+export RELEASE=$SERVICE_VERSION
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
 export TOKEN=$(<"${CONF_DIR}/service_token")
 export GO111MODULE=on
 
-
-go mod tidy
-go mod vendor
-
-go run src/main.go
+./service

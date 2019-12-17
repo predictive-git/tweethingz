@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEchoHandler(t *testing.T) {
+func TestGetDailyFollowerStatesSince(t *testing.T) {
 
 	ctx := context.Background()
 	username := "knativeproject"

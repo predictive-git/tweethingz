@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"cloud.google.com/go/firestore"
@@ -25,6 +26,13 @@ type SimpleUserEvent struct {
 	EventDate time.Time `firestore:"event_at"`
 	EventType string    `firestore:"event_type" json:"event_type"`
 }
+
+// UserEventByDate is a custom data structure for array of SimpleUserEvent
+type UserEventByDate []*SimpleUserEvent
+
+func (s UserEventByDate) Len() int           { return len(s) }
+func (s UserEventByDate) Less(i, j int) bool { return s[i].EventDate.Before(s[j].EventDate) }
+func (s UserEventByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // SimpleUser represents simplified Twitter user
 type SimpleUser struct {
@@ -100,7 +108,7 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 
 	for i, u := range users {
 		logger.Printf("batch set[%d]: %+v", i, u)
-		docRef := col.Doc(toID(u.Username))
+		docRef := col.Doc(toUserEventDateID(u.Username, u.EventType, u.EventDate))
 		batch.Set(docRef, u)
 	}
 
@@ -109,19 +117,38 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 
 }
 
-// GetUserEventsByType retreaves user events since date
-func GetUserEventsByType(ctx context.Context, username, eventType string, since time.Time) (data []*SimpleUserEvent, err error) {
+func toUserEventDateID(username, eventType string, date time.Time) string {
+	return toID(fmt.Sprintf("%s-%s-%s", date.Format(isoDateFormat), username, eventType))
+}
+
+// GetUserEventsByDate retreaves user events since date
+func GetUserEventsByDate(ctx context.Context, username string, since time.Time) (data []*SimpleUserEvent, err error) {
 
 	col, err := getCollection(ctx, userEventCollectionName)
 	if err != nil {
 		return nil, err
 	}
 
+	data = make([]*SimpleUserEvent, 0)
+	for _, d := range getDateRange(since) {
+		s, e := getUserEventsForDate(ctx, col, username, d)
+		if e != nil {
+			return nil, e
+		}
+		data = append(data, s...)
+	}
+
+	sort.Sort(UserEventByDate(data))
+
+	return
+
+}
+
+func getUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, username string, since time.Time) (data []*SimpleUserEvent, err error) {
+
 	docs, err := col.
 		Where("username", "==", username).
-		Where("event_at", ">=", since.Format(isoDateFormat)).
-		Where("event_type", "==", eventType).
-		OrderBy("date", firestore.Desc).
+		Where("event_at", "==", since.Format(isoDateFormat)).
 		Documents(ctx).
 		GetAll()
 

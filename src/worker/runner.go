@@ -37,32 +37,46 @@ func Run(ctx context.Context, username string) error {
 	yesterday := time.Now().AddDate(0, 0, -1)
 	yesterdayState, err := store.GetDailyFollowerState(ctx, forUser.Username, yesterday)
 	if err != nil {
-		return errors.Wrap(err, "error getting yesterday state")
+		return errors.Wrap(err, "error getting yesterday's state")
 	}
 
-	logger.Printf("Building current state for %s...", forUser.Username)
-	newDailyState := store.NewDailyFollowerState(forUser.Username, time.Now())
+	logger.Printf("Getting current state for %s...", forUser.Username)
+	newDailyState, err := store.GetDailyFollowerState(ctx, forUser.Username, time.Now())
+	if err != nil {
+		return errors.Wrap(err, "error getting today's state")
+	}
+	isCurrentStateNew := newDailyState.FollowerCount == 0
 	newDailyState.Followers = currentFollowerIDs
 	newDailyState.FollowerCount = len(currentFollowerIDs)
 
-	logger.Printf("Deriving new followers for %s...", forUser.Username)
+	logger.Printf("Identifying new followers for %s...", forUser.Username)
 	newFollowerIDs := getArrayDiff(yesterdayState.Followers, newDailyState.Followers)
 	newDailyState.NewFollowerCount = len(newFollowerIDs)
 
-	logger.Printf("Process new followers for %s...", forUser.Username)
-	if err := pageDownloadFollowerDetail(ctx, forUser, store.FollowedEventType, newFollowerIDs); err != nil {
-		return errors.Wrapf(err, "error downloading new follower detail for %s",
-			forUser.Username)
-	}
+	logger.Printf("Yesterday:%d, Today:%d", yesterdayState.FollowerCount, newDailyState.FollowerCount)
 
-	logger.Printf("Deriving unfollowers for %s...", forUser.Username)
-	newUnfollowerIDs := getArrayDiff(newDailyState.Followers, yesterdayState.Followers)
-	newDailyState.UnfollowerCount = len(newUnfollowerIDs)
+	// to avoid long refreshes the first day run only if
+	// A) there was a state the previous date (2nd day+ run)
+	// B) the current day state is new (1st run)
+	// C) the number of new followers is so small that it doesn't matter
+	if yesterdayState.FollowerCount > 0 || isCurrentStateNew || len(newFollowerIDs) < 100 {
 
-	logger.Printf("Process unfollowers for %s...", forUser.Username)
-	if err := pageDownloadFollowerDetail(ctx, forUser, store.UnfollowedEventType, newUnfollowerIDs); err != nil {
-		return errors.Wrapf(err, "error downloading unfollower detail for %s",
-			forUser.Username)
+		logger.Printf("Process new followers for %s...", forUser.Username)
+		if err := pageDownloadFollowerDetail(ctx, forUser, store.FollowedEventType, newFollowerIDs); err != nil {
+			return errors.Wrapf(err, "error downloading new follower detail for %s",
+				forUser.Username)
+		}
+
+		logger.Printf("Deriving unfollowers for %s...", forUser.Username)
+		newUnfollowerIDs := getArrayDiff(newDailyState.Followers, yesterdayState.Followers)
+		newDailyState.UnfollowerCount = len(newUnfollowerIDs)
+
+		logger.Printf("Process unfollowers for %s...", forUser.Username)
+		if err := pageDownloadFollowerDetail(ctx, forUser, store.UnfollowedEventType, newUnfollowerIDs); err != nil {
+			return errors.Wrapf(err, "error downloading unfollower detail for %s",
+				forUser.Username)
+		}
+
 	}
 
 	logger.Printf("Saving current state for %s...", forUser.Username)

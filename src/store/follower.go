@@ -3,9 +3,9 @@ package store
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
-	"cloud.google.com/go/firestore"
 	"github.com/pkg/errors"
 )
 
@@ -23,6 +23,13 @@ type DailyFollowerState struct {
 	UnfollowerCount  int     `firestore:"unfollower_count" json:"unfollower_count"`
 }
 
+// DailyFollowerStateByDate is a custom data structure for array of DailyFollowerState
+type DailyFollowerStateByDate []*DailyFollowerState
+
+func (s DailyFollowerStateByDate) Len() int           { return len(s) }
+func (s DailyFollowerStateByDate) Less(i, j int) bool { return s[i].StateOn < s[j].StateOn }
+func (s DailyFollowerStateByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
 // NewDailyFollowerState creates a new instance of the DailyFollowerState
 func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState {
 	return &DailyFollowerState{
@@ -31,7 +38,7 @@ func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState 
 	}
 }
 
-func getUserDayKey(username string, date time.Time) string {
+func toUserDateID(username string, date time.Time) string {
 	return toID(fmt.Sprintf("%s-%s", date.Format(isoDateFormat), username))
 }
 
@@ -42,17 +49,16 @@ func SaveDailyFollowerState(ctx context.Context, data *DailyFollowerState) error
 		return errors.New("data required")
 	}
 
-	docID := getUserDayKey(data.Username, time.Now())
+	docID := toUserDateID(data.Username, time.Now())
 
-	return save(ctx, followerCollectionName, toID(docID), data)
+	return save(ctx, followerCollectionName, docID, data)
 
 }
 
 // GetDailyFollowerState retreaves follower data for specific date
 func GetDailyFollowerState(ctx context.Context, username string, day time.Time) (data *DailyFollowerState, err error) {
 
-	docID := getUserDayKey(username, day)
-
+	docID := toUserDateID(username, day)
 	data = &DailyFollowerState{}
 	err = getByID(ctx, followerCollectionName, docID, data)
 	if err != nil {
@@ -72,31 +78,49 @@ func GetDailyFollowerState(ctx context.Context, username string, day time.Time) 
 }
 
 // GetDailyFollowerStatesSince retrieves map of dates and follower count since the specified date
+// HACK: workaround for lack of support for compounded queries.
+// You can only perform range comparisons (<, <=, >, >=) on a single field
 func GetDailyFollowerStatesSince(ctx context.Context, username string, since time.Time) (data []*DailyFollowerState, err error) {
 
-	col, err := getCollection(ctx, followerCollectionName)
-	if err != nil {
-		return nil, err
-	}
-
-	// TODO: figure out if the toID generates sortable values
-	// replace dual where with key or figure out how to create an index programmatically
-	docs, err := col.
-		Where("username", "==", username).
-		Where("date", ">=", since.Format(isoDateFormat)).
-		OrderBy("date", firestore.Desc).
-		Documents(ctx).
-		GetAll()
-
 	data = make([]*DailyFollowerState, 0)
-
-	for _, doc := range docs {
-		state := &DailyFollowerState{}
-		if err := doc.DataTo(state); err != nil {
-			return nil, fmt.Errorf("error retreiveing daily follower state from %v: %v", doc.Data(), err)
+	for _, d := range getDateRange(since) {
+		s, e := GetDailyFollowerState(ctx, username, d)
+		if e != nil {
+			return nil, e
 		}
+		data = append(data, s)
 	}
+
+	sort.Sort(DailyFollowerStateByDate(data))
 
 	return
 
 }
+
+// GetDailyFollowerStatesSince retrieves map of dates and follower count since the specified date
+// func GetDailyFollowerStatesSince(ctx context.Context, username string, since time.Time) (data []*DailyFollowerState, err error) {
+
+// 	col, err := getCollection(ctx, followerCollectionName)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	docs, err := col.
+// 		Where("username", "==", username).
+// 		Where("date", ">=", since.Format(isoDateFormat)).
+// 		OrderBy("date", firestore.Desc).
+// 		Documents(ctx).
+// 		GetAll()
+
+// 	data = make([]*DailyFollowerState, 0)
+
+// 	for _, doc := range docs {
+// 		state := &DailyFollowerState{}
+// 		if err := doc.DataTo(state); err != nil {
+// 			return nil, fmt.Errorf("error retreiveing daily follower state from %v: %v", doc.Data(), err)
+// 		}
+// 	}
+
+// 	return
+
+// }

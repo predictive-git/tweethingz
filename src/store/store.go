@@ -1,13 +1,15 @@
 package store
 
 import (
+	"hash/fnv"
 	"log"
 	"os"
+	"strconv"
+	"time"
 
 	"context"
 	"errors"
 	"fmt"
-	"hash/fnv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -139,4 +141,28 @@ func toID(query string) string {
 	h := fnv.New32a()
 	h.Write([]byte(query))
 	return fmt.Sprintf("%s%d", recordIDPrefix, h.Sum32())
+}
+
+func isNumeric(s string) bool {
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
+}
+
+func getDateRange(since time.Time) []time.Time {
+
+	r := make([]time.Time, 0)
+	today := time.Now().Format(isoDateFormat)
+	if since.Format(isoDateFormat) > today {
+		since = time.Now()
+	}
+
+	for {
+		r = append(r, since)
+		if since.Format(isoDateFormat) >= today {
+			break
+		}
+		since = since.AddDate(0, 0, 1)
+	}
+
+	return r
 }

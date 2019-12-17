@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/pkg/errors"
@@ -14,22 +15,22 @@ const (
 
 // SummaryData represents aggregate data view
 type SummaryData struct {
-	Self                  *SimpleUser        `firestore:"user"`
-	FollowerCountSeries   map[string]int     `firestore:"follower_count_series"`
-	FollowedEventSeries   map[string]int     `firestore:"followed_event_series"`
-	UnfollowedEventSeries map[string]int     `firestore:"unfollowed_event_series"`
-	RecentFollowers       []*SimpleUserEvent `firestore:"recent_follower_list"`
-	RecentUnfollowers     []*SimpleUserEvent `firestore:"recent_unfollower_list"`
-	RecentFollowerCount   int                `firestore:"recent_follower_count"`
-	RecentUnfollowerCount int                `firestore:"recent_unfollower_count"`
-	Meta                  *QueryCriteria     `firestore:"meta"`
+	Self                  *SimpleUser        `firestore:"user" json:"user"`
+	FollowerCountSeries   map[string]int     `firestore:"follower_count_series" json:"follower_count_series"`
+	FollowedEventSeries   map[string]int     `firestore:"followed_event_series" json:"followed_event_series"`
+	UnfollowedEventSeries map[string]int     `firestore:"unfollowed_event_series" json:"unfollowed_event_series"`
+	RecentFollowers       []*SimpleUserEvent `firestore:"recent_follower_list" json:"recent_follower_list"`
+	RecentUnfollowers     []*SimpleUserEvent `firestore:"recent_unfollower_list" json:"recent_unfollower_list"`
+	RecentFollowerCount   int                `firestore:"recent_follower_count" json:"recent_follower_count"`
+	RecentUnfollowerCount int                `firestore:"recent_unfollower_count" json:"recent_unfollower_count"`
+	Meta                  *QueryCriteria     `firestore:"meta" json:"meta"`
 }
 
 // QueryCriteria represents scope of the query
 // default for now, will pass this in as criteria
 type QueryCriteria struct {
-	NumRecentUsers int `firestore:"num_recent_users"`
-	NumDaysPeriod  int `firestore:"num_days_period"`
+	NumRecentUsers int `firestore:"num_recent_users" json:"num_recent_users"`
+	NumDaysPeriod  int `firestore:"num_days_period" json:"num_days_period"`
 }
 
 // GetSummaryForUser retreaves all summary data for that user
@@ -72,20 +73,23 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 	}
 
 	// new followers
-	list, err := GetUserEventsByType(ctx, username, FollowedEventType, sinceDate)
+	list, err := GetUserEventsByDate(ctx, username, sinceDate)
 	if err != nil {
 		return nil, errors.Wrap(err, "error quering new follower event users")
 	}
-	data.RecentFollowers = list
-	data.RecentFollowerCount = len(list)
 
-	// new unfollowers
-	list, err = GetUserEventsByType(ctx, username, UnfollowedEventType, sinceDate)
-	if err != nil {
-		return nil, errors.Wrap(err, "error quering new unfollower event users")
+	for _, item := range list {
+		if item.EventType == FollowedEventType {
+			data.RecentFollowers = append(data.RecentFollowers, item)
+		} else if item.EventType == UnfollowedEventType {
+			data.RecentUnfollowers = append(data.RecentUnfollowers, item)
+		} else {
+			return nil, fmt.Errorf("invalid event type: %s", item.EventType)
+		}
 	}
-	data.RecentUnfollowers = list
-	data.RecentUnfollowerCount = len(list)
+
+	data.RecentFollowerCount = len(data.RecentFollowers)
+	data.RecentUnfollowerCount = len(data.RecentUnfollowers)
 
 	// return loaded object
 	return data, nil
