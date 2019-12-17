@@ -102,7 +102,6 @@ func getByID(ctx context.Context, col, id string, in interface{}) error {
 	d, err := c.Doc(id).Get(ctx)
 	if err != nil {
 		if grpc.Code(err) == codes.NotFound {
-			logger.Printf("unable to find record in %s collection with id: %s", col, id)
 			return ErrDataNotFound
 		}
 		return fmt.Errorf("Error getting state: %v", err)

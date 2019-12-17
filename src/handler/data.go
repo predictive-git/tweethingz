@@ -21,7 +21,7 @@ func DataHandler(c *gin.Context) {
 		return
 	}
 
-	if err := worker.Run(c.Request.Context(), username); err != nil {
+	if err := worker.UpdateUserData(c.Request.Context(), username); err != nil {
 		logger.Printf("Error: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Error refreshing data, see logs for details",

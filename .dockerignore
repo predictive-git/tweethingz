@@ -1,8 +1,18 @@
-.DS_Store
-/bin
-README.md
+# test
+*_test.go
+*.out
+
+# git
 .git
 .gitignore
-*_test.go
-coverage.out
-bin/service
+
+# os crap
+.DS_Store
+
+# binaries
+/service
+/bin
+
+# other
+LICENSE
+README.md

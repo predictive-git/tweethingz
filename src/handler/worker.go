@@ -35,8 +35,8 @@ func WorkerHandler(c *gin.Context) {
 		return
 	}
 
-	logger.Printf("Starting worker for: %s...", user)
-	if err := worker.Run(c.Request.Context(), user); err != nil {
+	logger.Printf("Starting background worker for: %s...", user)
+	if err := worker.UpdateUserData(c.Request.Context(), user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Error running worker",
 			"status":  "Internal Error",

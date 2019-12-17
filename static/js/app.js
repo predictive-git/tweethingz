@@ -5,6 +5,7 @@ $(function () {
 });
 
 function runQuery() {
+
     $.get("/data", function (data) {
         console.log(data);
 
@@ -20,7 +21,6 @@ function runQuery() {
             " | Updated on: <b>" + toLongTime(data.user.updated_on) + "</b>" +
             " | <a href='/auth/logout'>Log out</a>"
         );
-
 
         // follower count chart
         var followerChart = new Chart($("#follower-count-series")[0].getContext("2d"), {

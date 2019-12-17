@@ -13,8 +13,8 @@ type RunItemResult struct {
 	Error   error
 }
 
-// Run runs the background service
-func Run(ctx context.Context, username string) error {
+// UpdateUserData runs the background service
+func UpdateUserData(ctx context.Context, username string) error {
 
 	logger.Printf("Starting worker for %s...", username)
 	forUser, err := store.GetAuthedUser(ctx, username)
@@ -45,38 +45,41 @@ func Run(ctx context.Context, username string) error {
 	if err != nil {
 		return errors.Wrap(err, "error getting today's state")
 	}
-	isCurrentStateNew := newDailyState.FollowerCount == 0
-	newDailyState.Followers = currentFollowerIDs
-	newDailyState.FollowerCount = len(currentFollowerIDs)
 
 	logger.Printf("Identifying new followers for %s...", forUser.Username)
-	newFollowerIDs := getArrayDiff(yesterdayState.Followers, newDailyState.Followers)
+	var newFollowerIDs []int64
+
+	// if didn't have data yesterday but has today than this is a subsequent view on the first day
+	if yesterdayState.FollowerCount == 0 && newDailyState.FollowerCount > 0 {
+		logger.Printf("View: 2nd+ view on the first day for %s...", forUser.Username)
+		newFollowerIDs = getArrayDiff(newDailyState.Followers, currentFollowerIDs)
+	} else {
+		logger.Printf("View: with yesterday data for for %s...", forUser.Username)
+		newFollowerIDs = getArrayDiff(yesterdayState.Followers, currentFollowerIDs)
+	}
+
+	logger.Printf("Yesterday:%d, Current:%d, New:%d",
+		yesterdayState.FollowerCount, newDailyState.FollowerCount, len(newFollowerIDs))
+
+	// update the current state
+	newDailyState.Followers = currentFollowerIDs
+	newDailyState.FollowerCount = len(currentFollowerIDs)
 	newDailyState.NewFollowerCount = len(newFollowerIDs)
 
-	logger.Printf("Yesterday:%d, Today:%d", yesterdayState.FollowerCount, newDailyState.FollowerCount)
+	logger.Printf("Process new followers for %s...", forUser.Username)
+	if err := pageDownloadFollowerDetail(ctx, forUser, store.FollowedEventType, newFollowerIDs); err != nil {
+		return errors.Wrapf(err, "error downloading new follower detail for %s",
+			forUser.Username)
+	}
 
-	// to avoid long refreshes the first day run only if
-	// A) there was a state the previous date (2nd day+ run)
-	// B) the current day state is new (1st run)
-	// C) the number of new followers is so small that it doesn't matter
-	if yesterdayState.FollowerCount > 0 || isCurrentStateNew || len(newFollowerIDs) < 100 {
+	logger.Printf("Deriving unfollowers for %s...", forUser.Username)
+	newUnfollowerIDs := getArrayDiff(newDailyState.Followers, yesterdayState.Followers)
+	newDailyState.UnfollowerCount = len(newUnfollowerIDs)
 
-		logger.Printf("Process new followers for %s...", forUser.Username)
-		if err := pageDownloadFollowerDetail(ctx, forUser, store.FollowedEventType, newFollowerIDs); err != nil {
-			return errors.Wrapf(err, "error downloading new follower detail for %s",
-				forUser.Username)
-		}
-
-		logger.Printf("Deriving unfollowers for %s...", forUser.Username)
-		newUnfollowerIDs := getArrayDiff(newDailyState.Followers, yesterdayState.Followers)
-		newDailyState.UnfollowerCount = len(newUnfollowerIDs)
-
-		logger.Printf("Process unfollowers for %s...", forUser.Username)
-		if err := pageDownloadFollowerDetail(ctx, forUser, store.UnfollowedEventType, newUnfollowerIDs); err != nil {
-			return errors.Wrapf(err, "error downloading unfollower detail for %s",
-				forUser.Username)
-		}
-
+	logger.Printf("Process unfollowers for %s...", forUser.Username)
+	if err := pageDownloadFollowerDetail(ctx, forUser, store.UnfollowedEventType, newUnfollowerIDs); err != nil {
+		return errors.Wrapf(err, "error downloading unfollower detail for %s",
+			forUser.Username)
 	}
 
 	logger.Printf("Saving current state for %s...", forUser.Username)
@@ -170,4 +173,21 @@ func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventTy
 	}
 
 	return nil
+}
+
+// returns items from b that are NOT in a
+func getArrayDiff(a, b []int64) (diff []int64) {
+
+	m := make(map[int64]bool)
+
+	for _, item := range a {
+		m[item] = true
+	}
+
+	for _, item := range b {
+		if _, ok := m[item]; !ok {
+			diff = append(diff, item)
+		}
+	}
+	return
 }

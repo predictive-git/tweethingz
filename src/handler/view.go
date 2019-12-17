@@ -52,6 +52,7 @@ func ViewHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "view", gin.H{
 		"twitter_username": username,
 		"version":          version,
+		"refresh":          c.Query("refresh"),
 	})
 
 }

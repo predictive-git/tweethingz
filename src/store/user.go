@@ -106,8 +106,7 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 
 	batch := fsClient.Batch()
 
-	for i, u := range users {
-		logger.Printf("batch set[%d]: %+v", i, u)
+	for _, u := range users {
 		docRef := col.Doc(toUserEventDateID(u.Username, u.EventType, u.EventDate))
 		batch.Set(docRef, u)
 	}
