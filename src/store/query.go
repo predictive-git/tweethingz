@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	recentUsersDefaultLimit  = 10
+	recentUsersPerDayLimit   = 10 // TODO: make that UI parameter
 	recentEventDefaultPeriod = 7
 )
 
@@ -29,8 +29,8 @@ type SummaryData struct {
 // QueryCriteria represents scope of the query
 // default for now, will pass this in as criteria
 type QueryCriteria struct {
-	NumRecentUsers int `firestore:"num_recent_users" json:"num_recent_users"`
-	NumDaysPeriod  int `firestore:"num_days_period" json:"num_days_period"`
+	RecentUserPerDayLimit int `firestore:"recent_users_per_day_limit" json:"recent_users_per_day_limit"`
+	NumDaysPeriod         int `firestore:"num_days_period" json:"num_days_period"`
 }
 
 // GetSummaryForUser retreaves all summary data for that user
@@ -45,9 +45,11 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		FollowedEventSeries:   map[string]int{},
 		UnfollowedEventSeries: map[string]int{},
 		Meta: &QueryCriteria{
-			NumRecentUsers: recentUsersDefaultLimit,
-			NumDaysPeriod:  recentEventDefaultPeriod,
+			RecentUserPerDayLimit: recentUsersPerDayLimit,
+			NumDaysPeriod:         recentEventDefaultPeriod,
 		},
+		RecentFollowers:   make([]*SimpleUserEvent, 0),
+		RecentUnfollowers: make([]*SimpleUserEvent, 0),
 	}
 
 	// user details
@@ -72,11 +74,12 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		data.UnfollowedEventSeries[item.StateOn] = item.UnfollowerCount
 	}
 
-	// new followers
-	list, err := GetUserEventsByDate(ctx, username, sinceDate)
+	// followers events
+	list, err := GetUserEventsSince(ctx, username, sinceDate, recentUsersPerDayLimit)
 	if err != nil {
-		return nil, errors.Wrap(err, "error quering new follower event users")
+		return nil, errors.Wrap(err, "error quering user events")
 	}
+	logger.Printf("found %d follower events for %s", len(list), username)
 
 	for _, item := range list {
 		if item.EventType == FollowedEventType {
@@ -88,8 +91,13 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		}
 	}
 
-	data.RecentFollowerCount = len(data.RecentFollowers)
-	data.RecentUnfollowerCount = len(data.RecentUnfollowers)
+	// to make this accurate the first day when the data first loaded
+	// only count new follows and unfollows when there was data yesterday
+	yesterdayCounts := followerData[len(followerData)-2]
+	if yesterdayCounts.FollowerCount > 0 {
+		data.RecentFollowerCount = len(data.RecentFollowers)
+		data.RecentUnfollowerCount = len(data.RecentUnfollowers)
+	}
 
 	// return loaded object
 	return data, nil

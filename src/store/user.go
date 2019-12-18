@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	userCollectionName      = "tweethingz_twitter_user_store"
-	userEventCollectionName = "tweethingz_twitter_user_event_store"
+	userCollectionName      = "thingz_user"
+	userEventCollectionName = "thingz_event"
 
 	// FollowedEventType when user followes
 	FollowedEventType = "followed"
@@ -23,15 +23,16 @@ const (
 // SimpleUserEvent wraps simple twitter user as an time event
 type SimpleUserEvent struct {
 	SimpleUser
-	EventDate time.Time `firestore:"event_at"`
-	EventType string    `firestore:"event_type" json:"event_type"`
+	EventDate string `firestore:"event_at" json:"event_at"`
+	EventType string `firestore:"event_type" json:"event_type"`
+	EventUser string `firestore:"event_user" json:"event_user"`
 }
 
 // UserEventByDate is a custom data structure for array of SimpleUserEvent
 type UserEventByDate []*SimpleUserEvent
 
 func (s UserEventByDate) Len() int           { return len(s) }
-func (s UserEventByDate) Less(i, j int) bool { return s[i].EventDate.Before(s[j].EventDate) }
+func (s UserEventByDate) Less(i, j int) bool { return s[i].EventDate < s[j].EventDate }
 func (s UserEventByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // SimpleUser represents simplified Twitter user
@@ -54,9 +55,6 @@ type SimpleUser struct {
 	FaveCount      int `firestore:"fave_count" json:"fave_count"`
 	FollowingCount int `firestore:"following_count" json:"following_count"`
 	FollowerCount  int `firestore:"followers_count" json:"followers_count"`
-
-	// Meta
-	UpdatedOn time.Time `firestore:"updated_on" json:"updated_on"`
 }
 
 // SaveUsers saves multiple users
@@ -116,12 +114,14 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 
 }
 
-func toUserEventDateID(username, eventType string, date time.Time) string {
-	return toID(fmt.Sprintf("%s-%s-%s", date.Format(isoDateFormat), username, eventType))
+func toUserEventDateID(username, eventType, date string) string {
+	return toID(fmt.Sprintf("%s-%s-%s", date, username, eventType))
 }
 
-// GetUserEventsByDate retreaves user events since date
-func GetUserEventsByDate(ctx context.Context, username string, since time.Time) (data []*SimpleUserEvent, err error) {
+// GetUserEventsSince retreaves user events since date
+// HACK: workaround for lack of support for compounded queries so we look for each day since
+// You can only perform range comparisons (<, <=, >, >=) on a single field
+func GetUserEventsSince(ctx context.Context, username string, since time.Time, dayLimit int) (data []*SimpleUserEvent, err error) {
 
 	col, err := getCollection(ctx, userEventCollectionName)
 	if err != nil {
@@ -130,11 +130,11 @@ func GetUserEventsByDate(ctx context.Context, username string, since time.Time) 
 
 	data = make([]*SimpleUserEvent, 0)
 	for _, d := range getDateRange(since) {
-		s, e := getUserEventsForDate(ctx, col, username, d)
+		items, e := GetUserEventsForDate(ctx, col, username, d, dayLimit)
 		if e != nil {
 			return nil, e
 		}
-		data = append(data, s...)
+		data = append(data, items...)
 	}
 
 	sort.Sort(UserEventByDate(data))
@@ -143,13 +143,17 @@ func GetUserEventsByDate(ctx context.Context, username string, since time.Time) 
 
 }
 
-func getUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, username string, since time.Time) (data []*SimpleUserEvent, err error) {
+// GetUserEventsForDate returns user events for specific date
+func GetUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, username string, since time.Time, dayLimit int) (data []*SimpleUserEvent, err error) {
 
 	docs, err := col.
-		Where("username", "==", username).
-		Where("event_at", "==", since.Format(isoDateFormat)).
+		Where("event_user", "==", username).
+		Where("event_at", "==", since.Format(ISODateFormat)).
+		Limit(dayLimit).
 		Documents(ctx).
 		GetAll()
+
+	logger.Printf("query for %s user and %s day found %d events", username, since.Format(ISODateFormat), len(docs))
 
 	data = make([]*SimpleUserEvent, 0)
 
@@ -158,6 +162,7 @@ func getUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, use
 		if err := doc.DataTo(state); err != nil {
 			return nil, fmt.Errorf("error retreiveing user events from %v: %v", doc.Data(), err)
 		}
+		data = append(data, state)
 	}
 
 	return

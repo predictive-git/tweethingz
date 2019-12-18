@@ -6,6 +6,8 @@ $(function () {
 
 function runQuery() {
 
+    $(".after-load").hide();
+
     $.get("/data", function (data) {
         console.log(data);
 
@@ -15,6 +17,9 @@ function runQuery() {
         $("#follower-gained-count .data").text(data.recent_follower_count);
         $("#follower-lost-count .data").text(data.recent_unfollower_count);
         $("#favorites-count .data").text(data.user.fave_count);
+
+        $(".wait-load").hide();
+        $(".after-load").show();
 
         $("#meta-panel").html("Account: <b>" + data.user.username + "</b>" +
             " | Time period: <b>Last " + data.meta.num_days_period + "days</b>" +
@@ -51,7 +56,6 @@ function runQuery() {
                     yAxes: [
                         {
                             ticks: {
-                                stepSize: 5,
                                 fontColor: 'rgba(250, 250, 250, 0.5)',
                                 fontSize: 14
                             }

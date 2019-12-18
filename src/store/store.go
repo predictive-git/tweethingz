@@ -19,7 +19,10 @@ import (
 )
 
 const (
-	isoDateFormat  = "2006-01-02"
+
+	// ISODateFormat is the YYYY-MM-DD format
+	ISODateFormat = "2006-01-02"
+
 	recordIDPrefix = "id-"
 )
 
@@ -150,14 +153,14 @@ func isNumeric(s string) bool {
 func getDateRange(since time.Time) []time.Time {
 
 	r := make([]time.Time, 0)
-	today := time.Now().Format(isoDateFormat)
-	if since.Format(isoDateFormat) > today {
+	today := time.Now().Format(ISODateFormat)
+	if since.Format(ISODateFormat) > today {
 		since = time.Now()
 	}
 
 	for {
 		r = append(r, since)
-		if since.Format(isoDateFormat) >= today {
+		if since.Format(ISODateFormat) >= today {
 			break
 		}
 		since = since.AddDate(0, 0, 1)

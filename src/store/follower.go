@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	followerCollectionName = "tweethingz_followers"
+	followerCollectionName = "thingz_follower"
 )
 
 // DailyFollowerState represents daily follower state
@@ -34,12 +34,12 @@ func (s DailyFollowerStateByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] 
 func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState {
 	return &DailyFollowerState{
 		Username: username,
-		StateOn:  date.Format(isoDateFormat),
+		StateOn:  date.Format(ISODateFormat),
 	}
 }
 
 func toUserDateID(username string, date time.Time) string {
-	return toID(fmt.Sprintf("%s-%s", date.Format(isoDateFormat), username))
+	return toID(fmt.Sprintf("%s-%s", date.Format(ISODateFormat), username))
 }
 
 // SaveDailyFollowerState saves daily follower state
@@ -65,7 +65,7 @@ func GetDailyFollowerState(ctx context.Context, username string, day time.Time) 
 		if IsDataNotFoundError(err) {
 			logger.Printf("no state data for %s on %v, using defaults", username, day)
 			data.Username = username
-			data.StateOn = day.Format(isoDateFormat)
+			data.StateOn = day.Format(ISODateFormat)
 			data.Followers = make([]int64, 0)
 			return data, nil
 		}

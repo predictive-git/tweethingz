@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	sessionCollectionName = "tweethingz_session_store"
-	authCollectionName    = "tweethingz_auth_user_store"
+	sessionCollectionName = "thingz_session"
+	authCollectionName    = "thingz_auth"
 )
 
 // AuthSession represents the authenticated user session

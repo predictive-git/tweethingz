@@ -23,7 +23,7 @@ func UpdateUserData(ctx context.Context, username string) error {
 	}
 
 	logger.Printf("Refreshing twitter details for %s...", forUser.Username)
-	if err := refreshUserDetails(ctx, forUser); err != nil {
+	if err := refreshUserOwnDetails(ctx, forUser); err != nil {
 		return errors.Wrapf(err, "error getting twitter %s deails", forUser.Username)
 	}
 
@@ -92,7 +92,7 @@ func UpdateUserData(ctx context.Context, username string) error {
 
 }
 
-func refreshUserDetails(ctx context.Context, forUser *store.AuthedUser) error {
+func refreshUserOwnDetails(ctx context.Context, forUser *store.AuthedUser) error {
 	// this returns array of 1
 	users, err := GetUserDetails(forUser)
 	if err != nil {
@@ -160,8 +160,9 @@ func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventTy
 	events := make([]*store.SimpleUserEvent, 0)
 	for _, u := range users {
 		ue := &store.SimpleUserEvent{
-			EventDate:  time.Now(),
+			EventDate:  time.Now().Format(store.ISODateFormat),
 			EventType:  eventType,
+			EventUser:  forUser.Username,
 			SimpleUser: *u,
 		}
 		events = append(events, ue)

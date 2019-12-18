@@ -157,7 +157,12 @@ tr.user-row td {
 	font-size: 0.8em;
 }
 
-.user-message {
-	font-size: 1em;
+.wait-load {
+	font-size: 1.2em;
 	text-align: center;
+	color: rgb(250, 250, 250, 1);
+	width: 80%;
+	break-after: always;
+	display: inline-block;
+	margin-top: 20px;
 }

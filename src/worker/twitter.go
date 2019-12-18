@@ -37,7 +37,6 @@ func GetUserDetails(byUser *store.AuthedUser) (users []*store.SimpleUser, err er
 
 // GetUsersFromIDs retreaves details about the user
 func GetUsersFromIDs(byUser *store.AuthedUser, ids []int64) (users []*store.SimpleUser, err error) {
-	logger.Printf("IDs: %d", len(ids))
 	return getUsersByParams(byUser, &twitter.UserLookupParams{
 		UserID:          ids,
 		IncludeEntities: twitter.Bool(true),
