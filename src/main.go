@@ -43,9 +43,12 @@ func main() {
 	}
 
 	// api
-	v1 := r.Group("/v1")
+	api := r.Group("/api")
 	{
-		v1.POST("/worker/:user", handler.WorkerHandler)
+		v1 := api.Group("/v1")
+		{
+			v1.POST("/refresh/:user", handler.RefreshWorkerHandler)
+		}
 	}
 
 	// port

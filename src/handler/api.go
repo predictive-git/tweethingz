@@ -16,8 +16,8 @@ var (
 	expectedToken = env.MustGetEnvVar("TOKEN", "")
 )
 
-// WorkerHandler ...
-func WorkerHandler(c *gin.Context) {
+// RefreshWorkerHandler ...
+func RefreshWorkerHandler(c *gin.Context) {
 
 	token := c.Query("token")
 	if token != expectedToken {
@@ -55,7 +55,7 @@ func WorkerHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("%s data refreshed", user),
+		"message": fmt.Sprintf("Refreshed %s data", user),
 		"status":  "Success",
 	})
 

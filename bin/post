@@ -10,5 +10,5 @@ export SERVICE_URL=$(gcloud beta run services describe ${SERVICE_NAME} \
     --region ${SERVICE_REGION} --format="value(status.domain)") # hosted
 
 curl -X POST -H "Content-type: application/json" \
-     "${SERVICE_URL}/v1/worker/${TW_USER}?token=${TOKEN}"
+     "${SERVICE_URL}/api/v1/refresh/${TW_USER}?token=${TOKEN}"
 
