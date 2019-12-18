@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -11,7 +12,7 @@ import (
 func TestGetDailyFollowerStatesSince(t *testing.T) {
 
 	ctx := context.Background()
-	username := "knativeproject"
+	username := os.Getenv("TW_USER")
 	yesterday := time.Now().AddDate(0, 0, -1)
 
 	data, err := GetDailyFollowerStatesSince(ctx, username, yesterday)

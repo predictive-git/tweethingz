@@ -5,18 +5,10 @@ DIR="$(dirname "$0")"
 
 
 export TOKEN=$(<"${CONF_DIR}/service_token")
+# export SERVICE_URL="http://localhost:8080" # local
+export SERVICE_URL=$(gcloud beta run services describe ${SERVICE_NAME} \
+    --region ${SERVICE_REGION} --format="value(status.domain)") # hosted
 
-# SERVICE_URL=$(gcloud beta run services describe ${SERVICE_NAME} \
-#   --region ${SERVICE_REGION} --format="value(status.domain)")
-
-# echo "pinging ${SERVICE_URL}..."
-# curl -X POST \
-#   --data-binary @etc/demo.yaml \
-#   -H "Content-type: text/x-yaml" \
-#   -H "Authorization: Bearer $(gcloud auth print-identity-token)" \
-#   "${SERVICE_URL}v1/worker/mchmarny?token=test"
-
-curl -X POST \
-     -H "Content-type: application/json" \
-     "http://localhost:8080/v1/worker/mchmarny?token=${TOKEN}"
+curl -X POST -H "Content-type: application/json" \
+     "${SERVICE_URL}/v1/worker/${TW_USER}?token=${TOKEN}"
 
