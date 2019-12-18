@@ -2,7 +2,7 @@
 
 # Cloud Run
 export SERVICE_REGION="us-central1"
-export SERVICE_VERSION="0.3.1"
+export SERVICE_VERSION="0.3.2"
 export SERVICE_SCHEDULE="every 60 mins"
 
 # Twitter API

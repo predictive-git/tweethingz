@@ -25,6 +25,7 @@ type SummaryData struct {
 	RecentFollowerCount   int                `firestore:"recent_follower_count" json:"recent_follower_count"`
 	RecentUnfollowerCount int                `firestore:"recent_unfollower_count" json:"recent_unfollower_count"`
 	Meta                  *QueryCriteria     `firestore:"meta" json:"meta"`
+	UpdatedOn             time.Time          `firestore:"updated_on" json:"updated_on"`
 }
 
 // QueryCriteria represents scope of the query
@@ -54,6 +55,7 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		},
 		RecentFollowers:   make([]*SimpleUserEvent, 0),
 		RecentUnfollowers: make([]*SimpleUserEvent, 0),
+		UpdatedOn:         time.Now(),
 	}
 
 	// ============================================================================

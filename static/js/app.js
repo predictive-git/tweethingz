@@ -23,7 +23,7 @@ function runQuery() {
 
         $("#meta-panel").html("Account: <b>" + data.user.username + "</b>" +
             " | Time period: <b>Last " + data.meta.num_days_period + "days</b>" +
-            " | Updated on: <b>" + toLongTime(data.user.updated_on) + "</b>" +
+            " | Updated on: <b>" + toLongTime(data.updated_on) + "</b>" +
             " | <a href='/auth/logout'>Log out</a>"
         );
 
