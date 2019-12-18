@@ -148,8 +148,8 @@ function loadUsers(tbl, list) {
 
         var $info = $("<div class='user-info-detail'>").append(
             $("<div class='user-info-name'>").html("<a href='https://twitter.com/" +
-                u.username + "' target='_blank'>" + u.username + "</a> - " + u.name +
-                " (<b>Loc:</b> " + u.location +
+                u.username + "' target='_blank'>" + u.username + "</a> - <b>" + u.name +
+                " </b> (<b>Loc:</b> " + u.location +
                 " <b>Follow:</b> " + u.followers_count + "/" + u.following_count +
                 " <b>Post:</b> " + u.post_count +
                 " <b>On:</b> " + toShortDate(u.event_at) + ")"),

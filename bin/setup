@@ -5,14 +5,15 @@ DIR="$(dirname "$0")"
 
 # api
 gcloud services enable --quiet \
-    compute.googleapis.com \
     cloudbuild.googleapis.com \
-    iam.googleapis.com \
+    cloudscheduler.googleapis.com \
+    compute.googleapis.com \
     containerregistry.googleapis.com \
-    run.googleapis.com \
-    firestore.googleapis.com
+    firestore.googleapis.com \
+    iam.googleapis.com \
+    run.googleapis.com
 
-# create alphanumeric token
+# create alphanumeric token and save it locally for reference in deployment and scheduler
 mkdir -p $CONF_DIR
 echo "$(openssl rand -base64 500 | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)" > "${CONF_DIR}/service_token"
 echo "token saved in: ${CONF_DIR}"

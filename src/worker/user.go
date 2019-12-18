@@ -7,12 +7,6 @@ import (
 	"time"
 )
 
-// RunItemResult represent run item result
-type RunItemResult struct {
-	ForUser *store.AuthedUser
-	Error   error
-}
-
 // UpdateUserData runs the background service
 func UpdateUserData(ctx context.Context, username string) error {
 
