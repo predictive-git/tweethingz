@@ -12,12 +12,10 @@ gcloud services enable --quiet \
     run.googleapis.com \
     firestore.googleapis.com
 
-# create passwords and tokens
+# create alphanumeric token
 mkdir -p $CONF_DIR
-echo "$(openssl rand -base64 32)" > "${CONF_DIR}/service_token"
-echo "db password and app token saved in:"
-echo ${CONF_DIR}
-
+echo "$(openssl rand -base64 500 | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)" > "${CONF_DIR}/service_token"
+echo "token saved in: ${CONF_DIR}"
 
 # cloud run running service account
 gcloud iam service-accounts create $SERVICE_NAME \

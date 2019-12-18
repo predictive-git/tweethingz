@@ -2,8 +2,8 @@
 
 # Cloud Run
 export SERVICE_REGION="us-central1"
-export SERVICE_VERSION="0.2.2"
-export SERVICE_SCHEDULE="every 30 mins"
+export SERVICE_VERSION="0.3.1"
+export SERVICE_SCHEDULE="every 60 mins"
 
 # Twitter API
 export TW_USER="mchmarny"
@@ -13,7 +13,7 @@ export TW_SECRET=$TW_CONSUMER_SECRET
 # ====================================================================#
 # Derived values (don't edit)                                         #
 # ====================================================================#
-export SERVICE_NAME="tweethingz3"
+export SERVICE_NAME="tweethingz"
 export PROJECT_ID=$(gcloud config get-value project)
 export SA_EMAIL="${SERVICE_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 export CONF_DIR="${HOME}/.${SERVICE_NAME}"

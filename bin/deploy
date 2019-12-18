@@ -21,7 +21,7 @@ gcloud beta run deploy $SERVICE_NAME \
     --concurrency 80 \
     --memory 512Mi \
 	--labels "release=${SERVICE_VERSION//./-}" \
-	--region $APP_REGION \
+	--region $SERVICE_REGION \
 	--set-env-vars $VARS
 
 # policy
