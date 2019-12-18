@@ -63,7 +63,7 @@ func GetDailyFollowerState(ctx context.Context, username string, day time.Time) 
 	err = getByID(ctx, followerCollectionName, docID, data)
 	if err != nil {
 		if IsDataNotFoundError(err) {
-			logger.Printf("no state data for %s on %v, using defaults", username, day)
+			// logger.Printf("no state data for %s on %v, using defaults", username, day)
 			data.Username = username
 			data.StateOn = day.Format(ISODateFormat)
 			data.Followers = make([]int64, 0)

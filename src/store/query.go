@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -37,9 +38,12 @@ type QueryCriteria struct {
 func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData, err error) {
 
 	if username == "" {
-		return nil, errors.New("Null username parameter")
+		return nil, errors.New("username required")
 	}
 
+	// ============================================================================
+	// Init data
+	// ============================================================================
 	data = &SummaryData{
 		FollowerCountSeries:   map[string]int{},
 		FollowedEventSeries:   map[string]int{},
@@ -52,35 +56,37 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		RecentUnfollowers: make([]*SimpleUserEvent, 0),
 	}
 
-	// user details
+	// ============================================================================
+	// User's saved twitter profile data
+	// ============================================================================
 	self, err := GetUser(ctx, username)
-	if err == ErrDataNotFound {
+	if err != nil {
 		return nil, err
 	}
-	if err != nil {
-		return nil, errors.Wrap(err, "Error getting user details")
-	}
 	data.Self = self
-	sinceDate := time.Now().AddDate(0, 0, -data.Meta.NumDaysPeriod)
 
-	// follower series
-	followerData, err := GetDailyFollowerStatesSince(ctx, username, sinceDate)
+	// ============================================================================
+	// User follower series
+	// ============================================================================
+	periodStartDate := time.Now().AddDate(0, 0, -data.Meta.NumDaysPeriod)
+	followerData, err := GetDailyFollowerStatesSince(ctx, username, periodStartDate)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error getting followe count")
+		return nil, errors.Wrap(err, "error getting followe count")
 	}
 	for _, item := range followerData {
 		data.FollowerCountSeries[item.StateOn] = item.FollowerCount
 		data.FollowedEventSeries[item.StateOn] = item.NewFollowerCount
-		data.UnfollowedEventSeries[item.StateOn] = item.UnfollowerCount
+		data.UnfollowedEventSeries[item.StateOn] = -item.UnfollowerCount
 	}
 
-	// followers events
-	list, err := GetUserEventsSince(ctx, username, sinceDate, recentUsersPerDayLimit)
+	// ============================================================================
+	// User follower events for today
+	// ============================================================================
+	list, err := GetUserEventsSince(ctx, username, time.Now())
 	if err != nil {
 		return nil, errors.Wrap(err, "error quering user events")
 	}
-	logger.Printf("found %d follower events for %s", len(list), username)
-
+	logger.Printf("found %d events for %s", len(list), username)
 	for _, item := range list {
 		if item.EventType == FollowedEventType {
 			data.RecentFollowers = append(data.RecentFollowers, item)
@@ -91,12 +97,23 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		}
 	}
 
-	// to make this accurate the first day when the data first loaded
-	// only count new follows and unfollows when there was data yesterday
-	yesterdayCounts := followerData[len(followerData)-2]
-	if yesterdayCounts.FollowerCount > 0 {
-		data.RecentFollowerCount = len(data.RecentFollowers)
-		data.RecentUnfollowerCount = len(data.RecentUnfollowers)
+	sort.Sort(UserEventByDate(data.RecentFollowers))
+	sort.Sort(UserEventByDate(data.RecentUnfollowers))
+
+	data.RecentFollowerCount = len(data.RecentFollowers)
+	data.RecentUnfollowerCount = len(data.RecentUnfollowers)
+
+	// ============================================================================
+	// Trim results after sort
+	// This is inly necessary because the lack of support for compounded queries
+	// (you can only perform range comparisons (<, <=, >, >=) on a single field)
+	// so I look for each day since, hence the need for after sort and trim
+	// ============================================================================
+	if len(data.RecentFollowers) > recentUsersPerDayLimit {
+		data.RecentFollowers = data.RecentFollowers[0 : recentUsersPerDayLimit-1]
+	}
+	if len(data.RecentUnfollowers) > recentUsersPerDayLimit {
+		data.RecentUnfollowers = data.RecentUnfollowers[0 : recentUsersPerDayLimit-1]
 	}
 
 	// return loaded object

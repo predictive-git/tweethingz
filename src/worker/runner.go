@@ -16,74 +16,105 @@ type RunItemResult struct {
 // UpdateUserData runs the background service
 func UpdateUserData(ctx context.Context, username string) error {
 
-	logger.Printf("Starting worker for %s...", username)
+	// ============================================================================
+	// Config
+	// ============================================================================
+	logger.Printf("Getting config info for %s...", username)
 	forUser, err := store.GetAuthedUser(ctx, username)
 	if err != nil {
-		errors.Wrapf(err, "error getting authed user for: %s", username)
+		if err == store.ErrDataNotFound {
+			return err
+		}
+		return errors.Wrapf(err, "error getting authed user for: %s", username)
 	}
 
+	// ============================================================================
+	// Updating Twitter Details
+	// ============================================================================
 	logger.Printf("Refreshing twitter details for %s...", forUser.Username)
-	if err := refreshUserOwnDetails(ctx, forUser); err != nil {
+	twitterUser, err := refreshUserOwnDetails(ctx, forUser)
+	if err != nil {
 		return errors.Wrapf(err, "error getting twitter %s deails", forUser.Username)
 	}
 
-	logger.Printf("Getting %s twitter followers...", forUser.Username)
-	currentFollowerIDs, err := getFollowerIDs(forUser)
+	// ============================================================================
+	// IDs of all followers from Twitter
+	// ============================================================================
+	logger.Printf("Getting IDs of %s twitter followers...", forUser.Username)
+	currentFollowerIDs, err := getTwitterFollowerIDs(forUser)
 	if err != nil {
 		return errors.Wrap(err, "error getting follower IDs")
 	}
+	logger.Printf("   Follower counts for %s (Profile:%d, IDs:%d)",
+		twitterUser.Username, twitterUser.FollowerCount, len(currentFollowerIDs))
 
+	// ============================================================================
+	// Yesterday State
+	// ============================================================================
 	logger.Printf("Getting previous day state for %s...", forUser.Username)
-	yesterday := time.Now().AddDate(0, 0, -1)
+	yesterday := time.Now().AddDate(0, 0, -1) //TODO: UTC
 	yesterdayState, err := store.GetDailyFollowerState(ctx, forUser.Username, yesterday)
 	if err != nil {
 		return errors.Wrap(err, "error getting yesterday's state")
 	}
+	logger.Printf("   Yesterday (#%d, +%d, -%d)",
+		yesterdayState.FollowerCount, yesterdayState.NewFollowerCount, yesterdayState.UnfollowerCount)
 
-	logger.Printf("Getting current state for %s...", forUser.Username)
-	newDailyState, err := store.GetDailyFollowerState(ctx, forUser.Username, time.Now())
+	// ============================================================================
+	//  Today State
+	// ============================================================================
+	logger.Printf("Getting current day state for %s...", forUser.Username)
+	todayState, err := store.GetDailyFollowerState(ctx, forUser.Username, time.Now())
 	if err != nil {
 		return errors.Wrap(err, "error getting today's state")
 	}
+	logger.Printf("   Today (#%d, +%d, -%d)",
+		todayState.FollowerCount, todayState.NewFollowerCount, todayState.UnfollowerCount)
 
-	logger.Printf("Identifying new followers for %s...", forUser.Username)
+	// ============================================================================
+	// New Followers
+	// ============================================================================
+	logger.Printf("Comparing to find new followers for %s...", forUser.Username)
 	var newFollowerIDs []int64
-
-	// if didn't have data yesterday but has today than this is a subsequent view on the first day
-	if yesterdayState.FollowerCount == 0 && newDailyState.FollowerCount > 0 {
-		logger.Printf("View: 2nd+ view on the first day for %s...", forUser.Username)
-		newFollowerIDs = getArrayDiff(newDailyState.Followers, currentFollowerIDs)
+	// to avoid reloading first day everything from Twitter
+	// if there is no yesterday data then use earier today data
+	if yesterdayState.FollowerCount == 0 {
+		newFollowerIDs = getArrayDiff(todayState.Followers, currentFollowerIDs)
 	} else {
-		logger.Printf("View: with yesterday data for for %s...", forUser.Username)
 		newFollowerIDs = getArrayDiff(yesterdayState.Followers, currentFollowerIDs)
 	}
+	logger.Printf("   Yesterday:%d, Today:%d, New Followers:%d",
+		yesterdayState.FollowerCount, todayState.FollowerCount, len(newFollowerIDs))
 
-	logger.Printf("Yesterday:%d, Current:%d, New:%d",
-		yesterdayState.FollowerCount, newDailyState.FollowerCount, len(newFollowerIDs))
-
-	// update the current state
-	newDailyState.Followers = currentFollowerIDs
-	newDailyState.FollowerCount = len(currentFollowerIDs)
-	newDailyState.NewFollowerCount = len(newFollowerIDs)
-
-	logger.Printf("Process new followers for %s...", forUser.Username)
+	logger.Printf("Getting new follower details for %s...", forUser.Username)
 	if err := pageDownloadFollowerDetail(ctx, forUser, store.FollowedEventType, newFollowerIDs); err != nil {
-		return errors.Wrapf(err, "error downloading new follower detail for %s",
-			forUser.Username)
+		return errors.Wrapf(err, "error downloading new follower detail for %s", forUser.Username)
 	}
 
-	logger.Printf("Deriving unfollowers for %s...", forUser.Username)
-	newUnfollowerIDs := getArrayDiff(newDailyState.Followers, yesterdayState.Followers)
-	newDailyState.UnfollowerCount = len(newUnfollowerIDs)
+	// ============================================================================
+	// New Unfollowers
+	// ============================================================================
+	logger.Printf("Comparing to find unfollowers for %s...", forUser.Username)
+	newUnfollowerIDs := getArrayDiff(todayState.Followers, yesterdayState.Followers)
+	logger.Printf("   Yesterday:%d, Today:%d, New Unfollowers:%d",
+		yesterdayState.UnfollowerCount, todayState.UnfollowerCount, len(newUnfollowerIDs))
 
-	logger.Printf("Process unfollowers for %s...", forUser.Username)
+	logger.Printf("Getting unfollowers details for %s...", forUser.Username)
 	if err := pageDownloadFollowerDetail(ctx, forUser, store.UnfollowedEventType, newUnfollowerIDs); err != nil {
-		return errors.Wrapf(err, "error downloading unfollower detail for %s",
-			forUser.Username)
+		return errors.Wrapf(err, "error downloading unfollower detail for %s", forUser.Username)
 	}
 
+	// ============================================================================
+	// Saving State
+	// ============================================================================
 	logger.Printf("Saving current state for %s...", forUser.Username)
-	err = store.SaveDailyFollowerState(ctx, newDailyState)
+	// update the current state
+	todayState.Followers = currentFollowerIDs
+	todayState.FollowerCount = len(currentFollowerIDs)
+	todayState.NewFollowerCount = len(newFollowerIDs)
+	todayState.UnfollowerCount = len(newUnfollowerIDs)
+
+	err = store.SaveDailyFollowerState(ctx, todayState)
 	if err != nil {
 		return errors.Wrap(err, "error saving daily state")
 	}
@@ -92,20 +123,26 @@ func UpdateUserData(ctx context.Context, username string) error {
 
 }
 
-func refreshUserOwnDetails(ctx context.Context, forUser *store.AuthedUser) error {
+func refreshUserOwnDetails(ctx context.Context, forUser *store.AuthedUser) (twitterUser *store.SimpleUser, err error) {
 	// this returns array of 1
 	users, err := GetUserDetails(forUser)
 	if err != nil {
-		return errors.Wrap(err, "Error getting user details")
+		return nil, errors.Wrap(err, "error getting user details")
+	}
+
+	if users == nil || len(users) != 1 {
+		return nil, errors.Wrapf(err, "expected 1 user, got %d", len(users))
 	}
 
 	// save tweeter details for the authed user
 	err = store.SaveUsers(ctx, users)
 	if err != nil {
-		return errors.Wrap(err, "Error saving new follower events")
+		return nil, errors.Wrap(err, "error saving new follower events")
 	}
 
-	return nil
+	twitterUser = users[0]
+
+	return
 }
 
 func pageDownloadFollowerDetail(ctx context.Context, forUser *store.AuthedUser, eventType string, ids []int64) error {
@@ -172,6 +209,9 @@ func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventTy
 	if err = store.SaveUserEvents(ctx, events); err != nil {
 		return errors.Wrap(err, "error saving events")
 	}
+
+	logger.Printf("   Found %d twitter users and saved %d events for %s",
+		len(users), len(events), forUser.Username)
 
 	return nil
 }

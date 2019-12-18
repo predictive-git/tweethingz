@@ -14,7 +14,7 @@ func TestGetUserEventsByType(t *testing.T) {
 	username := "KnativeProject"
 	yesterday := time.Now().AddDate(0, 0, -1)
 
-	data, err := GetUserEventsSince(ctx, username, yesterday, recentUsersPerDayLimit)
+	data, err := GetUserEventsSince(ctx, username, yesterday)
 	assert.Nil(t, err)
 	assert.NotNil(t, data)
 	assert.True(t, len(data) > 0)

@@ -121,7 +121,7 @@ func toUserEventDateID(username, eventType, date string) string {
 // GetUserEventsSince retreaves user events since date
 // HACK: workaround for lack of support for compounded queries so we look for each day since
 // You can only perform range comparisons (<, <=, >, >=) on a single field
-func GetUserEventsSince(ctx context.Context, username string, since time.Time, dayLimit int) (data []*SimpleUserEvent, err error) {
+func GetUserEventsSince(ctx context.Context, username string, since time.Time) (data []*SimpleUserEvent, err error) {
 
 	col, err := getCollection(ctx, userEventCollectionName)
 	if err != nil {
@@ -130,7 +130,7 @@ func GetUserEventsSince(ctx context.Context, username string, since time.Time, d
 
 	data = make([]*SimpleUserEvent, 0)
 	for _, d := range getDateRange(since) {
-		items, e := GetUserEventsForDate(ctx, col, username, d, dayLimit)
+		items, e := GetUserEventsForDate(ctx, col, username, d)
 		if e != nil {
 			return nil, e
 		}
@@ -144,16 +144,16 @@ func GetUserEventsSince(ctx context.Context, username string, since time.Time, d
 }
 
 // GetUserEventsForDate returns user events for specific date
-func GetUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, username string, since time.Time, dayLimit int) (data []*SimpleUserEvent, err error) {
+func GetUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, username string, since time.Time) (data []*SimpleUserEvent, err error) {
 
 	docs, err := col.
 		Where("event_user", "==", username).
 		Where("event_at", "==", since.Format(ISODateFormat)).
-		Limit(dayLimit).
 		Documents(ctx).
 		GetAll()
 
-	logger.Printf("query for %s user and %s day found %d events", username, since.Format(ISODateFormat), len(docs))
+	// logger.Printf("query for %s user and %s day found %d events",
+	// username, since.Format(ISODateFormat), len(docs))
 
 	data = make([]*SimpleUserEvent, 0)
 

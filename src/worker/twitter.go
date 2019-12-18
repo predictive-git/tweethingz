@@ -56,8 +56,6 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
 	}
 
-	logger.Printf("Found %d users for %s", len(items), byUser.Username)
-
 	// parse page users
 	for _, u := range items {
 
@@ -87,7 +85,7 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 	return list, nil
 }
 
-func getFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
+func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 
 	client, err := getClient(byUser)
 	if err != nil {
@@ -108,7 +106,7 @@ func getFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 		}
 
 		// debug
-		logger.Printf("Page size:%d, Next:%d\n", len(page.IDs), page.NextCursor)
+		logger.Printf("   Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
 
 		list = append(list, page.IDs...)
 

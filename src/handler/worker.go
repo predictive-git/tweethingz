@@ -2,7 +2,9 @@ package handler
 
 import (
 	"fmt"
+
 	"github.com/mchmarny/gcputil/env"
+	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/mchmarny/tweethingz/src/worker"
 
 	"github.com/gin-gonic/gin"
@@ -37,10 +39,18 @@ func WorkerHandler(c *gin.Context) {
 
 	logger.Printf("Starting background worker for: %s...", user)
 	if err := worker.UpdateUserData(c.Request.Context(), user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error running worker",
-			"status":  "Internal Error",
-		})
+		logger.Printf("error while updating user data: %v", err)
+		if err == store.ErrDataNotFound {
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": fmt.Sprintf("User %s must authenticate through UI first", user),
+				"status":  "Data Not Found",
+			})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Error running worker",
+				"status":  "Internal Error",
+			})
+		}
 		return
 	}
 

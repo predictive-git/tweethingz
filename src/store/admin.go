@@ -97,10 +97,7 @@ func GetAuthedUser(ctx context.Context, username string) (user *AuthedUser, err 
 	}
 
 	user = &AuthedUser{}
-	e := getByID(ctx, authCollectionName, toID(username), user)
-	if e != nil {
-		return nil, e
-	}
+	err = getByID(ctx, authCollectionName, toID(username), user)
 
 	return
 
