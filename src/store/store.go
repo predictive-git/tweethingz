@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
@@ -139,13 +140,20 @@ func save(ctx context.Context, col, id string, in interface{}) error {
 	return nil
 }
 
-func toID(query string) string {
+// NewID generates new ID using UUID v4
+func NewID() string {
+	return fmt.Sprintf("%s%s", recordIDPrefix, uuid.New().String())
+}
+
+// ToID hashes the passed string into a valid ID
+func ToID(query string) string {
 	h := fnv.New32a()
 	h.Write([]byte(query))
 	return fmt.Sprintf("%s%d", recordIDPrefix, h.Sum32())
 }
 
-func isNumeric(s string) bool {
+// IsNumeric checks if the passed string contains only 0-9 numbers
+func IsNumeric(s string) bool {
 	_, err := strconv.ParseFloat(s, 64)
 	return err == nil
 }

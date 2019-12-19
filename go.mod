@@ -9,6 +9,7 @@ require (
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/gin-gonic/gin v1.5.0
 	github.com/go-playground/universal-translator v0.17.0 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/kurrik/oauth1a v0.0.0-20151019171716-cb1b80e32dd4

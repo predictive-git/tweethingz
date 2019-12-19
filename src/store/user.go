@@ -72,7 +72,7 @@ func SaveUsers(ctx context.Context, users []*SimpleUser) error {
 	batch := fsClient.Batch()
 
 	for _, u := range users {
-		docRef := col.Doc(toID(u.Username))
+		docRef := col.Doc(ToID(u.Username))
 		batch.Set(docRef, u)
 	}
 
@@ -85,7 +85,7 @@ func SaveUsers(ctx context.Context, users []*SimpleUser) error {
 func GetUser(ctx context.Context, username string) (user *SimpleUser, err error) {
 
 	user = &SimpleUser{}
-	err = getByID(ctx, userCollectionName, toID(username), user)
+	err = getByID(ctx, userCollectionName, ToID(username), user)
 
 	return user, err
 }
@@ -115,7 +115,7 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 }
 
 func toUserEventDateID(username, eventType, date string) string {
-	return toID(fmt.Sprintf("%s-%s-%s", date, username, eventType))
+	return ToID(fmt.Sprintf("%s-%s-%s", date, username, eventType))
 }
 
 // GetUserEventsSince retreaves user events since date

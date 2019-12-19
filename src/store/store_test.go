@@ -17,7 +17,7 @@ func TestToID(t *testing.T) {
 		// is at least 10 char ("id-" + 9)
 		assert.True(t, len(id) > 10)
 		// the non prefix part is numeric
-		assert.True(t, isNumeric(id[3:]))
+		assert.True(t, IsNumeric(id[3:]))
 	}
 
 }

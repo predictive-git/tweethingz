@@ -39,7 +39,7 @@ func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState 
 }
 
 func toUserDateID(username string, date time.Time) string {
-	return toID(fmt.Sprintf("%s-%s", date.Format(ISODateFormat), username))
+	return ToID(fmt.Sprintf("%s-%s", date.Format(ISODateFormat), username))
 }
 
 // SaveDailyFollowerState saves daily follower state

@@ -38,7 +38,7 @@ func SaveAuthSession(ctx context.Context, s *AuthSession) error {
 		return errors.New("Nil auh session")
 	}
 
-	if err := save(ctx, sessionCollectionName, toID(s.ID), s); err != nil {
+	if err := save(ctx, sessionCollectionName, ToID(s.ID), s); err != nil {
 		return errors.Wrap(err, "Error executing save auth session")
 	}
 
@@ -54,7 +54,7 @@ func GetAuthSession(ctx context.Context, id string) (content *AuthSession, err e
 	}
 
 	s := &AuthSession{}
-	e := getByID(ctx, sessionCollectionName, toID(id), s)
+	e := getByID(ctx, sessionCollectionName, ToID(id), s)
 	if e != nil {
 		return nil, errors.Wrap(err, "Error getting session")
 	}
@@ -70,7 +70,7 @@ func DeleteAuthSession(ctx context.Context, username string) error {
 		return errors.New("Null id parameter")
 	}
 
-	return deleteByID(ctx, sessionCollectionName, toID(username))
+	return deleteByID(ctx, sessionCollectionName, ToID(username))
 
 }
 
@@ -81,7 +81,7 @@ func SaveAuthUser(ctx context.Context, u *AuthedUser) error {
 		return errors.New("Nil user argument")
 	}
 
-	if err := save(ctx, authCollectionName, toID(u.Username), u); err != nil {
+	if err := save(ctx, authCollectionName, ToID(u.Username), u); err != nil {
 		return errors.Wrap(err, "Error executing save auth session")
 	}
 
@@ -97,7 +97,7 @@ func GetAuthedUser(ctx context.Context, username string) (user *AuthedUser, err 
 	}
 
 	user = &AuthedUser{}
-	err = getByID(ctx, authCollectionName, toID(username), user)
+	err = getByID(ctx, authCollectionName, ToID(username), user)
 
 	return
 
