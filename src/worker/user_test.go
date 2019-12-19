@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestArrayDiff(t *testing.T) {
+func TestDerivingArrayDiff(t *testing.T) {
 
 	a1 := []int64{1, 2, 3, 4, 5}
 	a2 := []int64{6, 7, 3, 4, 5}

@@ -9,11 +9,11 @@ SERVICE_URL=$(gcloud beta run services describe ${SERVICE_NAME} \
 
 SERVICE_TOKEN=$(<"${CONF_DIR}/service_token")
 
-for TW_USER in "${TW_USERS[@]}"
+for TW_USER in "${SCHEDULE_ACCOUNTS[@]}"
 do
     gcloud scheduler jobs create http "${SERVICE_NAME}-refresh-${TW_USER}" \
         --http-method POST \
-        --schedule "${SERVICE_SCHEDULE}" \
+        --schedule "${SCHEDULE_FREQUENCY}" \
         --uri "${SERVICE_URL}/api/v1/refresh/${TW_USER}?token=${SERVICE_TOKEN}"
 
     gcloud scheduler jobs describe "${SERVICE_NAME}-refresh-${TW_USER}"

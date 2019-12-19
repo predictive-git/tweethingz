@@ -16,3 +16,5 @@ go mod vendor
 go test -v -count=1 -race ./...
 
 # go test -v -run TestTwitterTestAccount ./src/store
+# go test -v -run TestViewRedirectSansAuthCookie ./src/handler
+

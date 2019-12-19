@@ -9,7 +9,7 @@ export TOKEN=$(<"${CONF_DIR}/service_token")
 export SERVICE_URL=$(gcloud beta run services describe ${SERVICE_NAME} \
     --region ${SERVICE_REGION} --format="value(status.domain)") # hosted
 
-for TW_USER in "${TW_USERS[@]}"
+for TW_USER in "${SCHEDULE_ACCOUNTS[@]}"
 do
     curl -X POST -H "Content-type: application/json" \
         "${SERVICE_URL}/api/v1/refresh/${TW_USER}?token=${TOKEN}"
