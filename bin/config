@@ -5,8 +5,10 @@ export SERVICE_REGION="us-central1"
 export SERVICE_VERSION="0.3.5"
 export SERVICE_SCHEDULE="every 60 mins"
 
+# Cloud Scheduler
+export TW_USERS=("mchmarny" "KnativeProject")
+
 # Twitter API
-export TW_USER="mchmarny"
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
 

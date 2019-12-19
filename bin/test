@@ -3,6 +3,7 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+export TEST_TW_ACCOUNT="mchmarny"
 export RELEASE="${IMAGE_VERSION}"
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
@@ -13,3 +14,5 @@ go mod tidy
 go mod vendor
 
 go test -v -count=1 -race ./...
+
+# go test -v -run TestTwitterTestAccount ./src/store
