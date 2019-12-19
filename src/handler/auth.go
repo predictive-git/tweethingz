@@ -65,7 +65,7 @@ func AuthLoginHandler(c *gin.Context) {
 
 	uid, _ := c.Cookie(userIDCookieName)
 	if uid != "" {
-		c.Redirect(http.StatusSeeOther, "view")
+		c.Redirect(http.StatusSeeOther, "/view")
 		return
 	}
 
@@ -159,7 +159,7 @@ func AuthCallbackHandler(c *gin.Context) {
 		Username:          userConfig.AccessValues.Get("screen_name"),
 		AccessTokenKey:    userConfig.AccessTokenKey,
 		AccessTokenSecret: userConfig.AccessTokenSecret,
-		UpdatedAt:         time.Now(),
+		UpdatedAt:         time.Now().UTC(),
 	}
 
 	if err = store.SaveAuthUser(c.Request.Context(), authedUser); err != nil {

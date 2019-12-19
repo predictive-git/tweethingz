@@ -46,7 +46,7 @@ func UpdateUserData(ctx context.Context, username string) error {
 	// Yesterday State
 	// ============================================================================
 	logger.Printf("Getting previous day state for %s...", forUser.Username)
-	yesterday := time.Now().AddDate(0, 0, -1) //TODO: UTC
+	yesterday := time.Now().UTC().AddDate(0, 0, -1)
 	yesterdayState, err := store.GetDailyFollowerState(ctx, forUser.Username, yesterday)
 	if err != nil {
 		return errors.Wrap(err, "error getting yesterday's state")
@@ -58,7 +58,7 @@ func UpdateUserData(ctx context.Context, username string) error {
 	//  Today State
 	// ============================================================================
 	logger.Printf("Getting current day state for %s...", forUser.Username)
-	todayState, err := store.GetDailyFollowerState(ctx, forUser.Username, time.Now())
+	todayState, err := store.GetDailyFollowerState(ctx, forUser.Username, time.Now().UTC())
 	if err != nil {
 		return errors.Wrap(err, "error getting today's state")
 	}
@@ -191,7 +191,7 @@ func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventTy
 	events := make([]*store.SimpleUserEvent, 0)
 	for _, u := range users {
 		ue := &store.SimpleUserEvent{
-			EventDate:  time.Now().Format(store.ISODateFormat),
+			EventDate:  time.Now().UTC().Format(store.ISODateFormat),
 			EventType:  eventType,
 			EventUser:  forUser.Username,
 			SimpleUser: *u,

@@ -55,7 +55,7 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		},
 		RecentFollowers:   make([]*SimpleUserEvent, 0),
 		RecentUnfollowers: make([]*SimpleUserEvent, 0),
-		UpdatedOn:         time.Now(),
+		UpdatedOn:         time.Now().UTC(),
 	}
 
 	// ============================================================================
@@ -70,7 +70,7 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 	// ============================================================================
 	// User follower series
 	// ============================================================================
-	periodStartDate := time.Now().AddDate(0, 0, -data.Meta.NumDaysPeriod)
+	periodStartDate := time.Now().UTC().AddDate(0, 0, -data.Meta.NumDaysPeriod)
 	followerData, err := GetDailyFollowerStatesSince(ctx, username, periodStartDate)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting followe count")
@@ -84,7 +84,7 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 	// ============================================================================
 	// User follower events for today
 	// ============================================================================
-	list, err := GetUserEventsSince(ctx, username, time.Now())
+	list, err := GetUserEventsSince(ctx, username, time.Now().UTC())
 	if err != nil {
 		return nil, errors.Wrap(err, "error quering user events")
 	}

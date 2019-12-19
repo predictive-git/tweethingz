@@ -49,7 +49,7 @@ func SaveDailyFollowerState(ctx context.Context, data *DailyFollowerState) error
 		return errors.New("data required")
 	}
 
-	docID := toUserDateID(data.Username, time.Now())
+	docID := toUserDateID(data.Username, time.Now().UTC())
 
 	return save(ctx, followerCollectionName, docID, data)
 

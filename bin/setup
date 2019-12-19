@@ -11,11 +11,16 @@ gcloud services enable --quiet \
     containerregistry.googleapis.com \
     firestore.googleapis.com \
     iam.googleapis.com \
-    run.googleapis.com
+    run.googleapis.com \
+    secretmanager.googleapis.com
 
 # create alphanumeric token and save it locally for reference in deployment and scheduler
 mkdir -p $CONF_DIR
+# save locally for now
 echo "$(openssl rand -base64 500 | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)" > "${CONF_DIR}/service_token"
+# echo -n "$(openssl rand -base64 500 | tr -dc 'a-zA-Z0-9' | fold -w 32 | head -n 1)" | \
+#     gcloud beta secrets create thingz-token --replication-policy=automatic --data-file=-
+# gcloud beta secrets versions access latest --secret=thingz-token
 echo "token saved in: ${CONF_DIR}"
 
 # cloud run running service account

@@ -19,7 +19,7 @@ func DefaultHandler(c *gin.Context) {
 	uid, _ := c.Cookie(userIDCookieName)
 	if uid != "" {
 		logger.Printf("user already authenticated -> view")
-		c.Redirect(http.StatusSeeOther, "view")
+		c.Redirect(http.StatusSeeOther, "/view")
 		return
 	}
 

@@ -153,9 +153,9 @@ func isNumeric(s string) bool {
 func getDateRange(since time.Time) []time.Time {
 
 	r := make([]time.Time, 0)
-	today := time.Now().Format(ISODateFormat)
+	today := time.Now().UTC().Format(ISODateFormat)
 	if since.Format(ISODateFormat) > today {
-		since = time.Now()
+		since = time.Now().UTC()
 	}
 
 	for {

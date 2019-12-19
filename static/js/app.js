@@ -45,7 +45,7 @@ function runQuery() {
                 maintainAspectRatio: false,
                 title: {
                     display: true,
-                    text: 'Daily Follower Count',
+                    text: 'Daily Follower Count (UTC)',
                     fontColor: 'rgba(250, 250, 250, 0.5)',
                     fontSize: 16,
                 },
@@ -97,7 +97,7 @@ function runQuery() {
                 maintainAspectRatio: false,
                 title: {
                     display: true,
-                    text: 'Daily Follower Events',
+                    text: 'Daily Follower Events (UTC)',
                     fontColor: 'rgba(250, 250, 250, 0.5)',
                     fontSize: 16,
                 },
