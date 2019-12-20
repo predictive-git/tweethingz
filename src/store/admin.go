@@ -12,23 +12,15 @@ const (
 	authCollectionName    = "thingz_auth"
 )
 
+//============================================================================
+// User
+//============================================================================
+
 // AuthSession represents the authenticated user session
 type AuthSession struct {
 	ID     string    `firestore:"id" json:"id"`
 	Config string    `firestore:"config" json:"config"`
 	On     time.Time `firestore:"on" json:"on"`
-}
-
-// AuthedUser represents authenticated user
-type AuthedUser struct {
-
-	// User details
-	Username string `firestore:"username" json:"username"`
-
-	AccessTokenKey    string `firestore:"access_token_key" json:"access_token_key"`
-	AccessTokenSecret string `firestore:"access_token_secret" json:"access_token_secret"`
-
-	UpdatedAt time.Time `firestore:"updated_at" json:"updated_at"`
 }
 
 // SaveAuthSession persists authenticated user session config
@@ -38,7 +30,7 @@ func SaveAuthSession(ctx context.Context, s *AuthSession) error {
 		return errors.New("Nil auh session")
 	}
 
-	if err := save(ctx, sessionCollectionName, ToID(s.ID), s); err != nil {
+	if err := save(ctx, sessionCollectionName, s.ID, s); err != nil {
 		return errors.Wrap(err, "Error executing save auth session")
 	}
 
@@ -54,7 +46,7 @@ func GetAuthSession(ctx context.Context, id string) (content *AuthSession, err e
 	}
 
 	s := &AuthSession{}
-	e := getByID(ctx, sessionCollectionName, ToID(id), s)
+	e := getByID(ctx, sessionCollectionName, id, s)
 	if e != nil {
 		return nil, errors.Wrap(err, "Error getting session")
 	}
@@ -64,14 +56,26 @@ func GetAuthSession(ctx context.Context, id string) (content *AuthSession, err e
 }
 
 // DeleteAuthSession deletes session once it has been used
-func DeleteAuthSession(ctx context.Context, username string) error {
+func DeleteAuthSession(ctx context.Context, id string) error {
 
-	if username == "" {
+	if id == "" {
 		return errors.New("Null id parameter")
 	}
 
-	return deleteByID(ctx, sessionCollectionName, ToID(username))
+	return deleteByID(ctx, sessionCollectionName, id)
 
+}
+
+//============================================================================
+// User
+//============================================================================
+
+// AuthedUser represents authenticated user
+type AuthedUser struct {
+	Username          string    `firestore:"username" json:"username"`
+	AccessTokenKey    string    `firestore:"access_token_key" json:"access_token_key"`
+	AccessTokenSecret string    `firestore:"access_token_secret" json:"access_token_secret"`
+	UpdatedAt         time.Time `firestore:"updated_at" json:"updated_at"`
 }
 
 // SaveAuthUser saves multiple users

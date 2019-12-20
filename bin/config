@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Cloud Scheduler
-export SCHEDULE_ACCOUNTS=("mchmarny" "KnativeProject")
+export SCHEDULE_ACCOUNTS=("mchmarny" "knativeproject") # lower case
 export SCHEDULE_FREQUENCY="every 60 mins"
 
 # Twitter API
@@ -10,7 +10,7 @@ export TW_SECRET=$TW_CONSUMER_SECRET
 
 # Cloud Run
 export SERVICE_REGION="us-central1"
-export SERVICE_VERSION="0.3.5"
+export SERVICE_VERSION="0.3.8"
 
 # ====================================================================#
 # Derived values (don't edit)                                         #

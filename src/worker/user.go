@@ -74,8 +74,10 @@ func UpdateUserData(ctx context.Context, username string) error {
 	// if there is no yesterday data then use earier today data
 	if yesterdayState.FollowerCount == 0 {
 		newFollowerIDs = getArrayDiff(todayState.Followers, currentFollowerIDs)
+		todayState.NewFollowerCount = len(currentFollowerIDs)
 	} else {
 		newFollowerIDs = getArrayDiff(yesterdayState.Followers, currentFollowerIDs)
+		todayState.NewFollowerCount = len(newFollowerIDs)
 	}
 	logger.Printf("   Yesterday:%d, Today:%d, New Followers:%d",
 		yesterdayState.FollowerCount, todayState.FollowerCount, len(newFollowerIDs))
@@ -105,7 +107,6 @@ func UpdateUserData(ctx context.Context, username string) error {
 	// update the current state
 	todayState.Followers = currentFollowerIDs
 	todayState.FollowerCount = len(currentFollowerIDs)
-	todayState.NewFollowerCount = len(newFollowerIDs)
 	todayState.UnfollowerCount = len(newUnfollowerIDs)
 
 	err = store.SaveDailyFollowerState(ctx, todayState)
@@ -193,7 +194,7 @@ func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventTy
 		ue := &store.SimpleUserEvent{
 			EventDate:  time.Now().UTC().Format(store.ISODateFormat),
 			EventType:  eventType,
-			EventUser:  forUser.Username,
+			EventUser:  store.NormalizeString(forUser.Username),
 			SimpleUser: *u,
 		}
 		events = append(events, ue)

@@ -1,21 +1,23 @@
 package store
 
 import (
-	"hash/fnv"
 	"log"
 	"os"
-	"strconv"
+	"strings"
 	"time"
 
 	"context"
 	"errors"
 	"fmt"
 
-	"github.com/google/uuid"
+	"crypto/md5"
+	"encoding/hex"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 
 	"cloud.google.com/go/firestore"
+	"github.com/google/uuid"
 	"github.com/mchmarny/gcputil/project"
 )
 
@@ -142,20 +144,19 @@ func save(ctx context.Context, col, id string, in interface{}) error {
 
 // NewID generates new ID using UUID v4
 func NewID() string {
-	return fmt.Sprintf("%s%s", recordIDPrefix, uuid.New().String())
+	return ToID(uuid.New().String())
+}
+
+// NormalizeString makes val comparable regardless of case or whitespace
+func NormalizeString(val string) string {
+	return strings.TrimSpace(strings.ToLower(val))
 }
 
 // ToID hashes the passed string into a valid ID
-func ToID(query string) string {
-	h := fnv.New32a()
-	h.Write([]byte(query))
-	return fmt.Sprintf("%s%d", recordIDPrefix, h.Sum32())
-}
-
-// IsNumeric checks if the passed string contains only 0-9 numbers
-func IsNumeric(s string) bool {
-	_, err := strconv.ParseFloat(s, 64)
-	return err == nil
+func ToID(val string) string {
+	hash := md5.Sum([]byte(NormalizeString(val)))
+	hashStr := hex.EncodeToString(hash[:])
+	return fmt.Sprintf("%s%s", recordIDPrefix, hashStr)
 }
 
 func getDateRange(since time.Time) []time.Time {

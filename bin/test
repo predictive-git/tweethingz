@@ -13,13 +13,21 @@ export GO111MODULE=on
 go mod tidy
 go mod vendor
 
-# go test -v -count=1 -race ./...
-go test -v -count=1 -race -short ./...
+# full tests (short does not require DB)
+go test -v -count=1 -race ./...
+# go test -v -count=1 -race -short ./...
 
-# go test -v -run TestTwitterTestAccount ./src/store
-# go test -v -run TestViewRedirectSansAuthCookie ./src/handler
-
+# twitter search criteria tess
 # go test -v -run TestLinkFilter ./src/worker
 # go test -v -run TestRetweetFilter ./src/worker
 # go test -v -run TestAuthorFilter ./src/worker
+# go test -v -run TestSearch ./src/worker
+
+# other tests
+# go test -v -run TestTwitterTestAccount ./src/store
+# go test -v -run TestToID ./src/store
+# go test -v -run TestViewRedirectSansAuthCookie ./src/handler
+
+
+
 

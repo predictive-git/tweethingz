@@ -37,6 +37,7 @@ func RefreshWorkerHandler(c *gin.Context) {
 		return
 	}
 
+	user = store.NormalizeString(user)
 	logger.Printf("Starting background worker for: %s...", user)
 	if err := worker.UpdateUserData(c.Request.Context(), user); err != nil {
 		logger.Printf("error while updating user data: %v", err)

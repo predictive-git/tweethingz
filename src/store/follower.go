@@ -39,20 +39,16 @@ func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState 
 }
 
 func toUserDateID(username string, date time.Time) string {
-	return ToID(fmt.Sprintf("%s-%s", date.Format(ISODateFormat), username))
+	return ToID(fmt.Sprintf("%s-%s", date.Format(ISODateFormat), NormalizeString(username)))
 }
 
 // SaveDailyFollowerState saves daily follower state
 func SaveDailyFollowerState(ctx context.Context, data *DailyFollowerState) error {
-
 	if data == nil {
 		return errors.New("data required")
 	}
-
 	docID := toUserDateID(data.Username, time.Now().UTC())
-
 	return save(ctx, followerCollectionName, docID, data)
-
 }
 
 // GetDailyFollowerState retreaves follower data for specific date
@@ -64,7 +60,7 @@ func GetDailyFollowerState(ctx context.Context, username string, day time.Time) 
 	if err != nil {
 		if IsDataNotFoundError(err) {
 			// logger.Printf("no state data for %s on %v, using defaults", username, day)
-			data.Username = username
+			data.Username = NormalizeString(username)
 			data.StateOn = day.Format(ISODateFormat)
 			data.Followers = make([]int64, 0)
 			return data, nil
@@ -96,31 +92,3 @@ func GetDailyFollowerStatesSince(ctx context.Context, username string, since tim
 	return
 
 }
-
-// GetDailyFollowerStatesSince retrieves map of dates and follower count since the specified date
-// func GetDailyFollowerStatesSince(ctx context.Context, username string, since time.Time) (data []*DailyFollowerState, err error) {
-
-// 	col, err := getCollection(ctx, followerCollectionName)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	docs, err := col.
-// 		Where("username", "==", username).
-// 		Where("date", ">=", since.Format(isoDateFormat)).
-// 		OrderBy("date", firestore.Desc).
-// 		Documents(ctx).
-// 		GetAll()
-
-// 	data = make([]*DailyFollowerState, 0)
-
-// 	for _, doc := range docs {
-// 		state := &DailyFollowerState{}
-// 		if err := doc.DataTo(state); err != nil {
-// 			return nil, fmt.Errorf("error retreiveing daily follower state from %v: %v", doc.Data(), err)
-// 		}
-// 	}
-
-// 	return
-
-// }

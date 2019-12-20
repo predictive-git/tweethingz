@@ -1,12 +1,9 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -78,7 +75,7 @@ func AuthLoginHandler(c *gin.Context) {
 		return
 	}
 
-	url, err := userConfig.GetAuthorizeURL(service)
+	AuthURL, err := userConfig.GetAuthorizeURL(service)
 	if err != nil {
 		err := errors.Wrap(err, "could not get authorization URL")
 		errorHandler(c, err, http.StatusInternalServerError)
@@ -86,7 +83,7 @@ func AuthLoginHandler(c *gin.Context) {
 	}
 
 	authSession := &store.AuthSession{
-		ID:     getNewSessionID(),
+		ID:     store.NewID(), // already URL escaped
 		Config: userConfigToString(userConfig),
 		On:     time.Now().UTC(),
 	}
@@ -95,7 +92,7 @@ func AuthLoginHandler(c *gin.Context) {
 
 	c.SetCookie(authIDCookieName, authSession.ID, 60, "/", c.Request.Host, false, true)
 
-	c.Redirect(http.StatusFound, url)
+	c.Redirect(http.StatusFound, AuthURL)
 
 }
 
@@ -156,7 +153,7 @@ func AuthCallbackHandler(c *gin.Context) {
 	c.SetCookie(authIDCookieName, "", 0, "/", c.Request.Host, false, true)
 
 	authedUser := &store.AuthedUser{
-		Username:          userConfig.AccessValues.Get("screen_name"),
+		Username:          store.NormalizeString(userConfig.AccessValues.Get("screen_name")),
 		AccessTokenKey:    userConfig.AccessTokenKey,
 		AccessTokenSecret: userConfig.AccessTokenSecret,
 		UpdatedAt:         time.Now().UTC(),
@@ -177,20 +174,8 @@ func AuthCallbackHandler(c *gin.Context) {
 
 // LogOutHandler ...
 func LogOutHandler(c *gin.Context) {
-
 	c.SetCookie(userIDCookieName, "", -1, "/", c.Request.Host, false, true)
 	c.Redirect(http.StatusSeeOther, "/")
-
-}
-
-func getNewSessionID() string {
-	c := 128
-	b := make([]byte, c)
-	n, err := io.ReadFull(rand.Reader, b)
-	if n != len(b) || err != nil {
-		panic("could not generate random number")
-	}
-	return base64.URLEncoding.EncodeToString(b)
 }
 
 func userConfigToString(config *oauth1a.UserConfig) string {
@@ -203,10 +188,9 @@ func userConfigFromString(content string) (conf *oauth1a.UserConfig, err error) 
 	if e != nil {
 		return nil, e
 	}
-	var c oauth1a.UserConfig
-	if e := json.Unmarshal(b, &c); e != nil {
+	conf = &oauth1a.UserConfig{}
+	if e := json.Unmarshal(b, conf); e != nil {
 		return nil, e
 	}
-
-	return &c, nil
+	return
 }

@@ -6,13 +6,19 @@ import (
 	"sort"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/pkg/errors"
+	"google.golang.org/api/iterator"
 )
 
 const (
 	searchCriteriaCollectionName = "thingz_search_criteria"
 	searchResultCollectionName   = "thingz_search_result"
 )
+
+//============================================================================
+// Criteria
+//============================================================================
 
 // SearchCriteria defines search query criteria
 type SearchCriteria struct {
@@ -67,25 +73,6 @@ type FloatRange struct {
 	Max float64 `firestore:"max" json:"max"`
 }
 
-// SimpleTweet is the short version of twitter search result
-type SimpleTweet struct {
-	ID            string      `json:"id_str"`
-	CreatedAt     time.Time   `json:"created_at"`
-	FavoriteCount int         `json:"favorite_count"`
-	ReplyCount    int         `json:"reply_count"`
-	RetweetCount  int         `json:"retweet_count"`
-	IsRT          bool        `json:"is_rt"`
-	Text          string      `json:"text"`
-	Author        *SimpleUser `json:"author"`
-}
-
-// SimpleTweetByDate is a custom data structure for array of SimpleTweet
-type SimpleTweetByDate []*SimpleTweet
-
-func (s SimpleTweetByDate) Len() int           { return len(s) }
-func (s SimpleTweetByDate) Less(i, j int) bool { return s[i].CreatedAt.Before(s[j].CreatedAt) }
-func (s SimpleTweetByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
 // SaveSearchCriteria saves search criteria
 func SaveSearchCriteria(ctx context.Context, c *SearchCriteria) error {
 
@@ -93,22 +80,15 @@ func SaveSearchCriteria(ctx context.Context, c *SearchCriteria) error {
 		return errors.New("criteria required")
 	}
 
+	if c.ID == "" {
+		return errors.New("criteria ID required")
+	}
+
 	if c.Name == "" || c.Query == nil || c.Query.Value == "" {
 		return fmt.Errorf("invalid criteria: %+v", c)
 	}
 
-	if c.ID == "" {
-		c.ID = NewID()
-	}
-
 	return save(ctx, searchCriteriaCollectionName, c.ID, c)
-}
-
-// GetSearchCriterion retrieves singe search criterion
-func GetSearchCriterion(ctx context.Context, id string) (c *SearchCriteria, err error) {
-	c = &SearchCriteria{}
-	err = getByID(ctx, searchCriteriaCollectionName, id, c)
-	return
 }
 
 // DeleteSearchCriterion deletes single search criterion
@@ -125,7 +105,7 @@ func GetSearchCriteria(ctx context.Context, username string) (data []*SearchCrit
 	}
 
 	docs, err := col.
-		Where("user", "==", username).
+		Where("user", "==", NormalizeString(username)).
 		Documents(ctx).
 		GetAll()
 
@@ -140,6 +120,95 @@ func GetSearchCriteria(ctx context.Context, username string) (data []*SearchCrit
 	}
 
 	sort.Sort(SearchCriteriaByDate(data))
+
+	return
+
+}
+
+//============================================================================
+// Results
+//============================================================================
+
+// SimpleTweet is the short version of twitter search result
+type SimpleTweet struct {
+	ID            string      `firestore:"id_str" json:"id_str"`
+	CriteriaID    string      `firestore:"criteria_id" json:"criteria_id"`
+	CreatedAt     time.Time   `firestore:"created_at" json:"created_at"`
+	FavoriteCount int         `firestore:"favorite_count" json:"favorite_count"`
+	ReplyCount    int         `firestore:"reply_count" json:"reply_count"`
+	RetweetCount  int         `firestore:"retweet_count" json:"retweet_count"`
+	IsRT          bool        `firestore:"is_rt" json:"is_rt"`
+	Text          string      `firestore:"text" json:"text"`
+	Author        *SimpleUser `firestore:"author" json:"author"`
+}
+
+// SimpleTweetByDate is a custom data structure for array of SimpleTweet
+type SimpleTweetByDate []*SimpleTweet
+
+func (s SimpleTweetByDate) Len() int           { return len(s) }
+func (s SimpleTweetByDate) Less(i, j int) bool { return s[i].CreatedAt.Before(s[j].CreatedAt) }
+func (s SimpleTweetByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+// SaveSearchResults saves a list of search results
+func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
+
+	if len(list) == 0 {
+		return nil
+	}
+
+	col, err := getCollection(ctx, searchResultCollectionName)
+	if err != nil {
+		return err
+	}
+
+	batch := fsClient.Batch()
+
+	for _, t := range list {
+		docRef := col.Doc(ToID(t.ID))
+		batch.Set(docRef, t)
+	}
+
+	_, err = batch.Commit(ctx)
+	return err
+
+}
+
+// GetSearchResults gets saved search results
+func GetSearchResults(ctx context.Context, criteriaID, sinceID string, limit int) (data []*SimpleTweet, err error) {
+
+	col, err := getCollection(ctx, searchResultCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	docs := col.
+		Where("criteria_id", "==", criteriaID).
+		Where("id", ">=", sinceID).
+		Limit(limit).
+		OrderBy("id", firestore.Asc).
+		Documents(ctx)
+
+	if docs == nil {
+		return nil, fmt.Errorf("doc iterator required")
+	}
+
+	data = make([]*SimpleTweet, 0)
+
+	for {
+		d, e := docs.Next()
+		if e == iterator.Done {
+			break
+		}
+		if e != nil {
+			return nil, e
+		}
+
+		item := &SimpleTweet{}
+		if e := d.DataTo(item); e != nil {
+			return nil, e
+		}
+		data = append(data, item)
+	}
 
 	return
 

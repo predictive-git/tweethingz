@@ -15,11 +15,12 @@ func TestSearchCRUD(t *testing.T) {
 	}
 
 	ctx := context.Background()
+	usr := "test"
 
 	c1 := &SearchCriteria{
 		ID:        NewID(),
 		Name:      "Test Criteria",
-		User:      "test",
+		User:      usr,
 		UpdatedOn: time.Now(),
 		Query: &SimpleQuery{
 			Value: "knative",
@@ -41,25 +42,19 @@ func TestSearchCRUD(t *testing.T) {
 	err := SaveSearchCriteria(ctx, c1)
 	assert.Nil(t, err)
 
-	c2, err := GetSearchCriterion(ctx, c1.ID)
-	assert.Nil(t, err)
-	assert.NotNil(t, c1)
-	assert.Equal(t, c1.Name, c2.Name)
-
-	c2.ID = NewID()
-	c2.Name = "test2"
-	err = SaveSearchCriteria(ctx, c2)
+	c1.ID = NewID()
+	c1.Name = "test2"
+	err = SaveSearchCriteria(ctx, c1)
 	assert.Nil(t, err)
 
-	list, err := GetSearchCriteria(ctx, "test")
+	list, err := GetSearchCriteria(ctx, usr)
 	assert.Nil(t, err)
 	assert.NotNil(t, list)
 	assert.Len(t, list, 2)
 
-	err = DeleteSearchCriterion(ctx, c1.ID)
-	assert.Nil(t, err)
-
-	err = DeleteSearchCriterion(ctx, c2.ID)
-	assert.Nil(t, err)
+	for _, c := range list {
+		err = DeleteSearchCriterion(ctx, c.ID)
+		assert.Nil(t, err)
+	}
 
 }

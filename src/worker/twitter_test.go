@@ -1,7 +1,10 @@
 package worker
 
 import (
+	"context"
+	"os"
 	"testing"
+	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/mchmarny/tweethingz/src/store"
@@ -71,5 +74,36 @@ func TestAuthorFilter(t *testing.T) {
 
 	tweet.User.FollowersCount = 11
 	assert.False(t, shouldFilterOut(tweet, filter))
+
+}
+
+func TestSearch(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	ctx := context.Background()
+	username := os.Getenv("TEST_TW_ACCOUNT")
+
+	usr, err := store.GetAuthedUser(ctx, username)
+	assert.Nil(t, err)
+
+	sc := &store.SearchCriteria{
+		ID:        "testID",
+		User:      usr.Username,
+		Name:      "Test Search",
+		UpdatedOn: time.Now(),
+		Query: &store.SimpleQuery{
+			Value:   "serverless",
+			Lang:    "en",
+			SinceID: 0,
+		},
+		Filter: &store.SimpleFilter{},
+	}
+
+	list, err := getSearchResults(ctx, usr, sc)
+	assert.Nil(t, err)
+	assert.NotNil(t, list)
 
 }

@@ -20,20 +20,9 @@ const (
 	UnfollowedEventType = "unfollowed"
 )
 
-// SimpleUserEvent wraps simple twitter user as an time event
-type SimpleUserEvent struct {
-	SimpleUser
-	EventDate string `firestore:"event_at" json:"event_at"`
-	EventType string `firestore:"event_type" json:"event_type"`
-	EventUser string `firestore:"event_user" json:"event_user"`
-}
-
-// UserEventByDate is a custom data structure for array of SimpleUserEvent
-type UserEventByDate []*SimpleUserEvent
-
-func (s UserEventByDate) Len() int           { return len(s) }
-func (s UserEventByDate) Less(i, j int) bool { return s[i].EventDate < s[j].EventDate }
-func (s UserEventByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+//============================================================================
+// User
+//============================================================================
 
 // SimpleUser represents simplified Twitter user
 type SimpleUser struct {
@@ -83,12 +72,29 @@ func SaveUsers(ctx context.Context, users []*SimpleUser) error {
 
 // GetUser retreaves single user
 func GetUser(ctx context.Context, username string) (user *SimpleUser, err error) {
-
 	user = &SimpleUser{}
 	err = getByID(ctx, userCollectionName, ToID(username), user)
-
 	return user, err
 }
+
+//============================================================================
+// Event
+//============================================================================
+
+// SimpleUserEvent wraps simple twitter user as an time event
+type SimpleUserEvent struct {
+	SimpleUser
+	EventDate string `firestore:"event_at" json:"event_at"`
+	EventType string `firestore:"event_type" json:"event_type"`
+	EventUser string `firestore:"event_user" json:"event_user"`
+}
+
+// UserEventByDate is a custom data structure for array of SimpleUserEvent
+type UserEventByDate []*SimpleUserEvent
+
+func (s UserEventByDate) Len() int           { return len(s) }
+func (s UserEventByDate) Less(i, j int) bool { return s[i].EventDate < s[j].EventDate }
+func (s UserEventByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // SaveUserEvents saves multiple user events
 func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
@@ -105,17 +111,13 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 	batch := fsClient.Batch()
 
 	for _, u := range users {
-		docRef := col.Doc(toUserEventDateID(u.Username, u.EventType, u.EventDate))
+		docRef := col.Doc(NewID())
 		batch.Set(docRef, u)
 	}
 
 	_, err = batch.Commit(ctx)
 	return err
 
-}
-
-func toUserEventDateID(username, eventType, date string) string {
-	return ToID(fmt.Sprintf("%s-%s-%s", date, username, eventType))
 }
 
 // GetUserEventsSince retreaves user events since date
@@ -147,7 +149,7 @@ func GetUserEventsSince(ctx context.Context, username string, since time.Time) (
 func GetUserEventsForDate(ctx context.Context, col *firestore.CollectionRef, username string, since time.Time) (data []*SimpleUserEvent, err error) {
 
 	docs, err := col.
-		Where("event_user", "==", username).
+		Where("event_user", "==", NormalizeString(username)).
 		Where("event_at", "==", since.Format(ISODateFormat)).
 		Documents(ctx).
 		GetAll()

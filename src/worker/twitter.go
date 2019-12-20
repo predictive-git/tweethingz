@@ -75,7 +75,7 @@ func convertTwitterTime(v string) time.Time {
 
 func toSimpleUser(u *twitter.User) *store.SimpleUser {
 	return &store.SimpleUser{
-		Username:       u.ScreenName,
+		Username:       store.NormalizeString(u.ScreenName),
 		Name:           u.Name,
 		Description:    u.Description,
 		ProfileImage:   u.ProfileImageURLHttps,
@@ -212,6 +212,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 
 			item := &store.SimpleTweet{
 				ID:            t.IDStr,
+				CriteriaID:    c.ID,
 				CreatedAt:     convertTwitterTime(t.CreatedAt),
 				FavoriteCount: t.FavoriteCount,
 				ReplyCount:    t.ReplyCount,
