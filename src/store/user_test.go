@@ -10,6 +10,10 @@ import (
 
 func TestGetUserEventsByType(t *testing.T) {
 
+	if testing.Short() {
+		t.SkipNow()
+	}
+
 	ctx := context.Background()
 	username := "KnativeProject"
 	yesterday := time.Now().AddDate(0, 0, -1)
@@ -28,8 +32,8 @@ func TestToUserEventDateID(t *testing.T) {
 	id2 := toUserEventDateID("aaa", FollowedEventType, date)
 	assert.Equal(t, id1, id2)
 
-	id1 = toUserEventDateID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1", FollowedEventType, date)
-	id2 = toUserEventDateID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2", FollowedEventType, date)
+	id1 = toUserEventDateID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa1", FollowedEventType, date)
+	id2 = toUserEventDateID("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa2", FollowedEventType, date)
 	assert.NotEqual(t, id1, id2)
 
 }

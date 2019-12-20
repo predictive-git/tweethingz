@@ -15,11 +15,17 @@ func getTestTwitterAccount() string {
 
 func TestTwitterTestAccount(t *testing.T) {
 	val := getTestTwitterAccount()
-	t.Logf("val: %s", val)
+	if !testing.Short() {
+		t.Logf("Test User: %s", val)
+	}
 	assert.NotEmpty(t, val)
 }
 
 func TestGetDailyFollowerStatesSince(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
 
 	ctx := context.Background()
 	yesterday := time.Now().AddDate(0, 0, -1)

@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"context"
 	"log"
 	"os"
 	"time"
@@ -50,39 +51,43 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 		return nil, errors.Wrap(err, "Error initializing client")
 	}
 
-	list := []*store.SimpleUser{}
+	users = make([]*store.SimpleUser, 0)
 	items, resp, err := client.Users.Lookup(listParam)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
 	}
 
-	// parse page users
 	for _, u := range items {
+		usr := toSimpleUser(&u)
+		users = append(users, usr)
+	}
 
-		ca, err := time.Parse(time.RubyDate, u.CreatedAt)
-		if err != nil {
-			return nil, errors.Wrapf(err, "Error parsing created timestamp: %s", u.CreatedAt)
-		}
+	return
+}
 
-		usr := &store.SimpleUser{
-			Username:       u.ScreenName,
-			Name:           u.Name,
-			Description:    u.Description,
-			ProfileImage:   u.ProfileImageURLHttps,
-			CreatedAt:      ca,
-			Lang:           u.Lang,
-			Location:       u.Location,
-			Timezone:       u.Timezone,
-			PostCount:      u.StatusesCount,
-			FaveCount:      u.FavouritesCount,
-			FollowingCount: u.FriendsCount,
-			FollowerCount:  u.FollowersCount,
-		}
+func convertTwitterTime(v string) time.Time {
+	t, err := time.Parse(time.RubyDate, v)
+	if err != nil {
+		t = time.Now()
+	}
+	return t
+}
 
-		list = append(list, usr)
-	} // for users loop
-
-	return list, nil
+func toSimpleUser(u *twitter.User) *store.SimpleUser {
+	return &store.SimpleUser{
+		Username:       u.ScreenName,
+		Name:           u.Name,
+		Description:    u.Description,
+		ProfileImage:   u.ProfileImageURLHttps,
+		CreatedAt:      convertTwitterTime(u.CreatedAt),
+		Lang:           u.Lang,
+		Location:       u.Location,
+		Timezone:       u.Timezone,
+		PostCount:      u.StatusesCount,
+		FaveCount:      u.FavouritesCount,
+		FollowingCount: u.FriendsCount,
+		FollowerCount:  u.FollowersCount,
+	}
 }
 
 func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
@@ -97,8 +102,7 @@ func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 		Count:      5000, // max per page
 	}
 
-	list := []int64{}
-
+	ids = make([]int64, 0)
 	for {
 		page, resp, err := client.Followers.IDs(listParam)
 		if err != nil {
@@ -108,7 +112,7 @@ func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 		// debug
 		logger.Printf("   Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
 
-		list = append(list, page.IDs...)
+		ids = append(ids, page.IDs...)
 
 		// has more IDs?
 		if page.NextCursor < 1 {
@@ -119,5 +123,174 @@ func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 		listParam.Cursor = page.NextCursor
 	}
 
-	return list, nil
+	return
+}
+
+func isInIntRange(v int, r *store.IntRange) bool {
+
+	if r == nil {
+		return true
+	}
+
+	if r.Min == 0 && r.Max == 0 {
+		return true
+	}
+
+	if r.Min > 0 && v < r.Min {
+		return false
+	}
+
+	if r.Max > 0 && v > r.Max {
+		return false
+	}
+
+	return true
+
+}
+
+func isInFollowerRange(following, followers int, r *store.FloatRange) bool {
+
+	if r == nil {
+		return true
+	}
+
+	if r.Min == 0 && r.Max == 0 {
+		return true
+	}
+
+	v := float64(followers / following)
+
+	if r.Min > 0 && v < r.Min {
+		return false
+	}
+
+	if r.Max > 0 && v > r.Max {
+		return false
+	}
+
+	return true
+
+}
+
+func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchCriteria) (list []*store.SimpleTweet, err error) {
+
+	tc, err := getClient(u)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error initializing twitter client")
+	}
+
+	qp := &twitter.SearchTweetParams{
+		Query:           c.Query.Value,
+		Lang:            c.Query.Lang,
+		Count:           100,
+		SinceID:         c.Query.SinceID,
+		IncludeEntities: twitter.Bool(true),
+	}
+
+	list = make([]*store.SimpleTweet, 0)
+
+	for {
+
+		logger.Printf("Searching since ID: %d", c.Query.SinceID)
+		search, resp, err := tc.Search.Tweets(qp)
+
+		if err != nil {
+			return nil, errors.Wrapf(err, "Error executing search %+v - %v", qp, resp.Status)
+		}
+
+		// page has no data, search has no results or previous page was exactly the size
+		if search == nil || search.Statuses == nil || len(search.Statuses) == 0 {
+			return list, nil
+		}
+
+		logger.Printf("Page processing (List:%d, Page:%d)", len(list), len(search.Statuses))
+		for _, t := range search.Statuses {
+
+			if shouldFilterOut(&t, c.Filter) {
+				continue
+			}
+
+			item := &store.SimpleTweet{
+				ID:            t.IDStr,
+				CreatedAt:     convertTwitterTime(t.CreatedAt),
+				FavoriteCount: t.FavoriteCount,
+				ReplyCount:    t.ReplyCount,
+				RetweetCount:  t.RetweetCount,
+				Text:          t.Text,
+				IsRT:          t.RetweetedStatus != nil,
+				Author:        toSimpleUser(t.User),
+			}
+
+			list = append(list, item)
+
+			// tweets come in newest first order so just make sure we capture the highest number
+			// and start from there the next time
+			if t.ID > c.Query.SinceID {
+				c.Query.SinceID = t.ID
+				qp.SinceID = t.ID
+			}
+
+		}
+
+		// page has less than the max == last page
+		if len(search.Statuses) < qp.Count {
+			logger.Printf("Page size (List:%d, Page:%d)", len(list), len(search.Statuses))
+			return list, nil
+		}
+
+	}
+
+}
+
+func shouldFilterOut(t *twitter.Tweet, c *store.SimpleFilter) bool {
+
+	isRT := t.RetweetedStatus != nil
+
+	// qualify the twee based on filter
+	if c == nil {
+		return false
+	}
+
+	// link
+	if c.HasLink && (t.Entities == nil || t.Entities.Urls == nil || len(t.Entities.Urls) == 0) {
+		return true
+	}
+
+	// RT
+	if c.IncludeRT == false && isRT {
+		return true
+	}
+
+	// Author
+	if c.Author != nil {
+
+		// Post Count
+		if !isInIntRange(t.User.StatusesCount, c.Author.PostCount) {
+			return true
+		}
+
+		// Fave Count
+		if !isInIntRange(t.User.FavouritesCount, c.Author.FaveCount) {
+			return true
+		}
+
+		// Following Count
+		if !isInIntRange(t.User.FriendsCount, c.Author.FollowingCount) {
+			return true
+		}
+
+		// Followers Count
+		if !isInIntRange(t.User.FollowersCount, c.Author.FollowerCount) {
+			return true
+		}
+
+		// Follower Count
+		if !isInFollowerRange(t.User.FriendsCount, t.User.FollowersCount, c.Author.FollowerRatio) {
+			return true
+		}
+
+	}
+
+	return false
+
 }

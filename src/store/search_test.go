@@ -10,6 +10,10 @@ import (
 
 func TestSearchCRUD(t *testing.T) {
 
+	if testing.Short() {
+		t.SkipNow()
+	}
+
 	ctx := context.Background()
 
 	c1 := &SearchCriteria{

@@ -40,8 +40,9 @@ type SimpleQuery struct {
 
 // SimpleFilter represents the result filter
 type SimpleFilter struct {
-	HasLink bool          `firestore:"has_link" json:"has_link"`
-	Author  *AuthorFilter `firestore:"author" json:"author"`
+	HasLink   bool          `firestore:"has_link" json:"has_link"`
+	Author    *AuthorFilter `firestore:"author" json:"author"`
+	IncludeRT bool          `firestore:"include_rt" json:"include_rt"`
 }
 
 // AuthorFilter represents the result author filter
@@ -65,6 +66,25 @@ type FloatRange struct {
 	Min float64 `firestore:"min" json:"min"`
 	Max float64 `firestore:"max" json:"max"`
 }
+
+// SimpleTweet is the short version of twitter search result
+type SimpleTweet struct {
+	ID            string      `json:"id_str"`
+	CreatedAt     time.Time   `json:"created_at"`
+	FavoriteCount int         `json:"favorite_count"`
+	ReplyCount    int         `json:"reply_count"`
+	RetweetCount  int         `json:"retweet_count"`
+	IsRT          bool        `json:"is_rt"`
+	Text          string      `json:"text"`
+	Author        *SimpleUser `json:"author"`
+}
+
+// SimpleTweetByDate is a custom data structure for array of SimpleTweet
+type SimpleTweetByDate []*SimpleTweet
+
+func (s SimpleTweetByDate) Len() int           { return len(s) }
+func (s SimpleTweetByDate) Less(i, j int) bool { return s[i].CreatedAt.Before(s[j].CreatedAt) }
+func (s SimpleTweetByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // SaveSearchCriteria saves search criteria
 func SaveSearchCriteria(ctx context.Context, c *SearchCriteria) error {
