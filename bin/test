@@ -27,13 +27,13 @@ go mod vendor
 # go test -v -run TestTwitterTestAccount ./src/store
 # go test -v -run TestSearchCRUD ./src/store
 # go test -v -run TestToID ./src/store
+# go test -v -run TestSearchResultIDSort ./src/store
 
 # handler
 # go test -v -run TestViewRedirectSansAuthCookie ./src/handler
 
 # worker
-# go test -v -run TestTwitterSearchWorker ./src/worker
-go test -v -run TestTwitterSearchPaging ./src/worker
+go test -v -run TestTwitterSearchWorker ./src/worker
 
 
 
