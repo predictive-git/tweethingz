@@ -8,10 +8,11 @@ import (
 )
 
 func TestToID(t *testing.T) {
-	values := []string{"@1e6", "ed", "a/Aa", "B-bB", "1", "d75ac5fa-69e6-4f92-8b33-1cdaa3dd2275"}
+	values := []string{"@1e6", "ed", "a/Aa", "b-bB", "1", "d75ac5fa-69e6-4f92-8b33-1cdaa3dd2275"}
 	date := time.Now().AddDate(0, 0, -1)
 
 	for _, u := range values {
+		// t.Logf("Values[%d]: %v", i, u)
 		id1 := toUserDateID(u, date)
 		id2 := toUserDateID(u, date)
 		assert.True(t, len(id1) == 35) // 3 in prefix + 32 MD5 hash

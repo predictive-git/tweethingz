@@ -140,6 +140,16 @@ type SimpleTweet struct {
 	IsRT          bool        `firestore:"is_rt" json:"is_rt"`
 	Text          string      `firestore:"text" json:"text"`
 	Author        *SimpleUser `firestore:"author" json:"author"`
+	PageKey       string      `firestore:"page_key" json:"page_key"`
+	DayKey        string      `firestore:"day_key" json:"day_key"`
+}
+
+func toSearchResultPagingKey(criteriaID, tweetID string, periodDate time.Time) string {
+	return fmt.Sprintf("%s-%s-%s", criteriaID, periodDate.Format(ISODateFormat), tweetID)
+}
+
+func toSearchResultDailyKey(criteriaID string, periodDate time.Time) string {
+	return fmt.Sprintf("%s-%s", criteriaID, periodDate.Format(ISODateFormat))
 }
 
 // SimpleTweetByDate is a custom data structure for array of SimpleTweet
@@ -164,6 +174,8 @@ func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
 	batch := fsClient.Batch()
 
 	for _, t := range list {
+		t.PageKey = toSearchResultPagingKey(t.CriteriaID, t.ID, t.CreatedAt)
+		t.DayKey = toSearchResultDailyKey(t.CriteriaID, t.CreatedAt)
 		docRef := col.Doc(ToID(t.ID))
 		batch.Set(docRef, t)
 	}
@@ -173,21 +185,29 @@ func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
 
 }
 
-// GetSearchResults gets saved search results
-func GetSearchResults(ctx context.Context, criteriaID, sinceID string, limit int) (data []*SimpleTweet, err error) {
+// GetSavedSearchResults gets saved search results based on either the date (current date for first time) or the last record key
+func GetSavedSearchResults(ctx context.Context, criteriaID string, date time.Time, sinceID string, limit int) (data []*SimpleTweet, err error) {
+
+	if criteriaID == "" {
+		return nil, errors.New("criteriaID required")
+	}
 
 	col, err := getCollection(ctx, searchResultCollectionName)
 	if err != nil {
 		return nil, err
 	}
 
-	docs := col.
-		Where("criteria_id", "==", criteriaID).
-		Where("id", ">=", sinceID).
-		Limit(limit).
-		OrderBy("id", firestore.Asc).
-		Documents(ctx)
+	var q firestore.Query
 
+	if sinceID != "" {
+		// last key from previous query
+		q = col.Where("page_key", ">", sinceID).OrderBy("page_key", firestore.Asc)
+	} else {
+		// starting with no key so using current date
+		q = col.Where("day_key", "==", toSearchResultDailyKey(criteriaID, date)).OrderBy("__name__", firestore.Asc)
+	}
+
+	docs := q.Limit(limit).Documents(ctx)
 	if docs == nil {
 		return nil, fmt.Errorf("doc iterator required")
 	}

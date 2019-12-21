@@ -53,6 +53,11 @@ func TestSearchCRUD(t *testing.T) {
 	assert.Len(t, list, 2)
 
 	for _, c := range list {
+		err = SaveSearchCriteria(ctx, c)
+		assert.Nil(t, err)
+	}
+
+	for _, c := range list {
 		err = DeleteSearchCriterion(ctx, c.ID)
 		assert.Nil(t, err)
 	}
