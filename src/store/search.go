@@ -20,14 +20,36 @@ const (
 // Criteria
 //============================================================================
 
-// SearchCriteria defines search query criteria
+// SearchCriteria is the flat version of search criteria for simplicity of form binding
 type SearchCriteria struct {
-	ID        string        `firestore:"id" json:"id"`
-	User      string        `firestore:"user" json:"user"`
-	Name      string        `firestore:"name" json:"name"`
-	Query     *SimpleQuery  `firestore:"query" json:"query"`
-	Filter    *SimpleFilter `firestore:"filter" json:"filter"`
-	UpdatedOn time.Time     `firestore:"updated_on" json:"updated_on"`
+	ID   string `firestore:"id" json:"id" form:"id"`
+	User string `firestore:"user" json:"user" form:"user"`
+
+	Name  string `firestore:"name" json:"name" form:"name"`
+	Value string `firestore:"value" json:"value" form:"value"`
+	Lang  string `firestore:"lang" json:"lang" form:"lang"`
+
+	SinceID int64 `firestore:"since_id" json:"since_id" form:"since_id"`
+
+	HasLink   bool `firestore:"has_link" json:"has_link" form:"has_link"`
+	IncludeRT bool `firestore:"include_rt" json:"include_rt" form:"include_rt"`
+
+	PostCountMin int `firestore:"post_count_min" json:"post_count_min" form:"post_count_min"`
+	PostCountMax int `firestore:"post_count_max" json:"post_count_max" form:"post_count_max"`
+
+	FaveCountMin int `firestore:"fave_count_min" json:"fave_count_min" form:"fave_count_min"`
+	FaveCountMax int `firestore:"fave_count_max" json:"fave_count_max" form:"fave_count_max"`
+
+	FollowingCountMin int `firestore:"following_count_min" json:"following_count_min" form:"following_count_min"`
+	FollowingCountMax int `firestore:"following_count_max" json:"following_count_max" form:"following_count_max"`
+
+	FollowerCountMin int `firestore:"follower_count_min" json:"follower_count_min" form:"follower_count_min"`
+	FollowerCountMax int `firestore:"follower_count_max" json:"follower_count_max" form:"follower_count_max"`
+
+	FollowerRatioMin float32 `firestore:"follower_ratio_min" json:"follower_ratio_min" form:"follower_ratio_min"`
+	FollowerRatioMax float32 `firestore:"follower_ratio_max" json:"follower_ratio_max" form:"follower_ratio_max"`
+
+	UpdatedOn time.Time `firestore:"updated_on" json:"updated_on" form:"updated_on"`
 }
 
 // SearchCriteriaByDate is a custom data structure for array of SearchCriteria
@@ -36,42 +58,6 @@ type SearchCriteriaByDate []*SearchCriteria
 func (s SearchCriteriaByDate) Len() int           { return len(s) }
 func (s SearchCriteriaByDate) Less(i, j int) bool { return s[i].UpdatedOn.Before(s[j].UpdatedOn) }
 func (s SearchCriteriaByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-
-// SimpleQuery represents the twitter query
-type SimpleQuery struct {
-	Value   string `firestore:"value" json:"value"`
-	Lang    string `firestore:"lang" json:"lang"`
-	SinceID int64  `firestore:"since_id" json:"since_id"`
-}
-
-// SimpleFilter represents the result filter
-type SimpleFilter struct {
-	HasLink   bool          `firestore:"has_link" json:"has_link"`
-	Author    *AuthorFilter `firestore:"author" json:"author"`
-	IncludeRT bool          `firestore:"include_rt" json:"include_rt"`
-}
-
-// AuthorFilter represents the result author filter
-type AuthorFilter struct {
-	PostCount      *IntRange `firestore:"post_count" json:"post_count"`
-	FaveCount      *IntRange `firestore:"fave_count" json:"fave_count"`
-	FollowingCount *IntRange `firestore:"following_count" json:"following_count"`
-	FollowerCount  *IntRange `firestore:"follower_count" json:"follower_count"`
-	// FollowerRatio is Followers/Fallowing (<1 bad, >1 good)
-	FollowerRatio *FloatRange `firestore:"follower_ratio" json:"follower_ratio"`
-}
-
-// IntRange is a generic int range
-type IntRange struct {
-	Min int `firestore:"min" json:"min"`
-	Max int `firestore:"max" json:"max"`
-}
-
-// FloatRange is a generic float range
-type FloatRange struct {
-	Min float64 `firestore:"min" json:"min"`
-	Max float64 `firestore:"max" json:"max"`
-}
 
 // SaveSearchCriteria saves search criteria
 func SaveSearchCriteria(ctx context.Context, c *SearchCriteria) error {
@@ -84,7 +70,7 @@ func SaveSearchCriteria(ctx context.Context, c *SearchCriteria) error {
 		return errors.New("criteria ID required")
 	}
 
-	if c.Name == "" || c.Query == nil || c.Query.Value == "" {
+	if c.Name == "" || c.Value == "" {
 		return fmt.Errorf("invalid criteria: %+v", c)
 	}
 

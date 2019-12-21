@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/mchmarny/tweethingz/src/worker"
@@ -9,8 +10,65 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// DataHandler ...
-func DataHandler(c *gin.Context) {
+// SearchDataHandler ...
+func SearchDataHandler(c *gin.Context) {
+
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "User not authenticated",
+			"status":  "Unauthorized",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Not implemented",
+		"status":  "Not implemented",
+	})
+
+}
+
+// SearchDataSubmitHandler ...
+func SearchDataSubmitHandler(c *gin.Context) {
+
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "User not authenticated",
+			"status":  "Unauthorized",
+		})
+		return
+	}
+
+	sc := &store.SearchCriteria{}
+	if err := c.ShouldBind(&sc); err != nil {
+		logger.Printf("error binding: %v", err)
+	}
+
+	sc.ID = store.NewID()
+	sc.User = username
+	sc.UpdatedOn = time.Now()
+
+	// logger.Printf("Search Criteria: %+v", sc)
+
+	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
+		logger.Printf("error saving search criteria: %v", err)
+		c.HTML(http.StatusInternalServerError, "error", gin.H{
+			"error":       "Server error, details captured in service logs",
+			"status_code": http.StatusInternalServerError,
+			"status":      http.StatusText(http.StatusInternalServerError),
+		})
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/search")
+	return
+
+}
+
+// ViewDataHandler ...
+func ViewDataHandler(c *gin.Context) {
 
 	username, _ := c.Cookie(userIDCookieName)
 	if username == "" {

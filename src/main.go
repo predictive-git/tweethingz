@@ -32,7 +32,14 @@ func main() {
 	// routes
 	r.GET("/", handler.DefaultHandler)
 	r.GET("/view", handler.ViewHandler)
-	r.GET("/data", handler.DataHandler)
+	r.GET("/search", handler.SearchHandler)
+
+	data := r.Group("/data")
+	{
+		data.GET("/view", handler.ViewDataHandler)
+		data.GET("/search", handler.SearchDataHandler)
+		data.POST("/search", handler.SearchDataSubmitHandler)
+	}
 
 	// auth
 	auth := r.Group("/auth")

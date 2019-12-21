@@ -1,0 +1,204 @@
+{{ define "search" }}
+
+{{ template "header" . }}
+
+<!-- Middle -->
+
+<h3>Twitter Search Queries</h3>
+
+<!-- List -->
+<div id="search-list-section" class="after-load">
+</div>
+<!-- End List -->
+
+<!-- Details -->
+<div id="search-new-section" class="after-load">
+
+    <form id="search-new-form" method="post" action="/data/search">
+
+        <table>
+
+            <tr>
+                <th colspan="2">
+                    Metadata
+                </th>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Name:
+                </td>
+                <td class="form-field">
+                    <input type="text" name="name"></input>
+                </td>
+            </tr>
+
+            <tr>
+                <th colspan="2">
+                    Search Query Criteria
+                </th>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Query:
+                </td>
+                <td class="form-field">
+                    <input type="text" name="value"></input>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Language:
+                </td>
+                <td class="form-field">
+                    <select name="lang" size="1">
+                        <option value="en">English (default)</option>
+                        <option value="ar">Arabic</option>
+                        <option value="bn">Bengali</option>
+                        <option value="cs">Czech</option>
+                        <option value="da">Danish</option>
+                        <option value="de">German</option>
+                        <option value="el">Greek</option>
+                        <option value="es">Spanish</option>
+                        <option value="fa">Persian</option>
+                        <option value="fi">Finnish</option>
+                        <option value="fil">Filipino</option>
+                        <option value="fr">French</option>
+                        <option value="he">Hebrew</option>
+                        <option value="hi">Hindi</option>
+                        <option value="hu">Hungarian</option>
+                        <option value="id">Indonesian</option>
+                        <option value="it">Italian</option>
+                        <option value="ja">Japanese</option>
+                        <option value="ko">Korean</option>
+                        <option value="msa">Malay</option>
+                        <option value="nl">Dutch</option>
+                        <option value="no">Norwegian</option>
+                        <option value="pl">Polish</option>
+                        <option value="pt">Portuguese</option>
+                        <option value="ro">Romanian</option>
+                        <option value="ru">Russian</option>
+                        <option value="sv">Swedish</option>
+                        <option value="th">Thai</option>
+                        <option value="tr">Turkish</option>
+                        <option value="uk">Ukrainian</option>
+                        <option value="ur">Urdu</option>
+                        <option value="vi">Vietnamese</option>
+                        <option value="zh-cn">Chinese</option>
+                    </select>
+                </td>
+            </tr>
+
+            <tr>
+                <th colspan="2">
+                    Search Result Filter
+                </th>
+            </tr>
+
+            <tr>
+                <td class="form-field" colspan="2">
+                    <label for="has_link">Includes links:
+                        <input type="checkbox" name="has_link" value="true" />
+                    </label>
+
+                    <label for="include_rt">Allow RT:
+                        <input type="checkbox" name="include_rt" value="true" />
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Author has number of posts:
+                </td>
+                <td class="form-field">
+                    <label for="post_count_min">Min
+                        <input type="number" min="0" name="post_count_min" value="0"></input>
+                    </label>
+                    <label for="post_count_max">Max
+                        <input type="number" min="0" name="post_count_max" value="0"></input>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Author has number of faves:
+                </td>
+                <td class="form-field">
+                    <label for="fave_count_min">Min
+                        <input type="number" min="0" name="fave_count_min" value="0"></input>
+                    </label>
+                    <label for="fave_count_max">Max
+                        <input type="number" min="0" name="fave_count_max" value="0"></input>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Author is following number of users:
+                </td>
+                <td class="form-field">
+                    <label for="following_count_min">Min
+                        <input type="number" min="0" name="following_count_min" value="0"></input>
+                    </label>
+                    <label for="filter_following_count_max">Max
+                        <input type="number" min="0" name="following_count_max" value="0"></input>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Author has number of followers:
+                </td>
+                <td class="form-field">
+                    <label for="follower_count_min">Min
+                        <input type="number" min="0" name="follower_count_min" value="0"></input>
+                    </label>
+                    <label for="follower_count_max">Max
+                        <input type="number" min="0" name="follower_count_max" value="0"></input>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Author has follower ratio (Followers/Fallowing, the higher the better):
+                </td>
+                <td class="form-field">
+                    <label for="follower_ratio_min">Min
+                        <input type="number" step="any" min="0" name="follower_ratio_min" value="0"></input>
+                    </label>
+                    <label for="follower_ratio_max">Max
+                        <input type="number" step="any" min="0" name="follower_ratio_max" value="0"></input>
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td colspan="2" class="form-action">
+                    <input type="hidden" name="id" value="" />
+                    <input type="reset" value="Reset">
+                    <input type="submit" value="Submit">
+                </td>
+            </tr>
+
+        </table>
+
+    </form>
+
+</div>
+<!-- End Details -->
+
+
+
+<!-- End Middle -->
+
+
+{{ template "footer" . }}
+
+{{ end }}

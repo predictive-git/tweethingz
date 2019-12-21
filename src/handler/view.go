@@ -56,3 +56,20 @@ func ViewHandler(c *gin.Context) {
 	})
 
 }
+
+// SearchHandler ...
+func SearchHandler(c *gin.Context) {
+
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+
+	c.HTML(http.StatusOK, "search", gin.H{
+		"twitter_username": username,
+		"version":          version,
+		"refresh":          c.Query("refresh"),
+	})
+
+}

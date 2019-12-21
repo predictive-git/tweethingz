@@ -131,21 +131,17 @@ func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 	return
 }
 
-func isInIntRange(v int, r *store.IntRange) bool {
+func isInIntRange(v, min, max int) bool {
 
-	if r == nil {
+	if min == 0 && max == 0 {
 		return true
 	}
 
-	if r.Min == 0 && r.Max == 0 {
-		return true
-	}
-
-	if r.Min > 0 && v < r.Min {
+	if min > 0 && v < min {
 		return false
 	}
 
-	if r.Max > 0 && v > r.Max {
+	if max > 0 && v > max {
 		return false
 	}
 
@@ -153,23 +149,19 @@ func isInIntRange(v int, r *store.IntRange) bool {
 
 }
 
-func isInFollowerRange(following, followers int, r *store.FloatRange) bool {
+func isInFollowerRange(following, followers int, min, max float32) bool {
 
-	if r == nil {
+	if min == 0 && max == 0 {
 		return true
 	}
 
-	if r.Min == 0 && r.Max == 0 {
-		return true
-	}
+	v := float32(followers / following)
 
-	v := float64(followers / following)
-
-	if r.Min > 0 && v < r.Min {
+	if min > 0 && v < min {
 		return false
 	}
 
-	if r.Max > 0 && v > r.Max {
+	if max > 0 && v > max {
 		return false
 	}
 
@@ -185,10 +177,10 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 	}
 
 	qp := &twitter.SearchTweetParams{
-		Query:           c.Query.Value,
-		Lang:            c.Query.Lang,
+		Query:           c.Value,
+		Lang:            c.Lang,
 		Count:           100,
-		SinceID:         c.Query.SinceID,
+		SinceID:         c.SinceID,
 		IncludeEntities: twitter.Bool(true),
 	}
 
@@ -196,7 +188,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 
 	for {
 
-		logger.Printf("Searching since ID: %d", c.Query.SinceID)
+		logger.Printf("Searching since ID: %d", c.SinceID)
 		search, resp, err := tc.Search.Tweets(qp)
 
 		if err != nil {
@@ -211,7 +203,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 		logger.Printf("Page processing (List:%d, Page:%d)", len(list), len(search.Statuses))
 		for _, t := range search.Statuses {
 
-			if shouldFilterOut(&t, c.Filter) {
+			if shouldFilterOut(&t, c) {
 				continue
 			}
 
@@ -231,8 +223,8 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 
 			// tweets come in newest first order so just make sure we capture the highest number
 			// and start from there the next time
-			if t.ID > c.Query.SinceID {
-				c.Query.SinceID = t.ID
+			if t.ID > c.SinceID {
+				c.SinceID = t.ID
 				qp.SinceID = t.ID
 			}
 
@@ -248,7 +240,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 
 }
 
-func shouldFilterOut(t *twitter.Tweet, c *store.SimpleFilter) bool {
+func shouldFilterOut(t *twitter.Tweet, c *store.SearchCriteria) bool {
 
 	isRT := t.RetweetedStatus != nil
 
@@ -267,34 +259,29 @@ func shouldFilterOut(t *twitter.Tweet, c *store.SimpleFilter) bool {
 		return true
 	}
 
-	// Author
-	if c.Author != nil {
+	// Post Count
+	if !isInIntRange(t.User.StatusesCount, c.PostCountMin, c.PostCountMax) {
+		return true
+	}
 
-		// Post Count
-		if !isInIntRange(t.User.StatusesCount, c.Author.PostCount) {
-			return true
-		}
+	// Fave Count
+	if !isInIntRange(t.User.FavouritesCount, c.FaveCountMin, c.FaveCountMax) {
+		return true
+	}
 
-		// Fave Count
-		if !isInIntRange(t.User.FavouritesCount, c.Author.FaveCount) {
-			return true
-		}
+	// Following Count
+	if !isInIntRange(t.User.FriendsCount, c.FollowingCountMin, c.FollowingCountMax) {
+		return true
+	}
 
-		// Following Count
-		if !isInIntRange(t.User.FriendsCount, c.Author.FollowingCount) {
-			return true
-		}
+	// Followers Count
+	if !isInIntRange(t.User.FollowersCount, c.FollowerCountMin, c.FollowerCountMax) {
+		return true
+	}
 
-		// Followers Count
-		if !isInIntRange(t.User.FollowersCount, c.Author.FollowerCount) {
-			return true
-		}
-
-		// Follower Count
-		if !isInFollowerRange(t.User.FriendsCount, t.User.FollowersCount, c.Author.FollowerRatio) {
-			return true
-		}
-
+	// Follower Count
+	if !isInFollowerRange(t.User.FriendsCount, t.User.FollowersCount, c.FollowerRatioMin, c.FollowerRatioMax) {
+		return true
 	}
 
 	return false

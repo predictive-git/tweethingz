@@ -38,7 +38,7 @@ func makeTweet(rt, links bool) *twitter.Tweet {
 
 func TestRetweetFilter(t *testing.T) {
 	tweet := makeTweet(true, false)
-	filter := &store.SimpleFilter{
+	filter := &store.SearchCriteria{
 		IncludeRT: false,
 	}
 	assert.True(t, shouldFilterOut(tweet, filter))
@@ -49,7 +49,7 @@ func TestRetweetFilter(t *testing.T) {
 func TestLinkFilter(t *testing.T) {
 
 	tweet := makeTweet(false, true)
-	filter := &store.SimpleFilter{
+	filter := &store.SearchCriteria{
 		HasLink: true,
 	}
 	assert.False(t, shouldFilterOut(tweet, filter))
@@ -64,12 +64,8 @@ func TestAuthorFilter(t *testing.T) {
 	tweet := makeTweet(false, false)
 	tweet.User.FollowersCount = 9
 
-	filter := &store.SimpleFilter{
-		Author: &store.AuthorFilter{
-			FollowerCount: &store.IntRange{
-				Min: 10,
-			},
-		},
+	filter := &store.SearchCriteria{
+		FollowerCountMin: 10,
 	}
 	assert.True(t, shouldFilterOut(tweet, filter))
 
@@ -95,12 +91,9 @@ func TestTwitterSearchWorker(t *testing.T) {
 		User:      usr.Username,
 		Name:      "Test Search",
 		UpdatedOn: time.Now(),
-		Query: &store.SimpleQuery{
-			Value:   "serverless",
-			Lang:    "en",
-			SinceID: 0,
-		},
-		Filter: &store.SimpleFilter{},
+		Value:     "serverless",
+		Lang:      "en",
+		SinceID:   0,
 	}
 
 	list, err := getSearchResults(ctx, usr, sc)

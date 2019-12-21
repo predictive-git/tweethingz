@@ -2,13 +2,23 @@ $(function () {
     if ($("#numbers-section").length) {
         runQuery();
     }
+    if ($("search-new-section").length) {
+        runSearch();
+    }
 });
+
+function runSearch() {
+
+    console.log("View: search");
+
+
+}
 
 function runQuery() {
 
     $(".after-load").hide();
 
-    $.get("/data", function (data) {
+    $.get("/data/view", function (data) {
         console.log(data);
 
         // numbers

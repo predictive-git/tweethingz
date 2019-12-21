@@ -19,25 +19,15 @@ func TestSearchCRUD(t *testing.T) {
 	usr := "test"
 
 	c1 := &SearchCriteria{
-		ID:        NewID(),
-		Name:      "Test Criteria",
-		User:      usr,
-		UpdatedOn: time.Now(),
-		Query: &SimpleQuery{
-			Value: "knative",
-			Lang:  "en",
-		},
-		Filter: &SimpleFilter{
-			HasLink: true,
-			Author: &AuthorFilter{
-				FollowerRatio: &FloatRange{
-					Min: 1.5,
-				},
-				FollowerCount: &IntRange{
-					Min: 2000,
-				},
-			},
-		},
+		ID:               NewID(),
+		Name:             "Test Criteria",
+		User:             usr,
+		UpdatedOn:        time.Now(),
+		Value:            "knative",
+		Lang:             "en",
+		HasLink:          true,
+		FollowerRatioMin: 1.5,
+		FollowerCountMax: 2000,
 	}
 
 	err := SaveSearchCriteria(ctx, c1)
