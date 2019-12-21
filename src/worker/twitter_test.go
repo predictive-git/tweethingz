@@ -162,9 +162,9 @@ func TestTwitterSearchPaging(t *testing.T) {
 	assert.NotNil(t, list1)
 	assert.Len(t, list1, totalSize)
 
-	for i, d := range list1 {
-		t.Logf("1--C: %s, T[%d]: %s on %s", d.CriteriaID, i, d.ID, d.CreatedAt.Format(store.ISODateFormat))
-	}
+	// for i, d := range list1 {
+	// 	t.Logf("1--C: %s, T[%d]: %s on %s", d.CriteriaID, i, d.ID, d.CreatedAt.Format(store.ISODateFormat))
+	// }
 
 	pageSize := 10
 
@@ -181,8 +181,8 @@ func TestTwitterSearchPaging(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, list3)
 
-	for i, d := range list3 {
-		t.Logf("2--C: %s, T[%d]: %s on %s", d.CriteriaID, i, d.ID, d.CreatedAt.Format(store.ISODateFormat))
-	}
+	// for i, d := range list3 {
+	// 	t.Logf("2--C: %s, T[%d]: %s on %s", d.CriteriaID, i, d.ID, d.CreatedAt.Format(store.ISODateFormat))
+	// }
 
 }
