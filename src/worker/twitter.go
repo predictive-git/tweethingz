@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
@@ -54,6 +55,10 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 	users = make([]*store.SimpleUser, 0)
 	items, resp, err := client.Users.Lookup(listParam)
 	if err != nil {
+		// TODO: find cleaner way of parsing error status code (17) from API error
+		if resp.StatusCode == 404 && strings.Contains(err.Error(), "No user matches") {
+			return users, nil
+		}
 		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
 	}
 

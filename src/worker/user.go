@@ -214,6 +214,10 @@ func saveFollowerDetails(ctx context.Context, forUser *store.AuthedUser, eventTy
 // returns items from b that are NOT in a
 func getArrayDiff(a, b []int64) (diff []int64) {
 
+	if len(b) == 0 {
+		return a
+	}
+
 	m := make(map[int64]bool)
 
 	for _, item := range a {

@@ -10,7 +10,7 @@ export TW_SECRET=$TW_CONSUMER_SECRET
 
 # Cloud Run
 export SERVICE_REGION="us-central1"
-export SERVICE_VERSION="0.3.8"
+export SERVICE_VERSION="0.3.9"
 
 # ====================================================================#
 # Derived values (don't edit)                                         #

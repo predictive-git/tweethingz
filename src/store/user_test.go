@@ -15,7 +15,7 @@ func TestGetUserEventsByType(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	username := "KnativeProject" // TODO: check that it works with mixed case
+	username := "knativeproject"
 	yesterday := time.Now().AddDate(0, 0, -1)
 
 	data, err := GetUserEventsSince(ctx, username, yesterday)
