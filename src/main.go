@@ -37,7 +37,7 @@ func main() {
 	data := r.Group("/data")
 	{
 		data.GET("/view", handler.ViewDataHandler)
-		data.GET("/search", handler.SearchDataHandler)
+		data.GET("/search/:id", handler.SearchDataHandler)
 		data.POST("/search", handler.SearchDataSubmitHandler)
 	}
 

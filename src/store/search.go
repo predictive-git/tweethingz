@@ -82,6 +82,13 @@ func DeleteSearchCriterion(ctx context.Context, id string) error {
 	return deleteByID(ctx, searchCriteriaCollectionName, id)
 }
 
+// GetSearchCriterion selects single criterion by id
+func GetSearchCriterion(ctx context.Context, id string) (data *SearchCriteria, err error) {
+	data = &SearchCriteria{}
+	err = getByID(ctx, searchCriteriaCollectionName, id, data)
+	return
+}
+
 // GetSearchCriteria retreaves all search criteria for specific user
 func GetSearchCriteria(ctx context.Context, username string) (data []*SearchCriteria, err error) {
 

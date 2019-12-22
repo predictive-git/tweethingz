@@ -32,11 +32,7 @@ func DefaultHandler(c *gin.Context) {
 func errorHandler(c *gin.Context, err error, code int) {
 
 	logger.Printf("Error: %v", err)
-	c.HTML(code, "error", gin.H{
-		"error":       "Server error, details captured in service logs",
-		"status_code": code,
-		"status":      http.StatusText(code),
-	})
+	c.HTML(code, "error", errResult)
 
 }
 

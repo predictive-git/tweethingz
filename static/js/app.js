@@ -66,6 +66,7 @@ function runQuery() {
                     yAxes: [
                         {
                             ticks: {
+                                beginAtZero: false,
                                 fontColor: 'rgba(250, 250, 250, 0.5)',
                                 fontSize: 14
                             }

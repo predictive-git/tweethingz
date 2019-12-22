@@ -10,6 +10,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var (
+	errResult = gin.H{
+		"message": "Internal server error, see logs for details",
+		"status":  "Error",
+	}
+)
+
 // SearchDataHandler ...
 func SearchDataHandler(c *gin.Context) {
 
@@ -22,10 +29,24 @@ func SearchDataHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Not implemented",
-		"status":  "Not implemented",
-	})
+	var data interface{}
+	var err error
+
+	id := c.Param("id")
+	if id != "" {
+		logger.Printf("Search ID: %s", id)
+		data, err = store.GetSearchCriterion(c.Request.Context(), id)
+	} else {
+		data, err = store.GetSearchCriteria(c.Request.Context(), username)
+	}
+
+	if err != nil {
+		logger.Printf("Error getting criteria data: %v", err)
+		c.JSON(http.StatusInternalServerError, errResult)
+		return
+	}
+
+	c.JSON(http.StatusOK, data)
 
 }
 
@@ -54,11 +75,7 @@ func SearchDataSubmitHandler(c *gin.Context) {
 
 	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
 		logger.Printf("error saving search criteria: %v", err)
-		c.HTML(http.StatusInternalServerError, "error", gin.H{
-			"error":       "Server error, details captured in service logs",
-			"status_code": http.StatusInternalServerError,
-			"status":      http.StatusText(http.StatusInternalServerError),
-		})
+		c.HTML(http.StatusInternalServerError, "error", errResult)
 		return
 	}
 
@@ -81,10 +98,7 @@ func ViewDataHandler(c *gin.Context) {
 
 	if err := worker.UpdateUserData(c.Request.Context(), username); err != nil {
 		logger.Printf("Error: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error refreshing data, see logs for details",
-			"status":  "Internal Server Error",
-		})
+		c.JSON(http.StatusInternalServerError, errResult)
 		return
 	}
 
@@ -100,10 +114,7 @@ func ViewDataHandler(c *gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error while quering data service",
-			"status":  "Error",
-		})
+		c.JSON(http.StatusInternalServerError, errResult)
 		return
 	}
 
