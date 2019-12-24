@@ -2,15 +2,122 @@ $(function () {
     if ($("#numbers-section").length) {
         runQuery();
     }
-    if ($("search-new-section").length) {
+    if ($("#search-list-section").length) {
         runSearch();
     }
+
 });
 
 function runSearch() {
 
     console.log("View: search");
+    $(".after-load").hide();
+    var listDev = $("#search-list-section").empty();
 
+    $.get("/data/search", function (data) {
+
+        $.each(data, function (i, c) {
+
+            console.log("item[" + i + "]: " + c.id);
+
+            var criteriaLink = $("<a />")
+                .data("sc", c)
+                .attr("title", "Search Criterion")
+                .attr("href", "#")
+                .text(c.name)
+                .addClass("search-criterion-link")
+                .click(function (e) {
+                    e.preventDefault();
+                    var data = $(this).data("sc");
+                    console.log("clicked: " + data.id);
+                    loadSearchCriterion(data);
+                });
+
+            var criteriaMeta = $("<div />")
+                .html("<b>Last Search:</b> " + toLongTime(c.updated_on));
+
+            $("<div class='search-criterion' />")
+                .append(criteriaLink)
+                .append(criteriaMeta)
+                .appendTo(listDev);
+
+
+        }); // each
+
+        $("<a />")
+            .attr("title", "New Search Criterion")
+            .attr("href", "#")
+            .text("New Search Criterion")
+            .addClass("new-search-criterion-link")
+            .click(function (e) {
+                e.preventDefault();
+                $(".after-load").hide();
+                $("#search-new-form")[0].reset();
+                $("#search-new-section").show()
+            }).appendTo(listDev);
+
+        $("#search-criteria-cancel-button").click(function (e) {
+            e.preventDefault();
+            $(".after-load").hide();
+            $("#search-list-section").show();
+        });
+
+        $("#search-criteria-delete-button").click(function (e) {
+            e.preventDefault();
+            var data = $(this).data("sc");
+            console.log("deleting: " + data.id);
+            return $.ajax({
+                url: "/data/search/" + data.id,
+                type: 'DELETE',
+                success: function (result) {
+                    console.log("Delete success: ", result);
+                    runSearch();
+                },
+                error: function (err) {
+                    console.log("Delete err: ", err);
+                },
+            });
+        });
+
+        listDev.show();
+
+    });
+}
+
+function loadSearchCriterion(data) {
+
+    $(".after-load").hide();
+
+    console.log("View: search detail for " + data.id);
+    $("input[name=id]").val(data.id);
+    $("input[name=name]").val(data.name);
+    $("input[name=value]").val(data.value);
+
+    console.log("Lang: " + data.lang);
+    // $("input[name=lang]").val(data.lang);
+    // $("input[name=lang] option[value='" + data.lang + "']").attr("selected", "selected");
+
+    $("input[name=has_link]").prop("checked", data.has_link);
+    $("input[name=include_rt]").prop("checked", data.include_rt);
+
+    $("input[name=post_count_min]").val(data.post_count_min);
+    $("input[name=post_count_max]").val(data.post_count_max);
+
+    $("input[name=follower_count_min]").val(data.follower_count_min);
+    $("input[name=follower_count_max]").val(data.follower_count_max);
+
+    $("input[name=fave_count_min]").val(data.fave_count_min);
+    $("input[name=fave_count_max]").val(data.fave_count_max);
+
+    $("input[name=following_count_min]").val(data.following_count_min);
+    $("input[name=following_count_max]").val(data.following_count_max);
+
+    $("input[name=follower_ratio_min]").val(data.follower_ratio_min);
+    $("input[name=follower_ratio_max]").val(data.follower_ratio_max);
+
+    $("#search-criteria-delete-button").data("sc", data);
+
+    $("#search-new-section").show()
 
 }
 

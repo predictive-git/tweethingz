@@ -208,15 +208,49 @@ td.form-field input[type=checkbox] {
 	margin-right: 30px;
 }
 
-td.form-action {
+td.right {
 	text-align: right;
 }
 
-td.form-action input {
+td.left {
+	text-align: left;
+}
+
+td.form-action input, td.form-action button {
 	border-bottom: 1pt solid #999;
 	color: #999;
 	background-color: #333;
 	font-size: 1.1em;
 	margin-right: 10px;
 	padding: 5px 10px;
+}
+
+.new-search-criterion-link {
+	margin-top: 5px;
+	width: 60%;
+	break-after: always;
+	display: inline-block;
+	text-align: right;
+	padding: 10px;
+	font-size: 0.8em;
+}
+
+.search-criterion {
+	margin-top: 20px;
+	width: 60%;
+	break-after: always;
+	display: inline-block;
+	text-align: left;
+	padding: 10px;
+	border-bottom: 1pt solid #999;
+	font-size: 0.8em;
+}
+
+.search-criterion a {
+	font-size: 1.2em;
+	font-weight: bold;
+}
+
+.search-criterion div {
+	margin-top: 10px;
 }

@@ -99,12 +99,26 @@
 
             <tr>
                 <td class="form-field" colspan="2">
-                    <label for="has_link">Includes links:
+                    <label for="has_link">Must include links:
                         <input type="checkbox" name="has_link" value="true" />
                     </label>
 
                     <label for="include_rt">Allow RT:
                         <input type="checkbox" name="include_rt" value="true" />
+                    </label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-label">
+                    Author has number of followers:
+                </td>
+                <td class="form-field">
+                    <label for="follower_count_min">Min
+                        <input type="number" min="0" name="follower_count_min" value="0"></input>
+                    </label>
+                    <label for="follower_count_max">Max
+                        <input type="number" min="0" name="follower_count_max" value="0"></input>
                     </label>
                 </td>
             </tr>
@@ -153,20 +167,6 @@
 
             <tr>
                 <td class="form-label">
-                    Author has number of followers:
-                </td>
-                <td class="form-field">
-                    <label for="follower_count_min">Min
-                        <input type="number" min="0" name="follower_count_min" value="0"></input>
-                    </label>
-                    <label for="follower_count_max">Max
-                        <input type="number" min="0" name="follower_count_max" value="0"></input>
-                    </label>
-                </td>
-            </tr>
-
-            <tr>
-                <td class="form-label">
                     Author has follower ratio (Followers/Fallowing, the higher the better):
                 </td>
                 <td class="form-field">
@@ -180,9 +180,12 @@
             </tr>
 
             <tr>
-                <td colspan="2" class="form-action">
+                <td class="form-action left">
+                    <input type="button" value="Delete" id="search-criteria-delete-button">
+                </td class="form-action left">
+                <td class="form-action right">
                     <input type="hidden" name="id" value="" />
-                    <input type="reset" value="Reset">
+                    <input type="button" value="Cancel" id="search-criteria-cancel-button">
                     <input type="submit" value="Submit">
                 </td>
             </tr>

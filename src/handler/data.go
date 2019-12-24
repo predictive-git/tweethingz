@@ -50,6 +50,40 @@ func SearchDataHandler(c *gin.Context) {
 
 }
 
+// SearchDeleteHandler ...
+func SearchDeleteHandler(c *gin.Context) {
+
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "User not authenticated",
+			"status":  "Unauthorized",
+		})
+		return
+	}
+
+	id := c.Param("id")
+	if id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Missing parameter: ID",
+			"status":  "Bad Request",
+		})
+		return
+	}
+
+	if err := store.DeleteSearchCriterion(c.Request.Context(), id); err != nil {
+		logger.Printf("Error getting criteria data: %v", err)
+		c.JSON(http.StatusInternalServerError, errResult)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Search criterion deleted",
+		"status":  "Success",
+	})
+
+}
+
 // SearchDataSubmitHandler ...
 func SearchDataSubmitHandler(c *gin.Context) {
 
@@ -67,7 +101,9 @@ func SearchDataSubmitHandler(c *gin.Context) {
 		logger.Printf("error binding: %v", err)
 	}
 
-	sc.ID = store.NewID()
+	if sc.ID == "" {
+		sc.ID = store.NewID()
+	}
 	sc.User = username
 	sc.UpdatedOn = time.Now()
 
