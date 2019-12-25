@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"time"
 
 	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/mchmarny/tweethingz/src/worker"
@@ -105,7 +104,6 @@ func SearchDataSubmitHandler(c *gin.Context) {
 		sc.ID = store.NewID()
 	}
 	sc.User = username
-	sc.UpdatedOn = time.Now()
 
 	// logger.Printf("Search Criteria: %+v", sc)
 

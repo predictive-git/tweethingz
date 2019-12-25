@@ -33,15 +33,16 @@ function runSearch() {
                     loadSearchCriterion(data);
                 });
 
-            var criteriaMeta = $("<div />")
-                .html("<b>Last Search:</b> " + toLongTime(c.updated_on));
+            var execDate = "";
+            if (c.since_id > 0) {
+                execDate = toLongTime(c.executed_on);
+            }
+            var criteriaMeta = $("<div />").html("<b>Last executed on:</b> " + execDate);
 
             $("<div class='search-criterion' />")
                 .append(criteriaLink)
                 .append(criteriaMeta)
                 .appendTo(listDev);
-
-
         }); // each
 
         $("<a />")
@@ -65,6 +66,10 @@ function runSearch() {
         $("#search-criteria-delete-button").click(function (e) {
             e.preventDefault();
             var data = $(this).data("sc");
+            if (typeof data === "undefined") {
+                runSearch();
+                return;
+            }
             console.log("deleting: " + data.id);
             return $.ajax({
                 url: "/data/search/" + data.id,
@@ -93,9 +98,7 @@ function loadSearchCriterion(data) {
     $("input[name=name]").val(data.name);
     $("input[name=value]").val(data.value);
 
-    console.log("Lang: " + data.lang);
-    // $("input[name=lang]").val(data.lang);
-    // $("input[name=lang] option[value='" + data.lang + "']").attr("selected", "selected");
+    $("#lang").val(data.lang);
 
     $("input[name=has_link]").prop("checked", data.has_link);
     $("input[name=include_rt]").prop("checked", data.include_rt);
@@ -261,9 +264,12 @@ function toLongTime(v) {
 }
 
 function loadUsers(tbl, list) {
+    var lastUser = "";
     $.each(list, function (i, u) {
+        if (lastUser == u.username) {
+            return true; // continue
+        }
         // console.log("User[" + i + "] ID: " + u.id);
-
         var $info = $("<div class='user-info-detail'>").append(
             $("<div class='user-info-name'>").html("<a href='https://twitter.com/" +
                 u.username + "' target='_blank'>" + u.username + "</a> - <b>" + u.name +
@@ -278,5 +284,6 @@ function loadUsers(tbl, list) {
             $("<td class='user-img'>").html("<img src='" + u.profile_image + "'/>"),
             $("<td class='user-info'>").append($info)
         ).appendTo(tbl);
+        lastUser = u.username;
     });
 }

@@ -185,6 +185,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 	}
 
 	list = make([]*store.SimpleTweet, 0)
+	c.ExecutedOn = time.Now()
 
 	for {
 

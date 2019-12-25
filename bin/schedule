@@ -11,10 +11,17 @@ SERVICE_TOKEN=$(<"${CONF_DIR}/service_token")
 
 for TW_USER in "${SCHEDULE_ACCOUNTS[@]}"
 do
+    # refresh
     gcloud scheduler jobs create http "${SERVICE_NAME}-refresh-${TW_USER}" \
         --http-method POST \
         --schedule "${SCHEDULE_FREQUENCY}" \
         --uri "${SERVICE_URL}/api/v1/refresh/${TW_USER}?token=${SERVICE_TOKEN}"
-
     gcloud scheduler jobs describe "${SERVICE_NAME}-refresh-${TW_USER}"
+
+    # search
+    gcloud scheduler jobs create http "${SERVICE_NAME}-search-${TW_USER}" \
+        --http-method POST \
+        --schedule "${SCHEDULE_FREQUENCY}" \
+        --uri "${SERVICE_URL}/api/v1/search/${TW_USER}?token=${SERVICE_TOKEN}"
+    gcloud scheduler jobs describe "${SERVICE_NAME}-search-${TW_USER}"
 done

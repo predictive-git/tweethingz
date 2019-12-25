@@ -49,15 +49,15 @@ type SearchCriteria struct {
 	FollowerRatioMin float32 `firestore:"follower_ratio_min" json:"follower_ratio_min" form:"follower_ratio_min"`
 	FollowerRatioMax float32 `firestore:"follower_ratio_max" json:"follower_ratio_max" form:"follower_ratio_max"`
 
-	UpdatedOn time.Time `firestore:"updated_on" json:"updated_on" form:"updated_on"`
+	ExecutedOn time.Time `firestore:"updated_on" json:"executed_on" form:"executed_on"`
 }
 
-// SearchCriteriaByDate is a custom data structure for array of SearchCriteria
-type SearchCriteriaByDate []*SearchCriteria
+// SearchCriteriaByName is a custom data structure for array of SearchCriteria
+type SearchCriteriaByName []*SearchCriteria
 
-func (s SearchCriteriaByDate) Len() int           { return len(s) }
-func (s SearchCriteriaByDate) Less(i, j int) bool { return s[i].UpdatedOn.Before(s[j].UpdatedOn) }
-func (s SearchCriteriaByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+func (s SearchCriteriaByName) Len() int           { return len(s) }
+func (s SearchCriteriaByName) Less(i, j int) bool { return s[i].Name < s[j].Name }
+func (s SearchCriteriaByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
 
 // SaveSearchCriteria saves search criteria
 func SaveSearchCriteria(ctx context.Context, c *SearchCriteria) error {
@@ -112,7 +112,7 @@ func GetSearchCriteria(ctx context.Context, username string) (data []*SearchCrit
 		data = append(data, c)
 	}
 
-	sort.Sort(SearchCriteriaByDate(data))
+	sort.Sort(SearchCriteriaByName(data))
 
 	return
 

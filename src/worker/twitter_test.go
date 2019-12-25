@@ -87,13 +87,12 @@ func TestTwitterSearchWorker(t *testing.T) {
 	assert.Nil(t, err)
 
 	sc := &store.SearchCriteria{
-		ID:        store.NewID(),
-		User:      usr.Username,
-		Name:      "Test Search",
-		UpdatedOn: time.Now(),
-		Value:     "serverless",
-		Lang:      "en",
-		SinceID:   0,
+		ID:      store.NewID(),
+		User:    usr.Username,
+		Name:    "Test Search",
+		Value:   "serverless",
+		Lang:    "en",
+		SinceID: 0,
 	}
 
 	list, err := getSearchResults(ctx, usr, sc)

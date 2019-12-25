@@ -57,10 +57,10 @@ func main() {
 		v1 := api.Group("/v1")
 		{
 			// refreshes users
-			v1.POST("/refresh/:user", handler.RefreshWorkerHandler)
+			v1.POST("/refresh/:user", handler.RefreshUserDataHandler)
 
 			// executes all preconfigured searches by the user
-			v1.POST("/search/:user", handler.RefreshWorkerHandler)
+			v1.POST("/search/:user", handler.ExecuteSearchHandler)
 		}
 	}
 

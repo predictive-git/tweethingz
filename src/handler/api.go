@@ -16,8 +16,47 @@ var (
 	expectedToken = env.MustGetEnvVar("TOKEN", "")
 )
 
-// RefreshWorkerHandler ...
-func RefreshWorkerHandler(c *gin.Context) {
+// ExecuteSearchHandler ...
+func ExecuteSearchHandler(c *gin.Context) {
+
+	token := c.Query("token")
+	if token != expectedToken {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "User not authenticated",
+			"status":  "Unauthorized",
+		})
+		return
+	}
+
+	user := c.Param("user")
+	if user == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Username not defined",
+			"status":  "Bad Request",
+		})
+		return
+	}
+
+	user = store.NormalizeString(user)
+	logger.Printf("Starting background search worker for: %s...", user)
+	if err := worker.ExecuteUserSearches(c.Request.Context(), user); err != nil {
+		logger.Printf("error while executing user search: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error running worker",
+			"status":  "Internal Error",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("Refreshed %s data", user),
+		"status":  "Success",
+	})
+
+}
+
+// RefreshUserDataHandler ...
+func RefreshUserDataHandler(c *gin.Context) {
 
 	token := c.Query("token")
 	if token != expectedToken {

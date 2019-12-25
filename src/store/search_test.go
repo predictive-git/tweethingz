@@ -22,7 +22,6 @@ func TestSearchCRUD(t *testing.T) {
 		ID:               NewID(),
 		Name:             "Test Criteria",
 		User:             usr,
-		UpdatedOn:        time.Now(),
 		Value:            "knative",
 		Lang:             "en",
 		HasLink:          true,
