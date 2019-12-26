@@ -1,0 +1,70 @@
+{{ define "tweet" }}
+
+{{ template "header" . }}
+
+<!-- Middle -->
+
+<div id="middle-section">
+
+    {{with .criteria }}
+    <div>
+        <b>Search results for: </b>
+        <a href="/search/{{ .User }}" target="_blank">
+            {{ .Name }}
+        </a>
+    </div>
+    {{end}}
+
+    <!-- Table 1 -->
+    {{if .results}}
+    <table id="tweet-list">
+        {{ range .results }}
+        <tr>
+            <td>
+                {{ with .Author }}
+                <a href="https://twitter.com/{{ .Username }}" target="_blank">
+                    <img src="{{ .ProfileImage }}" />
+                </a>
+                {{ end }}
+            </td>
+            <td>
+                <div>{{ .Text }}</div>
+                <b>Posted: </b> {{ .CreatedAt }}
+                <b>Favorites: </b> {{ .FavoriteCount }}
+                <b>Replies: </b> {{ .ReplyCount }}
+                <b>Retweets: </b> {{ .RetweetCount }}
+            </td>
+        </tr>
+        {{ end }}
+    </table>
+    {{end}}
+
+    {{ if .next_key }}
+    <div class="bottom-link">
+        <a href="/tweet/{{ .criteria.ID }}?key={{ .next_key }}">
+            More
+        </a>
+    </div>
+    {{ end }}
+
+    <!--
+        ID string `firestore:"id_str" json:"id_str"`
+        CriteriaID string `firestore:"criteria_id" json:"criteria_id"`
+        CreatedAt time.Time `firestore:"created_at" json:"created_at"`
+        FavoriteCount int `firestore:"favorite_count" json:"favorite_count"`
+        ReplyCount int `firestore:"reply_count" json:"reply_count"`
+        RetweetCount int `firestore:"retweet_count" json:"retweet_count"`
+        IsRT bool `firestore:"is_rt" json:"is_rt"`
+        Text string `firestore:"text" json:"text"`
+        Author *SimpleUser `firestore:"author" json:"author"`
+        Key string `firestore:"key" json:"key"`
+    -->
+
+</div>
+
+<!-- End Middle -->
+
+
+{{ template "footer" . }}
+
+{{ end }}

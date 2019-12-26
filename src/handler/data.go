@@ -16,39 +16,6 @@ var (
 	}
 )
 
-// SearchDataHandler ...
-func SearchDataHandler(c *gin.Context) {
-
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "User not authenticated",
-			"status":  "Unauthorized",
-		})
-		return
-	}
-
-	var data interface{}
-	var err error
-
-	id := c.Param("id")
-	if id != "" {
-		logger.Printf("Search ID: %s", id)
-		data, err = store.GetSearchCriterion(c.Request.Context(), id)
-	} else {
-		data, err = store.GetSearchCriteria(c.Request.Context(), username)
-	}
-
-	if err != nil {
-		logger.Printf("Error getting criteria data: %v", err)
-		c.JSON(http.StatusInternalServerError, errResult)
-		return
-	}
-
-	c.JSON(http.StatusOK, data)
-
-}
-
 // SearchDeleteHandler ...
 func SearchDeleteHandler(c *gin.Context) {
 
@@ -118,8 +85,8 @@ func SearchDataSubmitHandler(c *gin.Context) {
 
 }
 
-// ViewDataHandler ...
-func ViewDataHandler(c *gin.Context) {
+// ViewDashboardHandler ...
+func ViewDashboardHandler(c *gin.Context) {
 
 	username, _ := c.Cookie(userIDCookieName)
 	if username == "" {

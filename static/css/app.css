@@ -246,11 +246,44 @@ td.form-action input, td.form-action button {
 	font-size: 0.8em;
 }
 
+.search-criterion b {
+	font-size: 1.2em;
+	margin-right: 20px;
+}
+
 .search-criterion a {
 	font-size: 1.2em;
-	font-weight: bold;
+	margin-right: 20px;
 }
 
 .search-criterion div {
 	margin-top: 10px;
+}
+
+#tweet-list {
+	width: 70%;
+	break-after: always;
+	display: inline-block;
+	text-align: left;
+	font-size: 0.9em;
+	padding: 0;
+	margin: 0;
+}
+
+#tweet-list td {
+	padding: 10px 5px 10px 5px;
+	margin: 0;
+	border-bottom: 1pt solid #e4e4e4;
+}
+
+#tweet-list div {
+	font-size: 1.1em;
+	margin-bottom: 10px;
+}
+
+#tweet-list img {
+	border: 1pt solid #e4e4e4;
+	filter: grayscale(80%);
+	padding: 0;
+	margin: 0;
 }

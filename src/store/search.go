@@ -209,6 +209,8 @@ func GetSavedSearchResults(ctx context.Context, sinceKey string, limit int) (dat
 		data = append(data, item)
 	}
 
+	logger.Printf("found %d tweets", len(data))
+
 	return
 
 }

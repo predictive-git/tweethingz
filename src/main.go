@@ -32,13 +32,13 @@ func main() {
 	// routes
 	r.GET("/", handler.DefaultHandler)
 	r.GET("/view", handler.ViewHandler)
-	r.GET("/search", handler.SearchHandler)
+	r.GET("/search", handler.SearchListHandler)
+	r.GET("/search/:cid", handler.SearchDetailHandler)
+	r.GET("/tweet/:cid", handler.TweetHandler)
 
 	data := r.Group("/data")
 	{
-		data.GET("/view", handler.ViewDataHandler)
-		data.GET("/search", handler.SearchDataHandler)
-		data.GET("/search/:id", handler.SearchDataHandler)
+		data.GET("/view", handler.ViewDashboardHandler)
 		data.DELETE("/search/:id", handler.SearchDeleteHandler)
 		data.POST("/search", handler.SearchDataSubmitHandler)
 	}

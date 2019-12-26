@@ -7,12 +7,37 @@
 <h3>Twitter Search Queries</h3>
 
 <!-- List -->
-<div id="search-list-section" class="after-load">
+{{ if .list }}
+<div id="search-list-section">
+
+    {{ range .list }}
+
+    <div class="search-criterion">
+        <b>{{ .Name }}</b>
+        <a href="/search/{{ .ID }}">Edit</a>
+        <a href="/tweet/{{ .ID }}">Results</a>
+        <div>
+            <b>Last executed on:</b>
+            {{ if gt .SinceID 0 }}
+            {{ .ExecutedOn }}
+            {{ end }}
+        </div>
+    </div>
+
+    {{ end }}
+
+    <div>
+        <a href="/search/0">New Search</a>
+    </div>
+
 </div>
+{{ end }}
 <!-- End List -->
 
 <!-- Details -->
-<div id="search-new-section" class="after-load">
+{{ if .detail }}
+{{ with .detail }}
+<div id="search-new-section">
 
     <form id="search-new-form" method="post" action="/data/search">
 
@@ -29,7 +54,7 @@
                     Name:
                 </td>
                 <td class="form-field">
-                    <input type="text" name="name"></input>
+                    <input type="text" name="name" value="{{ .Name }}"></input>
                 </td>
             </tr>
 
@@ -44,7 +69,7 @@
                     Query:
                 </td>
                 <td class="form-field">
-                    <input type="text" name="value"></input>
+                    <input type="text" name="value" value="{{ .Value }}"></input>
                 </td>
             </tr>
 
@@ -54,39 +79,40 @@
                 </td>
                 <td class="form-field">
                     <select name="lang" id="lang">
-                        <option value="en">English (default)</option>
-                        <option value="ar">Arabic</option>
-                        <option value="bn">Bengali</option>
-                        <option value="cs">Czech</option>
-                        <option value="da">Danish</option>
-                        <option value="de">German</option>
-                        <option value="el">Greek</option>
-                        <option value="es">Spanish</option>
-                        <option value="fa">Persian</option>
-                        <option value="fi">Finnish</option>
-                        <option value="fil">Filipino</option>
-                        <option value="fr">French</option>
-                        <option value="he">Hebrew</option>
-                        <option value="hi">Hindi</option>
-                        <option value="hu">Hungarian</option>
-                        <option value="id">Indonesian</option>
-                        <option value="it">Italian</option>
-                        <option value="ja">Japanese</option>
-                        <option value="ko">Korean</option>
-                        <option value="msa">Malay</option>
-                        <option value="nl">Dutch</option>
-                        <option value="no">Norwegian</option>
-                        <option value="pl">Polish</option>
-                        <option value="pt">Portuguese</option>
-                        <option value="ro">Romanian</option>
-                        <option value="ru">Russian</option>
-                        <option value="sv">Swedish</option>
-                        <option value="th">Thai</option>
-                        <option value="tr">Turkish</option>
-                        <option value="uk">Ukrainian</option>
-                        <option value="ur">Urdu</option>
-                        <option value="vi">Vietnamese</option>
-                        <option value="zh-cn">Chinese</option>
+                        <option value="en" {{ if eq .Lang "en" }} selected="selected" {{ end }}>English (default)
+                        </option>
+                        <option value="ar" {{ if eq .Lang "ar" }} selected="selected" {{ end }}>Arabic</option>
+                        <option value="bn" {{ if eq .Lang "bn" }} selected="selected" {{ end }}>Bengali</option>
+                        <option value="cs" {{ if eq .Lang "cs" }} selected="selected" {{ end }}>Czech</option>
+                        <option value="da" {{ if eq .Lang "da" }} selected="selected" {{ end }}>Danish</option>
+                        <option value="de" {{ if eq .Lang "de" }} selected="selected" {{ end }}>German</option>
+                        <option value="el" {{ if eq .Lang "el" }} selected="selected" {{ end }}>Greek</option>
+                        <option value="es" {{ if eq .Lang "es" }} selected="selected" {{ end }}>Spanish</option>
+                        <option value="fa" {{ if eq .Lang "fa" }} selected="selected" {{ end }}>Persian</option>
+                        <option value="fi" {{ if eq .Lang "fi" }} selected="selected" {{ end }}>Finnish</option>
+                        <option value="fil" {{ if eq .Lang "fil" }} selected="selected" {{ end }}>Filipino</option>
+                        <option value="fr" {{ if eq .Lang "fr" }} selected="selected" {{ end }}>French</option>
+                        <option value="he" {{ if eq .Lang "he" }} selected="selected" {{ end }}>Hebrew</option>
+                        <option value="hi" {{ if eq .Lang "hi" }} selected="selected" {{ end }}>Hindi</option>
+                        <option value="hu" {{ if eq .Lang "hu" }} selected="selected" {{ end }}>Hungarian</option>
+                        <option value="id" {{ if eq .Lang "id" }} selected="selected" {{ end }}>Indonesian</option>
+                        <option value="it" {{ if eq .Lang "it" }} selected="selected" {{ end }}>Italian</option>
+                        <option value="ja" {{ if eq .Lang "ja" }} selected="selected" {{ end }}>Japanese</option>
+                        <option value="ko" {{ if eq .Lang "ko" }} selected="selected" {{ end }}>Korean</option>
+                        <option value="msa" {{ if eq .Lang "msa" }} selected="selected" {{ end }}>Malay</option>
+                        <option value="nl" {{ if eq .Lang "nl" }} selected="selected" {{ end }}>Dutch</option>
+                        <option value="no" {{ if eq .Lang "no" }} selected="selected" {{ end }}>Norwegian</option>
+                        <option value="pl" {{ if eq .Lang "pl" }} selected="selected" {{ end }}>Polish</option>
+                        <option value="pt" {{ if eq .Lang "pt" }} selected="selected" {{ end }}>Portuguese</option>
+                        <option value="ro" {{ if eq .Lang "ro" }} selected="selected" {{ end }}>Romanian</option>
+                        <option value="ru" {{ if eq .Lang "ru" }} selected="selected" {{ end }}>Russian</option>
+                        <option value="sv" {{ if eq .Lang "sv" }} selected="selected" {{ end }}>Swedish</option>
+                        <option value="th" {{ if eq .Lang "th" }} selected="selected" {{ end }}>Thai</option>
+                        <option value="tr" {{ if eq .Lang "tr" }} selected="selected" {{ end }}>Turkish</option>
+                        <option value="uk" {{ if eq .Lang "uk" }} selected="selected" {{ end }}>Ukrainian</option>
+                        <option value="ur" {{ if eq .Lang "ur" }} selected="selected" {{ end }}>Urdu</option>
+                        <option value="vi" {{ if eq .Lang "vi" }} selected="selected" {{ end }}>Vietnamese</option>
+                        <option value="zh-cn" {{ if eq .Lang "zh-cn" }} selected="selected" {{ end }}>Chinese</option>
                     </select>
                 </td>
             </tr>
@@ -100,11 +126,13 @@
             <tr>
                 <td class="form-field" colspan="2">
                     <label for="has_link">Must include links:
-                        <input type="checkbox" name="has_link" value="true" />
+                        <input type="checkbox" name="has_link" value="true" {{ if .HasLink }} checked="true"
+                            {{ end }} />
                     </label>
 
                     <label for="include_rt">Allow RT:
-                        <input type="checkbox" name="include_rt" value="true" />
+                        <input type="checkbox" name="include_rt" value="true" {{ if .IncludeRT }} checked="true"
+                            {{ end }} />
                     </label>
                 </td>
             </tr>
@@ -115,10 +143,10 @@
                 </td>
                 <td class="form-field">
                     <label for="follower_count_min">Min
-                        <input type="number" min="0" name="follower_count_min" value="0"></input>
+                        <input type="number" min="0" name="follower_count_min" value="{{ .FollowerCountMin }}"></input>
                     </label>
                     <label for="follower_count_max">Max
-                        <input type="number" min="0" name="follower_count_max" value="0"></input>
+                        <input type="number" min="0" name="follower_count_max" value="{{ .FollowerCountMax }}"></input>
                     </label>
                 </td>
             </tr>
@@ -129,10 +157,10 @@
                 </td>
                 <td class="form-field">
                     <label for="post_count_min">Min
-                        <input type="number" min="0" name="post_count_min" value="0"></input>
+                        <input type="number" min="0" name="post_count_min" value="{{ .PostCountMin }}"></input>
                     </label>
                     <label for="post_count_max">Max
-                        <input type="number" min="0" name="post_count_max" value="0"></input>
+                        <input type="number" min="0" name="post_count_max" value="{{ .PostCountMax }}"></input>
                     </label>
                 </td>
             </tr>
@@ -143,10 +171,10 @@
                 </td>
                 <td class="form-field">
                     <label for="fave_count_min">Min
-                        <input type="number" min="0" name="fave_count_min" value="0"></input>
+                        <input type="number" min="0" name="fave_count_min" value="{{ .FaveCountMin }}"></input>
                     </label>
                     <label for="fave_count_max">Max
-                        <input type="number" min="0" name="fave_count_max" value="0"></input>
+                        <input type="number" min="0" name="fave_count_max" value="{{ .FaveCountMax }}"></input>
                     </label>
                 </td>
             </tr>
@@ -157,10 +185,12 @@
                 </td>
                 <td class="form-field">
                     <label for="following_count_min">Min
-                        <input type="number" min="0" name="following_count_min" value="0"></input>
+                        <input type="number" min="0" name="following_count_min"
+                            value="{{ .FollowingCountMin }}"></input>
                     </label>
                     <label for="filter_following_count_max">Max
-                        <input type="number" min="0" name="following_count_max" value="0"></input>
+                        <input type="number" min="0" name="following_count_max"
+                            value="{{ .FollowingCountMax }}"></input>
                     </label>
                 </td>
             </tr>
@@ -171,22 +201,26 @@
                 </td>
                 <td class="form-field">
                     <label for="follower_ratio_min">Min
-                        <input type="number" step="any" min="0" name="follower_ratio_min" value="0"></input>
+                        <input type="number" step="any" min="0" name="follower_ratio_min"
+                            value="{{ .FollowerRatioMin }}"></input>
                     </label>
                     <label for="follower_ratio_max">Max
-                        <input type="number" step="any" min="0" name="follower_ratio_max" value="0"></input>
+                        <input type="number" step="any" min="0" name="follower_ratio_max"
+                            value="{{ .FollowerRatioMax }}"></input>
                     </label>
                 </td>
             </tr>
 
             <tr>
                 <td class="form-action left">
-                    <input type="button" value="Delete" id="search-criteria-delete-button">
+                    {{ if .ID }}
+                    <input type="button" value="Delete" data-id="{{ .ID }}" id="search-criteria-delete-button" />
+                    {{ end }}
                 </td class="form-action left">
                 <td class="form-action right">
-                    <input type="hidden" name="id" value="" />
-                    <input type="button" value="Cancel" id="search-criteria-cancel-button">
-                    <input type="submit" value="Submit">
+                    <input type="hidden" name="id" value="{{ .ID }}" />
+                    <input type="button" value="Cancel" id="search-criteria-cancel-button" />
+                    <input type="submit" value="Submit" />
                 </td>
             </tr>
 
@@ -195,6 +229,8 @@
     </form>
 
 </div>
+{{ end }}
+{{ end }}
 <!-- End Details -->
 
 

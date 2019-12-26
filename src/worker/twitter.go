@@ -224,7 +224,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 
 			// tweets come in newest first order so just make sure we capture the highest number
 			// and start from there the next time
-			if t.ID > c.SinceID {
+			if t.ID >= c.SinceID {
 				c.SinceID = t.ID
 				qp.SinceID = t.ID
 			}

@@ -1,130 +1,29 @@
 $(function () {
     if ($("#numbers-section").length) {
-        runQuery();
+        loadDashboard();
     }
-    if ($("#search-list-section").length) {
-        runSearch();
-    }
-
+    $("#search-criteria-delete-button").click(handleDeleteSearchCriteria);
 });
 
-function runSearch() {
-
-    console.log("View: search");
-    $(".after-load").hide();
-    var listDev = $("#search-list-section").empty();
-
-    $.get("/data/search", function (data) {
-
-        $.each(data, function (i, c) {
-
-            console.log("item[" + i + "]: " + c.id);
-
-            var criteriaLink = $("<a />")
-                .data("sc", c)
-                .attr("title", "Search Criterion")
-                .attr("href", "#")
-                .text(c.name)
-                .addClass("search-criterion-link")
-                .click(function (e) {
-                    e.preventDefault();
-                    var data = $(this).data("sc");
-                    console.log("clicked: " + data.id);
-                    loadSearchCriterion(data);
-                });
-
-            var execDate = "";
-            if (c.since_id > 0) {
-                execDate = toLongTime(c.executed_on);
-            }
-            var criteriaMeta = $("<div />").html("<b>Last executed on:</b> " + execDate);
-
-            $("<div class='search-criterion' />")
-                .append(criteriaLink)
-                .append(criteriaMeta)
-                .appendTo(listDev);
-        }); // each
-
-        $("<a />")
-            .attr("title", "New Search Criterion")
-            .attr("href", "#")
-            .text("New Search Criterion")
-            .addClass("new-search-criterion-link")
-            .click(function (e) {
-                e.preventDefault();
-                $(".after-load").hide();
-                $("#search-new-form")[0].reset();
-                $("#search-new-section").show()
-            }).appendTo(listDev);
-
-        $("#search-criteria-cancel-button").click(function (e) {
-            e.preventDefault();
-            $(".after-load").hide();
-            $("#search-list-section").show();
-        });
-
-        $("#search-criteria-delete-button").click(function (e) {
-            e.preventDefault();
-            var data = $(this).data("sc");
-            if (typeof data === "undefined") {
-                runSearch();
-                return;
-            }
-            console.log("deleting: " + data.id);
-            return $.ajax({
-                url: "/data/search/" + data.id,
-                type: 'DELETE',
-                success: function (result) {
-                    console.log("Delete success: ", result);
-                    runSearch();
-                },
-                error: function (err) {
-                    console.log("Delete err: ", err);
-                },
-            });
-        });
-
-        listDev.show();
-
+function handleDeleteSearchCriteria(e) {
+    e.preventDefault();
+    var cid = $(this).attr("data-id");
+    console.log("deleting: " + cid);
+    return $.ajax({
+        url: "/data/search/" + cid,
+        type: 'DELETE',
+        success: function (result) {
+            console.log("Delete success: ", result);
+            $(location).attr("href", "/search");
+        },
+        error: function (err) {
+            console.log("Delete err: ", err);
+        },
     });
 }
 
-function loadSearchCriterion(data) {
 
-    $(".after-load").hide();
-
-    console.log("View: search detail for " + data.id);
-    $("input[name=id]").val(data.id);
-    $("input[name=name]").val(data.name);
-    $("input[name=value]").val(data.value);
-
-    $("#lang").val(data.lang);
-
-    $("input[name=has_link]").prop("checked", data.has_link);
-    $("input[name=include_rt]").prop("checked", data.include_rt);
-
-    $("input[name=post_count_min]").val(data.post_count_min);
-    $("input[name=post_count_max]").val(data.post_count_max);
-
-    $("input[name=follower_count_min]").val(data.follower_count_min);
-    $("input[name=follower_count_max]").val(data.follower_count_max);
-
-    $("input[name=fave_count_min]").val(data.fave_count_min);
-    $("input[name=fave_count_max]").val(data.fave_count_max);
-
-    $("input[name=following_count_min]").val(data.following_count_min);
-    $("input[name=following_count_max]").val(data.following_count_max);
-
-    $("input[name=follower_ratio_min]").val(data.follower_ratio_min);
-    $("input[name=follower_ratio_max]").val(data.follower_ratio_max);
-
-    $("#search-criteria-delete-button").data("sc", data);
-
-    $("#search-new-section").show()
-
-}
-
-function runQuery() {
+function loadDashboard() {
 
     $(".after-load").hide();
 
@@ -144,6 +43,7 @@ function runQuery() {
         $("#meta-panel").html("Account: <b>" + data.user.username + "</b>" +
             " | Time period: <b>Last " + data.meta.num_days_period + "days</b>" +
             " | Updated on: <b>" + toLongTime(data.updated_on) + "</b>" +
+            " | <a href='/search'>Search</a>" +
             " | <a href='/auth/logout'>Log out</a>"
         );
 
@@ -190,9 +90,14 @@ function runQuery() {
                             }
                         }
                     ]
+                },
+                onClick: (evt, item) => {
+                    var model = item[0]._model;
+                    console.log("Date: ", model.label);
                 }
             }
         });
+
 
         // follower count chart
         var followerChart = new Chart($("#follower-event-series")[0].getContext("2d"), {
@@ -243,47 +148,18 @@ function runQuery() {
                             }
                         }
                     ]
+                },
+                onClick: (evt, item) => {
+                    var model = item[0]._model;
+                    console.log("Date: ", model.label);
                 }
             }
         });
 
-        loadUsers($("#follower-list"), data.recent_follower_list);
-        loadUsers($("#unfollower-list"), data.recent_unfollower_list);
-
     });
-}
-
-function toShortDate(v) {
-    var ts = new Date(v)
-    return ts.toISOString().substring(0, 10)
 }
 
 function toLongTime(v) {
     var ts = new Date(v)
     return ts.toTimeString()
-}
-
-function loadUsers(tbl, list) {
-    var lastUser = "";
-    $.each(list, function (i, u) {
-        if (lastUser == u.username) {
-            return true; // continue
-        }
-        // console.log("User[" + i + "] ID: " + u.id);
-        var $info = $("<div class='user-info-detail'>").append(
-            $("<div class='user-info-name'>").html("<a href='https://twitter.com/" +
-                u.username + "' target='_blank'>" + u.username + "</a> - <b>" + u.name +
-                " </b> (<b>Loc:</b> " + u.location +
-                " <b>Follow:</b> " + u.followers_count + "/" + u.following_count +
-                " <b>Post:</b> " + u.post_count +
-                " <b>On:</b> " + toShortDate(u.event_at) + ")"),
-            $("<div class='user-info-desc'>").text(u.description),
-        );
-
-        var $tr = $("<tr class='user-row'>").append(
-            $("<td class='user-img'>").html("<img src='" + u.profile_image + "'/>"),
-            $("<td class='user-info'>").append($info)
-        ).appendTo(tbl);
-        lastUser = u.username;
-    });
 }
