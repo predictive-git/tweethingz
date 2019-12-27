@@ -14,8 +14,8 @@
 
     <div class="search-criterion">
         <b>{{ .Name }}</b>
-        <a href="/search/{{ .ID }}">Edit</a>
-        <a href="/tweet/{{ .ID }}">Results</a>
+        <a href="/view/search/{{ .ID }}">Edit</a>
+        <a href="/view/tweet/{{ .ID }}">Results</a>
         <div>
             <b>Last executed on:</b>
             {{ if gt .SinceID 0 }}
@@ -31,7 +31,7 @@
 <!-- End List -->
 
 <div>
-    <a href="/search/0">New Search</a>
+    <a href="/view/search/0">New Search</a>
 </div>
 
 <!-- Details -->

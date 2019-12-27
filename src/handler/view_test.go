@@ -13,7 +13,7 @@ func TestViewRedirectSansAuthCookie(t *testing.T) {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.GET("/", ViewHandler)
+	r.GET("/", DashboardHandler)
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	r.ServeHTTP(w, req)

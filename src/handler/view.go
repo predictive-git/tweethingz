@@ -22,7 +22,7 @@ func DefaultHandler(c *gin.Context) {
 	uid, _ := c.Cookie(userIDCookieName)
 	if uid != "" {
 		logger.Printf("user already authenticated -> view")
-		c.Redirect(http.StatusSeeOther, "/view")
+		c.Redirect(http.StatusSeeOther, "/view/board")
 		return
 	}
 
@@ -39,32 +39,19 @@ func errorHandler(c *gin.Context, err error, code int) {
 
 }
 
-// ViewHandler ...
-func ViewHandler(c *gin.Context) {
-
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.Redirect(http.StatusSeeOther, "/")
-		return
-	}
-
+// DashboardHandler ...
+func DashboardHandler(c *gin.Context) {
+	username := getAuthedUsername(c)
 	c.HTML(http.StatusOK, "view", gin.H{
 		"twitter_username": username,
 		"version":          version,
 		"refresh":          c.Query("refresh"),
 	})
-
 }
 
 // SearchListHandler ...
 func SearchListHandler(c *gin.Context) {
-
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.Redirect(http.StatusSeeOther, "/")
-		return
-	}
-
+	username := getAuthedUsername(c)
 	list, err := store.GetSearchCriteria(c.Request.Context(), username)
 	if err != nil {
 		errorHandler(c, err, http.StatusInternalServerError)
@@ -76,18 +63,12 @@ func SearchListHandler(c *gin.Context) {
 		"version":          version,
 		"list":             list,
 	})
-
 }
 
 // SearchDetailHandler ...
 func SearchDetailHandler(c *gin.Context) {
 
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.Redirect(http.StatusSeeOther, "/")
-		return
-	}
-
+	username := getAuthedUsername(c)
 	id := c.Param("cid")
 	if id == "" {
 		errorHandler(c, errors.New("Search ID required"), http.StatusInternalServerError)
@@ -123,12 +104,7 @@ const tweetPageSize = 10
 // TweetHandler ...
 func TweetHandler(c *gin.Context) {
 
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.Redirect(http.StatusSeeOther, "/")
-		return
-	}
-
+	username := getAuthedUsername(c)
 	cid := c.Param("cid")
 	if cid == "" {
 		errorHandler(c, errors.New("Search query ID required (param: cid)"), http.StatusBadRequest)
@@ -170,12 +146,7 @@ func TweetHandler(c *gin.Context) {
 // DayHandler ...
 func DayHandler(c *gin.Context) {
 
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.Redirect(http.StatusSeeOther, "/")
-		return
-	}
-
+	username := getAuthedUsername(c)
 	day := c.Param("day")
 	if day == "" {
 		errorHandler(c, errors.New("Day required (param: day)"), http.StatusBadRequest)

@@ -158,7 +158,7 @@ function loadDashboard() {
 }
 
 function redirectToDate(d) {
-    $(location).attr("href", "/day/" + d);
+    $(location).attr("href", "/view/day/" + d);
 }
 
 function toLongTime(v) {

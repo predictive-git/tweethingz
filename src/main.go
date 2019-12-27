@@ -31,20 +31,8 @@ func main() {
 
 	// routes
 	r.GET("/", handler.DefaultHandler)
-	r.GET("/view", handler.ViewHandler)
-	r.GET("/search", handler.SearchListHandler)
-	r.GET("/search/:cid", handler.SearchDetailHandler)
-	r.GET("/tweet/:cid", handler.TweetHandler)
-	r.GET("/day/:day", handler.DayHandler)
 
-	data := r.Group("/data")
-	{
-		data.GET("/view", handler.ViewDashboardHandler)
-		data.DELETE("/search/:id", handler.SearchDeleteHandler)
-		data.POST("/search", handler.SearchDataSubmitHandler)
-	}
-
-	// auth
+	// auth (authing itself)
 	auth := r.Group("/auth")
 	{
 		auth.GET("/login", handler.AuthLoginHandler)
@@ -52,8 +40,28 @@ func main() {
 		auth.GET("/logout", handler.LogOutHandler)
 	}
 
-	// api
+	// authed routes
+	view := r.Group("/view")
+	view.Use(handler.AuthRequired(false))
+	{
+		view.GET("/board", handler.DashboardHandler)
+		view.GET("/search", handler.SearchListHandler)
+		view.GET("/search/:cid", handler.SearchDetailHandler)
+		view.GET("/tweet/:cid", handler.TweetHandler)
+		view.GET("/day/:day", handler.DayHandler)
+	}
+
+	data := r.Group("/data")
+	data.Use(handler.AuthRequired(true))
+	{
+		data.GET("/view", handler.ViewDashboardHandler)
+		data.DELETE("/search/:id", handler.SearchDeleteHandler)
+		data.POST("/search", handler.SearchDataSubmitHandler)
+	}
+
+	// api (token validation)
 	api := r.Group("/api")
+	api.Use(handler.APITokenRequired())
 	{
 		v1 := api.Group("/v1")
 		{

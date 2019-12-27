@@ -58,15 +58,6 @@ func ExecuteSearchHandler(c *gin.Context) {
 // RefreshUserDataHandler ...
 func RefreshUserDataHandler(c *gin.Context) {
 
-	token := c.Query("token")
-	if token != expectedToken {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "User not authenticated",
-			"status":  "Unauthorized",
-		})
-		return
-	}
-
 	user := c.Param("user")
 	if user == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -99,4 +90,20 @@ func RefreshUserDataHandler(c *gin.Context) {
 		"status":  "Success",
 	})
 
+}
+
+// APITokenRequired is a authentication midleware
+func APITokenRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		token := c.Query("token")
+		if token != expectedToken {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"message": "User not authenticated",
+				"status":  "Unauthorized",
+			})
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
 }

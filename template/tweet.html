@@ -9,7 +9,7 @@
     {{with .criteria }}
     <div>
         <b>Search results for: </b>
-        <a href="/search/{{ .User }}" target="_blank">
+        <a href="/view/search/{{ .User }}" target="_blank">
             {{ .Name }}
         </a>
     </div>
@@ -41,7 +41,7 @@
 
     {{ if .next_key }}
     <div class="bottom-link">
-        <a href="/tweet/{{ .criteria.ID }}?key={{ .next_key }}">
+        <a href="/view/tweet/{{ .criteria.ID }}?key={{ .next_key }}">
             More
         </a>
     </div>

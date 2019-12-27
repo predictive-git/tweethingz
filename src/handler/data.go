@@ -19,14 +19,7 @@ var (
 // SearchDeleteHandler ...
 func SearchDeleteHandler(c *gin.Context) {
 
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "User not authenticated",
-			"status":  "Unauthorized",
-		})
-		return
-	}
+	username := getAuthedUsername(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -44,8 +37,9 @@ func SearchDeleteHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Search criterion deleted",
-		"status":  "Success",
+		"message":  "Search criterion deleted",
+		"status":   "Success",
+		"username": username,
 	})
 
 }
@@ -53,15 +47,7 @@ func SearchDeleteHandler(c *gin.Context) {
 // SearchDataSubmitHandler ...
 func SearchDataSubmitHandler(c *gin.Context) {
 
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "User not authenticated",
-			"status":  "Unauthorized",
-		})
-		return
-	}
-
+	username := getAuthedUsername(c)
 	sc := &store.SearchCriteria{}
 	if err := c.ShouldBind(&sc); err != nil {
 		logger.Printf("error binding: %v", err)
@@ -79,7 +65,7 @@ func SearchDataSubmitHandler(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusSeeOther, "/search")
+	c.Redirect(http.StatusSeeOther, "/view/search")
 	return
 
 }
@@ -87,15 +73,7 @@ func SearchDataSubmitHandler(c *gin.Context) {
 // ViewDashboardHandler ...
 func ViewDashboardHandler(c *gin.Context) {
 
-	username, _ := c.Cookie(userIDCookieName)
-	if username == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "User not authenticated",
-			"status":  "Unauthorized",
-		})
-		return
-	}
-
+	username := getAuthedUsername(c)
 	result, err := store.GetSummaryForUser(c.Request.Context(), username)
 	if err != nil {
 

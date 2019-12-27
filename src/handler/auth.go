@@ -62,7 +62,7 @@ func AuthLoginHandler(c *gin.Context) {
 
 	uid, _ := c.Cookie(userIDCookieName)
 	if uid != "" {
-		c.Redirect(http.StatusSeeOther, "/view")
+		c.Redirect(http.StatusSeeOther, "/view/board")
 		return
 	}
 
@@ -168,7 +168,7 @@ func AuthCallbackHandler(c *gin.Context) {
 	c.SetCookie(userIDCookieName, authedUser.Username, authedUserCookieDuration,
 		"/", c.Request.Host, false, true)
 
-	c.Redirect(http.StatusSeeOther, "/view")
+	c.Redirect(http.StatusSeeOther, "/view/board")
 
 }
 
@@ -193,4 +193,32 @@ func userConfigFromString(content string) (conf *oauth1a.UserConfig, err error) 
 		return nil, e
 	}
 	return
+}
+
+// AuthRequired is a authentication midleware
+func AuthRequired(isJSON bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		username, _ := c.Cookie(userIDCookieName)
+		if username == "" {
+			if isJSON {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"message": "User not authenticated",
+					"status":  "Unauthorized",
+				})
+			} else {
+				c.Redirect(http.StatusSeeOther, "/")
+			}
+			c.Abort()
+			return
+		}
+		c.Next()
+	}
+}
+
+func getAuthedUsername(c *gin.Context) string {
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
+		logger.Fatalln("This should never happen, nil auth cookie")
+	}
+	return username
 }
