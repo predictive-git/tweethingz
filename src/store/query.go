@@ -10,7 +10,7 @@ import (
 
 const (
 	recentUsersPerDayLimit   = 10 // TODO: make that UI parameter
-	recentEventDefaultPeriod = 7
+	recentEventDefaultPeriod = 6  // inclusive to 6 past + today == 7 days
 )
 
 // SummaryData represents aggregate data view
@@ -50,7 +50,6 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 			RecentUserPerDayLimit: recentUsersPerDayLimit,
 			NumDaysPeriod:         recentEventDefaultPeriod,
 		},
-		UpdatedOn: time.Now().UTC(),
 	}
 
 	// ============================================================================
@@ -61,6 +60,7 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		return nil, err
 	}
 	data.Self = self
+	data.UpdatedOn = self.UpdatedAt
 
 	// ============================================================================
 	// User follower series

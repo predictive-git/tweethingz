@@ -37,15 +37,11 @@ function loadDashboard() {
         $("#follower-lost-count .data").text(data.recent_unfollower_count);
         $("#favorites-count .data").text(data.user.fave_count);
 
+        $("#meta-name").text(data.user.username);
+        $("#meta-updated-on").text(toLongTime(data.updated_on));
+
         $(".wait-load").hide();
         $(".after-load").show();
-
-        $("#meta-panel").html("Account: <b>" + data.user.username + "</b>" +
-            " | Time period: <b>Last " + data.meta.num_days_period + "days</b>" +
-            " | Updated on: <b>" + toLongTime(data.updated_on) + "</b>" +
-            " | <a href='/search'>Search</a>" +
-            " | <a href='/auth/logout'>Log out</a>"
-        );
 
         // follower count chart
         var followerChart = new Chart($("#follower-count-series")[0].getContext("2d"), {
@@ -94,6 +90,7 @@ function loadDashboard() {
                 onClick: (evt, item) => {
                     var model = item[0]._model;
                     console.log("Date: ", model.label);
+                    redirectToDate(model.label);
                 }
             }
         });
@@ -152,11 +149,16 @@ function loadDashboard() {
                 onClick: (evt, item) => {
                     var model = item[0]._model;
                     console.log("Date: ", model.label);
+                    redirectToDate(model.label);
                 }
             }
         });
 
     });
+}
+
+function redirectToDate(d) {
+    $(location).attr("href", "/day/" + d);
 }
 
 function toLongTime(v) {

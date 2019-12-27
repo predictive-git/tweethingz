@@ -166,3 +166,53 @@ func TweetHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "tweet", data)
 
 }
+
+// DayHandler ...
+func DayHandler(c *gin.Context) {
+
+	username, _ := c.Cookie(userIDCookieName)
+	if username == "" {
+		c.Redirect(http.StatusSeeOther, "/")
+		return
+	}
+
+	day := c.Param("day")
+	if day == "" {
+		errorHandler(c, errors.New("Day required (param: day)"), http.StatusBadRequest)
+		return
+	}
+
+	list, err := store.GetUserDailyEvents(c.Request.Context(), username, day)
+	if err != nil {
+		errorHandler(c, err, http.StatusInternalServerError)
+		return
+	}
+
+	followers := make([]*store.SimpleUserEvent, 0)
+	unfollowers := make([]*store.SimpleUserEvent, 0)
+
+	for _, item := range list {
+		if item.EventType == store.FollowedEventType {
+			followers = append(followers, item)
+		} else if item.EventType == store.UnfollowedEventType {
+			unfollowers = append(unfollowers, item)
+		} else {
+			logger.Printf("invalid event type: %s", item.EventType)
+			errorHandler(c, err, http.StatusInternalServerError)
+			return
+		}
+	}
+
+	logger.Printf("List:%d (f:%d, u:%d)", len(list), len(followers), len(unfollowers))
+
+	data := gin.H{
+		"username":    username,
+		"version":     version,
+		"date":        day,
+		"followers":   followers,
+		"unfollowers": unfollowers,
+	}
+
+	c.HTML(http.StatusOK, "day", data)
+
+}

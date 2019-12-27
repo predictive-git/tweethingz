@@ -33,6 +33,7 @@ type SimpleUser struct {
 	Description  string    `firestore:"description" json:"description"`
 	ProfileImage string    `firestore:"profile_image" json:"profile_image"`
 	CreatedAt    time.Time `firestore:"created_at" json:"created_at"`
+	UpdatedAt    time.Time `firestore:"updated_at" json:"updated_at"`
 
 	// geo
 	Lang     string `firestore:"lang" json:"lang"`
@@ -111,7 +112,8 @@ func SaveUserEvents(ctx context.Context, users []*SimpleUserEvent) error {
 	batch := fsClient.Batch()
 
 	for _, u := range users {
-		docRef := col.Doc(NewID())
+		eventID := ToID(fmt.Sprintf("%s-%s-%s-%s", u.EventUser, u.Username, u.EventType, u.EventDate))
+		docRef := col.Doc(eventID)
 		batch.Set(docRef, u)
 	}
 
@@ -137,6 +139,36 @@ func GetUserEventsSince(ctx context.Context, username string, since time.Time) (
 			return nil, e
 		}
 		data = append(data, items...)
+	}
+
+	sort.Sort(UserEventByDate(data))
+
+	return
+
+}
+
+// GetUserDailyEvents retreaves user events for specific date
+func GetUserDailyEvents(ctx context.Context, username, isoDate string) (data []*SimpleUserEvent, err error) {
+
+	col, err := getCollection(ctx, userEventCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	docs, err := col.
+		Where("event_user", "==", NormalizeString(username)).
+		Where("event_at", "==", isoDate).
+		Documents(ctx).
+		GetAll()
+
+	data = make([]*SimpleUserEvent, 0)
+
+	for _, doc := range docs {
+		state := &SimpleUserEvent{}
+		if err := doc.DataTo(state); err != nil {
+			return nil, fmt.Errorf("error retreiveing user events from %v: %v", doc.Data(), err)
+		}
+		data = append(data, state)
 	}
 
 	sort.Sort(UserEventByDate(data))

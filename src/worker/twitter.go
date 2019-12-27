@@ -92,6 +92,7 @@ func toSimpleUser(u *twitter.User) *store.SimpleUser {
 		FaveCount:      u.FavouritesCount,
 		FollowingCount: u.FriendsCount,
 		FollowerCount:  u.FollowersCount,
+		UpdatedAt:      time.Now(),
 	}
 }
 

@@ -73,7 +73,6 @@ func SearchDataSubmitHandler(c *gin.Context) {
 	sc.User = username
 
 	// logger.Printf("Search Criteria: %+v", sc)
-
 	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
 		logger.Printf("error saving search criteria: %v", err)
 		c.HTML(http.StatusInternalServerError, "error", errResult)
@@ -97,26 +96,33 @@ func ViewDashboardHandler(c *gin.Context) {
 		return
 	}
 
-	if err := worker.UpdateUserData(c.Request.Context(), username); err != nil {
-		logger.Printf("Error: %v", err)
-		c.JSON(http.StatusInternalServerError, errResult)
-		return
-	}
-
 	result, err := store.GetSummaryForUser(c.Request.Context(), username)
 	if err != nil {
+
 		logger.Printf("Error while quering data service: %v", err)
 
-		if store.IsDataNotFoundError(err) {
-			c.JSON(http.StatusNoContent, gin.H{
-				"message": "Your data is still being loaded. Please try again in a few min",
-				"status":  "Error",
-			})
+		// if anything else by no data found, err
+		if !store.IsDataNotFoundError(err) {
+			c.JSON(http.StatusInternalServerError, errResult)
 			return
 		}
 
-		c.JSON(http.StatusInternalServerError, errResult)
-		return
+		// update only when need to
+		logger.Printf("No data found, updating data for: %v", username)
+		if err := worker.UpdateUserData(c.Request.Context(), username); err != nil {
+			logger.Printf("Error while updating after nil results: %v", err)
+			c.JSON(http.StatusInternalServerError, errResult)
+			return
+		}
+
+		// get data once more after update
+		result, err = store.GetSummaryForUser(c.Request.Context(), username)
+		if err != nil {
+			logger.Printf("Error while getting summary after nil results: %v", err)
+			c.JSON(http.StatusInternalServerError, errResult)
+			return
+		}
+
 	}
 
 	c.JSON(http.StatusOK, result)

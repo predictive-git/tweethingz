@@ -37,8 +37,8 @@ go mod vendor
 
 # worker
 # go test -v -run TestTwitterSearchWorker ./src/worker
-# go test -v -run TestUpdateUserDataWorker ./src/worker
-go test -v -run TestExecuteUserSearches ./src/worker
+go test -v -run TestUpdateUserDataWorker ./src/worker
+# go test -v -run TestExecuteUserSearches ./src/worker
 
 
 

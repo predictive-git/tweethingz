@@ -35,6 +35,7 @@ func main() {
 	r.GET("/search", handler.SearchListHandler)
 	r.GET("/search/:cid", handler.SearchDetailHandler)
 	r.GET("/tweet/:cid", handler.TweetHandler)
+	r.GET("/day/:day", handler.DayHandler)
 
 	data := r.Group("/data")
 	{

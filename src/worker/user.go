@@ -95,16 +95,21 @@ func UpdateUserData(ctx context.Context, username string) error {
 	// Saving State
 	// ============================================================================
 	logger.Printf("Saving current state for %s...", forUser.Username)
-	// update the current state
 	todayState.Followers = currentFollowerIDs
 	todayState.FollowerCount = len(currentFollowerIDs)
-	todayState.NewFollowerCount = len(newFollowerIDs)
-	todayState.UnfollowerCount = len(newUnfollowerIDs)
 
-	// handle first day, don't want to all followers to show as new
-	// messes up visualization for the first week
-	if todayState.NewFollowerCount == todayState.FollowerCount {
+	// check for 1st day when all users are new
+	if len(newUnfollowerIDs) == todayState.FollowerCount {
+		todayState.UnfollowerCount = 0
+	} else {
+		todayState.UnfollowerCount = len(newUnfollowerIDs)
+	}
+
+	// handle first day
+	if len(newFollowerIDs) == todayState.FollowerCount {
 		todayState.NewFollowerCount = 0
+	} else {
+		todayState.NewFollowerCount = len(newFollowerIDs)
 	}
 
 	err = store.SaveDailyFollowerState(ctx, todayState)
@@ -126,6 +131,8 @@ func refreshUserOwnDetails(ctx context.Context, forUser *store.AuthedUser) (twit
 	if users == nil || len(users) != 1 {
 		return nil, errors.Wrapf(err, "expected 1 user, got %d", len(users))
 	}
+
+	users[0].UpdatedAt = time.Now()
 
 	// save tweeter details for the authed user
 	err = store.SaveUsers(ctx, users)

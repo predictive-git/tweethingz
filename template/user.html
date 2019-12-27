@@ -1,0 +1,26 @@
+{{ define "user" }}
+{{ range . }}
+
+<tr>
+    <td class="user-img">
+        <img src="{{ .ProfileImage }}" />
+    </td>
+    <td>
+        <div>
+            <a href="https://twitter.com/{{ .Username }}" target="_blank">
+                <b>{{ .Username }}</b>
+            </a>
+            - {{ .Name }}
+        </div>
+
+        <div>
+            <b>Loc:</b> {{ .Location }}
+            <b>Follow:</b> {{ .FollowerCount }}/{{ .FollowingCount }}
+            <b>Post:</b> {{ .PostCount }}
+        </div>
+    </td>
+
+</tr>
+
+{{ end }}
+{{ end }}
