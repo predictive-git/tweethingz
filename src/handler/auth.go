@@ -152,8 +152,10 @@ func AuthCallbackHandler(c *gin.Context) {
 
 	c.SetCookie(authIDCookieName, "", 0, "/", c.Request.Host, false, true)
 
+	username := store.NormalizeString(userConfig.AccessValues.Get("screen_name"))
+
 	authedUser := &store.AuthedUser{
-		Username:          store.NormalizeString(userConfig.AccessValues.Get("screen_name")),
+		Username:          username,
 		AccessTokenKey:    userConfig.AccessTokenKey,
 		AccessTokenSecret: userConfig.AccessTokenSecret,
 		UpdatedAt:         time.Now().UTC(),
