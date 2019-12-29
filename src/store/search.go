@@ -54,9 +54,10 @@ type SearchCriteria struct {
 
 // FormatedExecutedOn returns RFC822 formated  ExecutedOn
 func (s *SearchCriteria) FormatedExecutedOn() string {
-	if s == nil {
+	if s == nil || s.ExecutedOn.IsZero() {
 		return ""
 	}
+
 	return s.ExecutedOn.Format(time.RFC822)
 }
 
@@ -147,7 +148,7 @@ type SimpleTweet struct {
 
 // FormatedCreatedAt returns RFC822 formated CreatedAt
 func (s *SimpleTweet) FormatedCreatedAt() string {
-	if s == nil {
+	if s == nil || s.CreatedAt.IsZero() {
 		return ""
 	}
 	return s.CreatedAt.Format(time.RFC822)
@@ -192,8 +193,8 @@ func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
 	batch := fsClient.Batch()
 
 	for _, t := range list {
-		t.Key = ToSearchResultPagingKey(t.CriteriaID, time.Now(), t.ID)
-		t.ExecutedOn = time.Now().Format(ISODateFormat)
+		t.Key = ToSearchResultPagingKey(t.CriteriaID, time.Now().UTC(), t.ID)
+		t.ExecutedOn = time.Now().UTC().Format(ISODateFormat)
 		// make sure the same tweet is saved as diff docs for diff criteria
 		docID := ToID(fmt.Sprintf("%s-%s", t.ID, t.CriteriaID))
 		docRef := col.Doc(docID)

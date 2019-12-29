@@ -5,11 +5,11 @@ export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
 
 # Cloud Scheduler
-export SCHEDULE_FREQUENCY="every 60 mins"
+export SCHEDULE_FREQUENCY="every 30 mins"
 
 # Cloud Run
 export SERVICE_REGION="us-central1"
-export SERVICE_VERSION="0.4.1"
+export SERVICE_VERSION="0.4.2"
 
 # ====================================================================#
 # Derived values (don't edit)                                         #

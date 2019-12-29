@@ -3,7 +3,8 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-export TEST_TW_ACCOUNT="knativeproject"
+# export TEST_TW_ACCOUNT="knativeproject"
+export TEST_TW_ACCOUNT="mchmarny"
 export RELEASE="${IMAGE_VERSION}"
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET

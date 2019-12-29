@@ -84,7 +84,7 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 func convertTwitterTime(v string) time.Time {
 	t, err := time.Parse(time.RubyDate, v)
 	if err != nil {
-		t = time.Now()
+		t = time.Now().UTC()
 	}
 	return t
 }
@@ -103,7 +103,7 @@ func toSimpleUser(u *twitter.User) *store.SimpleUser {
 		FaveCount:      u.FavouritesCount,
 		FollowingCount: u.FriendsCount,
 		FollowerCount:  u.FollowersCount,
-		UpdatedAt:      time.Now(),
+		UpdatedAt:      time.Now().UTC(),
 	}
 }
 
@@ -199,7 +199,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 		TweetMode:       "extended",
 	}
 
-	c.ExecutedOn = time.Now()
+	c.ExecutedOn = time.Now().UTC()
 	list = make([]*store.SimpleTweet, 0)
 
 	for {

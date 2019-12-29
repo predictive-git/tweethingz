@@ -17,7 +17,7 @@ function handleDeleteSearchCriteria(e) {
         type: 'DELETE',
         success: function (result) {
             console.log("Delete success: ", result);
-            $(location).attr("href", "/search");
+            $(location).attr("href", "/view/search");
         },
         error: function (err) {
             console.log("Delete err: ", err);

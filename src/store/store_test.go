@@ -9,7 +9,7 @@ import (
 
 func TestToID(t *testing.T) {
 	values := []string{"@1e6", "ed", "a/Aa", "b-bB", "1", "d75ac5fa-69e6-4f92-8b33-1cdaa3dd2275"}
-	date := time.Now().AddDate(0, 0, -1)
+	date := time.Now().UTC().AddDate(0, 0, -1)
 
 	for _, u := range values {
 		// t.Logf("Values[%d]: %v", i, u)
@@ -23,19 +23,19 @@ func TestToID(t *testing.T) {
 
 func TestDateRangeYesterday(t *testing.T) {
 
-	r := getDateRange(time.Now().AddDate(0, 0, -1))
+	r := getDateRange(time.Now().UTC().AddDate(0, 0, -1))
 	assert.NotNil(t, r)
 	assert.Len(t, r, 2)
 }
 
 func TestDateRangeToday(t *testing.T) {
-	r := getDateRange(time.Now())
+	r := getDateRange(time.Now().UTC())
 	assert.NotNil(t, r)
 	assert.Len(t, r, 1)
 }
 
 func TestDateRangeWeek(t *testing.T) {
-	r := getDateRange(time.Now().AddDate(0, 0, -7))
+	r := getDateRange(time.Now().UTC().AddDate(0, 0, -7))
 	assert.NotNil(t, r)
 	assert.Len(t, r, 8)
 }

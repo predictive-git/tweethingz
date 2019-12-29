@@ -143,7 +143,7 @@ func TweetHandler(c *gin.Context) {
 
 	sinceKey := c.Query("key")
 	if sinceKey == "" {
-		results, resultsErr = store.GetSearchResultsForDay(c.Request.Context(), cid, time.Now(), tweetPageSize)
+		results, resultsErr = store.GetSearchResultsForDay(c.Request.Context(), cid, time.Now().UTC(), tweetPageSize)
 	} else {
 		results, resultsErr = store.GetSearchResultsFromKey(c.Request.Context(), sinceKey, tweetPageSize)
 	}

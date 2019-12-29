@@ -31,17 +31,22 @@ func ExecuteUserSearches(ctx context.Context, forUser *store.AuthedUser) error {
 
 	for _, c := range criteria {
 
-		logger.Printf("executing criteria %s...", c.Name)
+		logger.Printf("executing criteria %s (since: %d, on: %v", c.Name, c.SinceID, c.ExecutedOn)
 		tweets, err := getSearchResults(ctx, forUser, c)
 		if err != nil {
 			return errors.Wrapf(err, "error executing search criteria %s user for %s: %v", c.ID, c.User, err)
 		}
 
-		if err = store.SaveSearchResults(ctx, tweets); err != nil {
-			return errors.Wrapf(err, "error saving search criteria %s results for %s: %v", c.ID, c.User, err)
+		tweetsCount := len(tweets)
+		logger.Printf("criteria %s found %d tweets", c.Name, tweetsCount)
+		if tweetsCount > 0 {
+			if err = store.SaveSearchResults(ctx, tweets); err != nil {
+				return errors.Wrapf(err, "error saving search criteria %s results for %s: %v", c.ID, c.User, err)
+			}
 		}
 
 		// save the updated search criteria (lastID and exec time, updated in getSearchResults)
+		logger.Printf("saving criteria %s (since: %d, on: %v", c.Name, c.SinceID, c.ExecutedOn)
 		if err = store.SaveSearchCriteria(ctx, c); err != nil {
 			return errors.Wrapf(err, "error saving search criteria %s for %s: %v", c.ID, c.User, err)
 		}

@@ -78,7 +78,7 @@ type SimpleUser struct {
 
 // FormatedCreatedAt returns RFC822 formated CreatedAt
 func (s *SimpleUser) FormatedCreatedAt() string {
-	if s == nil {
+	if s == nil || s.CreatedAt.IsZero() {
 		return ""
 	}
 	return s.CreatedAt.Format(time.RFC822)

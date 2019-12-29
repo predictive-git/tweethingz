@@ -65,7 +65,7 @@ func TestSearchResultIDSort(t *testing.T) {
 	for c := 0; c < cIDs; c++ {
 		cID := NewID()
 		for d := 0; d < days; d++ {
-			day := time.Now().AddDate(0, 0, -d)
+			day := time.Now().UTC().AddDate(0, 0, -d)
 			ids = append(ids, ToSearchResultPagingKey(cID, day, ""))
 			for k := 0; k < keys; k++ {
 				ids = append(ids, ToSearchResultPagingKey(cID, day, NewID()))

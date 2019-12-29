@@ -21,10 +21,7 @@
             <b>{{ .Name }}</b>
         </div>
         <div>
-            Last executed on:
-            {{ if gt .SinceID 0 }}
-            {{ .FormatedExecutedOn }}
-            {{ end }}
+            Last executed on: {{ .FormatedExecutedOn }}
         </div>
         <div class="search-criterion-action">
             <a href="/view/search/{{ .ID }}">Edit Criteria</a>

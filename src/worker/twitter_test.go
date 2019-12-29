@@ -78,7 +78,7 @@ func getTestSearchResults(criteriaID string, num int) []*store.SimpleTweet {
 		item := &store.SimpleTweet{
 			ID:         fmt.Sprintf("id-%d-%s", i, store.NewID()),
 			CriteriaID: criteriaID,
-			CreatedAt:  time.Now(),
+			CreatedAt:  time.Now().UTC(),
 			Text:       fmt.Sprintf("Test tweet %d", i),
 		}
 		list = append(list, item)
