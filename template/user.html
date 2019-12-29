@@ -8,15 +8,17 @@
     <td>
         <div>
             <a href="https://twitter.com/{{ .Username }}" target="_blank">
-                <b>{{ .Username }}</b>
+                <b>@{{ .Username }}</b>
             </a>
             - {{ .Name }}
+            - {{ .Description }}
         </div>
 
         <div>
-            <b>Loc:</b> {{ .Location }}
-            <b>Follow:</b> {{ .FollowerCount }}/{{ .FollowingCount }}
-            <b>Post:</b> {{ .PostCount }}
+            <b>Since:</b> {{ .FormatedCreatedAt }},
+            <b>Loc:</b> {{ .Location }},
+            <b>Follow:</b> {{ .FollowerCount }}/{{ .FollowingCount }},
+            <b>Post:</b> {{ .PostCount }},
         </div>
     </td>
 

@@ -76,6 +76,14 @@ type SimpleUser struct {
 	FollowerCount  int `firestore:"followers_count" json:"followers_count"`
 }
 
+// FormatedCreatedAt returns RFC822 formated CreatedAt
+func (s *SimpleUser) FormatedCreatedAt() string {
+	if s == nil {
+		return ""
+	}
+	return s.CreatedAt.Format(time.RFC822)
+}
+
 //============================================================================
 // Event
 //============================================================================

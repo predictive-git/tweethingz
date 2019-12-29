@@ -6,6 +6,10 @@
 
 <h3>Twitter Search Queries</h3>
 
+<div id="search-new">
+    <a href="/view/search/0">New Search</a>
+</div>
+
 <!-- List -->
 {{ if .list }}
 <div id="search-list-section">
@@ -13,14 +17,18 @@
     {{ range .list }}
 
     <div class="search-criterion">
-        <b>{{ .Name }}</b>
-        <a href="/view/search/{{ .ID }}">Edit</a>
-        <a href="/view/tweet/{{ .ID }}">Results</a>
         <div>
-            <b>Last executed on:</b>
+            <b>{{ .Name }}</b>
+        </div>
+        <div>
+            Last executed on:
             {{ if gt .SinceID 0 }}
             {{ .FormatedExecutedOn }}
             {{ end }}
+        </div>
+        <div class="search-criterion-action">
+            <a href="/view/search/{{ .ID }}">Edit Criteria</a>
+            <a href="/view/tweet/{{ .ID }}">View Results</a>
         </div>
     </div>
 
@@ -30,9 +38,6 @@
 {{ end }}
 <!-- End List -->
 
-<div>
-    <a href="/view/search/0">New Search</a>
-</div>
 
 <!-- Details -->
 {{ if .detail }}

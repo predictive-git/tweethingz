@@ -38,7 +38,7 @@ go mod vendor
 # worker
 # go test -v -run TestTwitterSearchWorker ./src/worker
 # go test -v -count=1 -run TestUpdateFollowerDataWorker ./src/worker
-# go test -v -count=1 -run TestExecuteUserSearches ./src/worker
+go test -v -count=1 -run TestExecuteUserSearches ./src/worker
 
 
 
