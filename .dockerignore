@@ -12,6 +12,7 @@
 # binaries
 /service
 /bin
+/doc
 
 # other
 LICENSE

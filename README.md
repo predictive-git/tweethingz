@@ -34,6 +34,12 @@ To deploy `tweethingz` manually with an opportunity to customize it follow these
 
 ### Schedule Refresh Worker
 
+## Usage
+
+### Authorization
+
+![](doc/twitter-auth.png)
+
 ## Cleanup
 
 To cleanup all resources created by `tweethingz` execute
