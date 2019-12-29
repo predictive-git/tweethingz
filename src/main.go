@@ -54,7 +54,7 @@ func main() {
 	data := r.Group("/data")
 	data.Use(handler.AuthRequired(true))
 	{
-		data.GET("/view", handler.ViewDashboardHandler)
+		data.GET("/view", handler.DashboardDataHandler)
 		data.DELETE("/search/:id", handler.SearchDeleteHandler)
 		data.POST("/search", handler.SearchDataSubmitHandler)
 	}
@@ -65,11 +65,11 @@ func main() {
 	{
 		v1 := api.Group("/v1")
 		{
-			// refreshes users
-			v1.POST("/refresh/:user", handler.RefreshUserDataHandler)
+			// exec user follower update
+			v1.POST("/follower", handler.ExecuteFollowerUpdateHandler)
 
-			// executes all preconfigured searches by the user
-			v1.POST("/search/:user", handler.ExecuteSearchHandler)
+			// exec all preconfigured searches for each user
+			v1.POST("/search", handler.ExecuteSearchHandler)
 		}
 	}
 

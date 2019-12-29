@@ -19,7 +19,7 @@
         <div>
             <b>Last executed on:</b>
             {{ if gt .SinceID 0 }}
-            {{ .ExecutedOn }}
+            {{ .FormatedExecutedOn }}
             {{ end }}
         </div>
     </div>
@@ -130,7 +130,7 @@
                             {{ end }} />
                     </label>
 
-                    <label for="include_rt">Allow RT:
+                    <label for="include_rt">Allow Re-tweets:
                         <input type="checkbox" name="include_rt" value="true" {{ if .IncludeRT }} checked="true"
                             {{ end }} />
                     </label>
@@ -138,8 +138,14 @@
             </tr>
 
             <tr>
+                <th colspan="2">
+                    Tweet Author Filter
+                </th>
+            </tr>
+
+            <tr>
                 <td class="form-label">
-                    Author has number of followers:
+                    Number of followers:
                 </td>
                 <td class="form-field">
                     <label for="follower_count_min">Min
@@ -153,7 +159,7 @@
 
             <tr>
                 <td class="form-label">
-                    Author has number of posts:
+                    Number of posts:
                 </td>
                 <td class="form-field">
                     <label for="post_count_min">Min
@@ -167,7 +173,7 @@
 
             <tr>
                 <td class="form-label">
-                    Author has number of faves:
+                    Number of faves:
                 </td>
                 <td class="form-field">
                     <label for="fave_count_min">Min
@@ -181,7 +187,7 @@
 
             <tr>
                 <td class="form-label">
-                    Author is following number of users:
+                    Following number of users:
                 </td>
                 <td class="form-field">
                     <label for="following_count_min">Min
@@ -197,7 +203,7 @@
 
             <tr>
                 <td class="form-label">
-                    Author has follower ratio (Followers/Fallowing, the higher the better):
+                    Follower ratio <i>(Followers/Fallowing, higher better)</i>:
                 </td>
                 <td class="form-field">
                     <label for="follower_ratio_min">Min

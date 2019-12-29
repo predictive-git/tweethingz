@@ -9,7 +9,7 @@
     {{with .criteria }}
     <div>
         <b>Search results for: </b>
-        <a href="/view/search/{{ .User }}" target="_blank">
+        <a href="/view/search/{{ .ID }}" target="_blank">
             {{ .Name }}
         </a>
     </div>
@@ -28,11 +28,17 @@
                 {{ end }}
             </td>
             <td>
-                <div>{{ .Text }}</div>
-                <b>Posted: </b> {{ .CreatedAt }}
-                <b>Favorites: </b> {{ .FavoriteCount }}
+                <div class="tweet-text">
+                    {{ .Text }}
+                </div>
+                <b>By: </b><a href="https://twitter.com/{{ .Author.Username }}"
+                    target="_blank">@{{ .Author.Username }}</a>
+                <b>On: </b> {{ .FormatedCreatedAt }}
+                <b>Fave'd: </b> {{ .FavoriteCount }}
                 <b>Replies: </b> {{ .ReplyCount }}
-                <b>Retweets: </b> {{ .RetweetCount }}
+                <b>RT: </b> {{ .RetweetCount }} |
+                <a href="https://twitter.com/{{ .Author.Username }}/status/{{ .ID }}" target="_blank">View
+                    on Twitter</a>
             </td>
         </tr>
         {{ end }}
@@ -46,19 +52,6 @@
         </a>
     </div>
     {{ end }}
-
-    <!--
-        ID string `firestore:"id_str" json:"id_str"`
-        CriteriaID string `firestore:"criteria_id" json:"criteria_id"`
-        CreatedAt time.Time `firestore:"created_at" json:"created_at"`
-        FavoriteCount int `firestore:"favorite_count" json:"favorite_count"`
-        ReplyCount int `firestore:"reply_count" json:"reply_count"`
-        RetweetCount int `firestore:"retweet_count" json:"retweet_count"`
-        IsRT bool `firestore:"is_rt" json:"is_rt"`
-        Text string `firestore:"text" json:"text"`
-        Author *SimpleUser `firestore:"author" json:"author"`
-        Key string `firestore:"key" json:"key"`
-    -->
 
 </div>
 

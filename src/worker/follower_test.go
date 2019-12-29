@@ -2,8 +2,10 @@ package worker
 
 import (
 	"context"
+	"os"
 	"testing"
 
+	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,15 +20,19 @@ func TestDerivingArrayDiff(t *testing.T) {
 	assert.Len(t, a4, 2)
 }
 
-func TestUpdateUserDataWorker(t *testing.T) {
+func TestUpdateFollowerDataWorker(t *testing.T) {
 
 	if testing.Short() {
 		t.SkipNow()
 	}
 
 	ctx := context.Background()
-	username := "knativeproject"
-	err := UpdateUserData(ctx, username)
+	username := os.Getenv("TEST_TW_ACCOUNT")
+
+	forUser, err := store.GetAuthedUser(ctx, username)
+	assert.Nil(t, err)
+
+	err = ExecuteFollowerUpdate(ctx, forUser)
 	assert.Nil(t, err)
 
 }

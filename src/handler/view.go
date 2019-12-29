@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 	"time"
@@ -8,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/mchmarny/gcputil/env"
 	"github.com/mchmarny/tweethingz/src/store"
+	"github.com/mchmarny/tweethingz/src/worker"
 	"github.com/pkg/errors"
 )
 
@@ -32,20 +34,13 @@ func DefaultHandler(c *gin.Context) {
 
 }
 
-func errorHandler(c *gin.Context, err error, code int) {
-
-	logger.Printf("Error: %v", err)
-	c.HTML(code, "error", errResult)
-
-}
-
 // DashboardHandler ...
 func DashboardHandler(c *gin.Context) {
 	username := getAuthedUsername(c)
 	c.HTML(http.StatusOK, "view", gin.H{
-		"twitter_username": username,
-		"version":          version,
-		"refresh":          c.Query("refresh"),
+		"username": username,
+		"version":  version,
+		"refresh":  c.Query("refresh"),
 	})
 }
 
@@ -54,14 +49,14 @@ func SearchListHandler(c *gin.Context) {
 	username := getAuthedUsername(c)
 	list, err := store.GetSearchCriteria(c.Request.Context(), username)
 	if err != nil {
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	c.HTML(http.StatusOK, "search", gin.H{
-		"twitter_username": username,
-		"version":          version,
-		"list":             list,
+		"username": username,
+		"version":  version,
+		"list":     list,
 	})
 }
 
@@ -71,7 +66,7 @@ func SearchDetailHandler(c *gin.Context) {
 	username := getAuthedUsername(c)
 	id := c.Param("cid")
 	if id == "" {
-		errorHandler(c, errors.New("Search ID required"), http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, errors.New("Search ID required"))
 		return
 	}
 	logger.Printf("Search ID: %s", id)
@@ -84,7 +79,7 @@ func SearchDetailHandler(c *gin.Context) {
 	} else {
 		detail, err = store.GetSearchCriterion(c.Request.Context(), id)
 		if err != nil {
-			errorHandler(c, err, http.StatusInternalServerError)
+			viewErrorHandler(c, http.StatusInternalServerError, err)
 			return
 		}
 	}
@@ -92,10 +87,36 @@ func SearchDetailHandler(c *gin.Context) {
 	logger.Printf("Lang: %s", detail.Lang)
 
 	c.HTML(http.StatusOK, "search", gin.H{
-		"twitter_username": username,
-		"version":          version,
-		"detail":           detail,
+		"username": username,
+		"version":  version,
+		"detail":   detail,
 	})
+
+}
+
+// SearchDataSubmitHandler ...
+func SearchDataSubmitHandler(c *gin.Context) {
+
+	username := getAuthedUsername(c)
+	sc := &store.SearchCriteria{}
+	if err := c.ShouldBind(&sc); err != nil {
+		logger.Printf("error binding: %v", err)
+	}
+
+	if sc.ID == "" {
+		sc.ID = store.NewID()
+	}
+	sc.User = username
+
+	// logger.Printf("Search Criteria: %+v", sc)
+	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
+		logger.Printf("error saving search criteria: %v", err)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/view/search")
+	return
 
 }
 
@@ -107,32 +128,36 @@ func TweetHandler(c *gin.Context) {
 	username := getAuthedUsername(c)
 	cid := c.Param("cid")
 	if cid == "" {
-		errorHandler(c, errors.New("Search query ID required (param: cid)"), http.StatusBadRequest)
+		viewErrorHandler(c, http.StatusBadRequest, errors.New("Search query ID required (param: cid)"))
 		return
 	}
 
 	criteria, err := store.GetSearchCriterion(c.Request.Context(), cid)
 	if err != nil {
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
+	var results []*store.SimpleTweet
+	var resultsErr error
+
 	sinceKey := c.Query("key")
 	if sinceKey == "" {
-		sinceKey = store.ToSearchResultPagingKey(criteria.ID, time.Now(), "")
+		results, resultsErr = store.GetSearchResultsForDay(c.Request.Context(), cid, time.Now(), tweetPageSize)
+	} else {
+		results, resultsErr = store.GetSearchResultsFromKey(c.Request.Context(), sinceKey, tweetPageSize)
 	}
 
-	results, err := store.GetSavedSearchResults(c.Request.Context(), sinceKey, tweetPageSize)
-	if err != nil {
-		errorHandler(c, err, http.StatusInternalServerError)
+	if resultsErr != nil {
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	data := gin.H{
-		"twitter_username": username,
-		"version":          version,
-		"criteria":         criteria,
-		"results":          results,
+		"username": username,
+		"version":  version,
+		"criteria": criteria,
+		"results":  results,
 	}
 
 	if len(results) == tweetPageSize {
@@ -147,43 +172,85 @@ func TweetHandler(c *gin.Context) {
 func DayHandler(c *gin.Context) {
 
 	username := getAuthedUsername(c)
-	day := c.Param("day")
-	if day == "" {
-		errorHandler(c, errors.New("Day required (param: day)"), http.StatusBadRequest)
-		return
-	}
-
-	list, err := store.GetUserDailyEvents(c.Request.Context(), username, day)
+	forUser, err := store.GetAuthedUser(c.Request.Context(), username)
 	if err != nil {
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	followers := make([]*store.SimpleUserEvent, 0)
-	unfollowers := make([]*store.SimpleUserEvent, 0)
-
-	for _, item := range list {
-		if item.EventType == store.FollowedEventType {
-			followers = append(followers, item)
-		} else if item.EventType == store.UnfollowedEventType {
-			unfollowers = append(unfollowers, item)
-		} else {
-			logger.Printf("invalid event type: %s", item.EventType)
-			errorHandler(c, err, http.StatusInternalServerError)
-			return
-		}
+	isoDate := c.Param("day")
+	if isoDate == "" {
+		viewErrorHandler(c, http.StatusBadRequest, errors.New("Day required (param: day)"))
+		return
 	}
 
-	logger.Printf("List:%d (f:%d, u:%d)", len(list), len(followers), len(unfollowers))
+	day, err := time.Parse("2006-01-02", isoDate)
+	if err != nil {
+		viewErrorHandler(c, http.StatusBadRequest, fmt.Errorf("Invalid day parameter format (expected YYYY-MM-DD, got: %s)", isoDate))
+		return
+	}
+
+	dayState, err := store.GetDailyFollowerState(c.Request.Context(), username, day)
+	if err != nil {
+		viewErrorHandler(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	followers, err := ToUserEvent(forUser, dayState.NewFollowers, isoDate, store.FollowedEventType)
+	if err != nil {
+		viewErrorHandler(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	unfollowers, err := ToUserEvent(forUser, dayState.Unfollowers, isoDate, store.UnfollowedEventType)
+	if err != nil {
+		viewErrorHandler(c, http.StatusInternalServerError, err)
+		return
+	}
 
 	data := gin.H{
 		"username":    username,
 		"version":     version,
-		"date":        day,
+		"date":        isoDate,
+		"state":       dayState,
 		"followers":   followers,
 		"unfollowers": unfollowers,
 	}
 
 	c.HTML(http.StatusOK, "day", data)
 
+}
+
+// ToUserEvent retreaves users and builds user events for list of IDs as
+func ToUserEvent(forUser *store.AuthedUser, ids []int64, isoDate, eventType string) (list []*store.SimpleUserEvent, err error) {
+
+	list = make([]*store.SimpleUserEvent, 0)
+
+	if len(ids) > 0 {
+		users, detailErr := worker.GetTwitterUserDetailsFromIDs(forUser, ids)
+		if detailErr != nil {
+			return nil, detailErr
+		}
+		for _, u := range users {
+			event := &store.SimpleUserEvent{
+				SimpleUser: *u,
+				EventDate:  isoDate,
+				EventType:  eventType,
+				EventUser:  forUser.Username,
+			}
+			list = append(list, event)
+		}
+	}
+
+	return
+
+}
+
+func viewErrorHandler(c *gin.Context, code int, err error) {
+	logger.Printf("Error: %v", err)
+	c.HTML(code, "error", gin.H{
+		"error":  err.Error,
+		"status": "Internal Server Error",
+	})
+	c.Abort()
 }

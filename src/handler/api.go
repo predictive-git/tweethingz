@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/mchmarny/gcputil/env"
 	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/mchmarny/tweethingz/src/worker"
@@ -19,74 +17,66 @@ var (
 // ExecuteSearchHandler ...
 func ExecuteSearchHandler(c *gin.Context) {
 
-	token := c.Query("token")
-	if token != expectedToken {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"message": "User not authenticated",
-			"status":  "Unauthorized",
-		})
-		return
-	}
-
-	user := c.Param("user")
-	if user == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Username not defined",
-			"status":  "Bad Request",
-		})
-		return
-	}
-
-	user = store.NormalizeString(user)
-	logger.Printf("Starting background search worker for: %s...", user)
-	if err := worker.ExecuteUserSearches(c.Request.Context(), user); err != nil {
-		logger.Printf("error while executing user search: %v", err)
+	users, err := store.GetAllAuthedUsers(c.Request.Context())
+	if err != nil {
+		logger.Printf("error while getting authed users: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"message": "Error running worker",
 			"status":  "Internal Error",
 		})
+		c.Abort()
 		return
 	}
 
+	for _, user := range users {
+		logger.Printf("Starting background search worker for: %s...", user.Username)
+		if err := worker.ExecuteUserSearches(c.Request.Context(), user); err != nil {
+			logger.Printf("error while executing user search: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Error running worker",
+				"status":  "Internal Error",
+			})
+			c.Abort()
+			return
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Refreshed %s data", user),
+		"message": "Searches executed",
 		"status":  "Success",
 	})
 
 }
 
-// RefreshUserDataHandler ...
-func RefreshUserDataHandler(c *gin.Context) {
+// ExecuteFollowerUpdateHandler ...
+func ExecuteFollowerUpdateHandler(c *gin.Context) {
 
-	user := c.Param("user")
-	if user == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Username not defined",
-			"status":  "Bad Request",
+	users, err := store.GetAllAuthedUsers(c.Request.Context())
+	if err != nil {
+		logger.Printf("error while getting authed users: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Error running worker",
+			"status":  "Internal Error",
 		})
+		c.Abort()
 		return
 	}
 
-	user = store.NormalizeString(user)
-	logger.Printf("Starting background worker for: %s...", user)
-	if err := worker.UpdateUserData(c.Request.Context(), user); err != nil {
-		logger.Printf("error while updating user data: %v", err)
-		if err == store.ErrDataNotFound {
-			c.JSON(http.StatusNotFound, gin.H{
-				"message": fmt.Sprintf("User %s must authenticate through UI first", user),
-				"status":  "Data Not Found",
-			})
-		} else {
+	for _, user := range users {
+		logger.Printf("Starting follower update for: %s...", user.Username)
+		if err := worker.ExecuteFollowerUpdate(c.Request.Context(), user); err != nil {
+			logger.Printf("error while updating user data: %v", err)
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "Error running worker",
 				"status":  "Internal Error",
 			})
+			c.Abort()
+			return
 		}
-		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": fmt.Sprintf("Refreshed %s data", user),
+		"message": "Follower update executed",
 		"status":  "Success",
 	})
 

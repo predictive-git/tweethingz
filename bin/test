@@ -3,7 +3,7 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-export TEST_TW_ACCOUNT="mchmarny"
+export TEST_TW_ACCOUNT="knativeproject"
 export RELEASE="${IMAGE_VERSION}"
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
@@ -37,8 +37,8 @@ go mod vendor
 
 # worker
 # go test -v -run TestTwitterSearchWorker ./src/worker
-go test -v -run TestUpdateUserDataWorker ./src/worker
-# go test -v -run TestExecuteUserSearches ./src/worker
+# go test -v -count=1 -run TestUpdateFollowerDataWorker ./src/worker
+# go test -v -count=1 -run TestExecuteUserSearches ./src/worker
 
 
 

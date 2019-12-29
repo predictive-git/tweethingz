@@ -3,6 +3,9 @@ $(function () {
         loadDashboard();
     }
     $("#search-criteria-delete-button").click(handleDeleteSearchCriteria);
+
+    makeLinks();
+
 });
 
 function handleDeleteSearchCriteria(e) {
@@ -36,8 +39,6 @@ function loadDashboard() {
         $("#follower-gained-count .data").text(data.recent_follower_count);
         $("#follower-lost-count .data").text(data.recent_unfollower_count);
         $("#favorites-count .data").text(data.user.fave_count);
-
-        $("#meta-name").text(data.user.username);
         $("#meta-updated-on").text(toLongTime(data.updated_on));
 
         $(".wait-load").hide();
@@ -164,4 +165,24 @@ function redirectToDate(d) {
 function toLongTime(v) {
     var ts = new Date(v)
     return ts.toTimeString()
+}
+
+function makeLinks(e) {
+
+    var tweetText = $(".tweet-text");
+
+    if (tweetText.length) {
+        tweetText.each(
+            function () {
+                var $words = $(this).text().split(' ');
+                for (i in $words) {
+                    if ($words[i].indexOf('https://t.co/') == 0) {
+                        $words[i] = '<a href="' + $words[i] + '" target="_blank">' + $words[i] + '</a>';
+                    }
+                }
+                $(this).html($words.join(' '));
+            }
+        );
+    }
+
 }

@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -28,17 +29,27 @@ func getClient(byUser *store.AuthedUser) (client *twitter.Client, err error) {
 	return twitter.NewClient(httpClient), nil
 }
 
-// GetUserDetails retreaves details about the user
-func GetUserDetails(byUser *store.AuthedUser) (users []*store.SimpleUser, err error) {
+// GetTwitterUserDetails retreaves details about the user
+func GetTwitterUserDetails(byUser *store.AuthedUser) (user *store.SimpleUser, err error) {
 	logger.Printf("User: %s", byUser.Username)
-	return getUsersByParams(byUser, &twitter.UserLookupParams{
+	users, err := getUsersByParams(byUser, &twitter.UserLookupParams{
 		ScreenName:      []string{byUser.Username},
 		IncludeEntities: twitter.Bool(true),
 	})
+	if err != nil {
+		return nil, errors.Wrapf(err, "Error quering Twitter for user: %s", byUser.Username)
+	}
+	if users == nil {
+		return nil, fmt.Errorf("Expected 1 user, found 0")
+	}
+	if len(users) != 1 {
+		return nil, fmt.Errorf("Expected 1 user, found ")
+	}
+	return users[0], nil
 }
 
-// GetUsersFromIDs retreaves details about the user
-func GetUsersFromIDs(byUser *store.AuthedUser, ids []int64) (users []*store.SimpleUser, err error) {
+// GetTwitterUserDetailsFromIDs retreaves details about the user
+func GetTwitterUserDetailsFromIDs(byUser *store.AuthedUser, ids []int64) (users []*store.SimpleUser, err error) {
 	return getUsersByParams(byUser, &twitter.UserLookupParams{
 		UserID:          ids,
 		IncludeEntities: twitter.Bool(true),
@@ -96,7 +107,8 @@ func toSimpleUser(u *twitter.User) *store.SimpleUser {
 	}
 }
 
-func getTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
+// GetTwitterFollowerIDs returns all follower IDs for authed user
+func GetTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 
 	client, err := getClient(byUser)
 	if err != nil {
@@ -183,10 +195,12 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 		Count:           100,
 		SinceID:         c.SinceID,
 		IncludeEntities: twitter.Bool(true),
+		ResultType:      "popular",
+		TweetMode:       "extended",
 	}
 
-	list = make([]*store.SimpleTweet, 0)
 	c.ExecutedOn = time.Now()
+	list = make([]*store.SimpleTweet, 0)
 
 	for {
 
@@ -205,6 +219,13 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 		logger.Printf("Page processing (List:%d, Page:%d)", len(list), len(search.Statuses))
 		for _, t := range search.Statuses {
 
+			// tweets come in newest first order so just make sure we capture the highest number
+			// and start from there the next time
+			if t.ID >= c.SinceID {
+				c.SinceID = t.ID
+				qp.SinceID = t.ID
+			}
+
 			if shouldFilterOut(&t, c) {
 				continue
 			}
@@ -216,25 +237,19 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 				FavoriteCount: t.FavoriteCount,
 				ReplyCount:    t.ReplyCount,
 				RetweetCount:  t.RetweetCount,
-				Text:          t.Text,
+				Text:          t.FullText,
 				IsRT:          t.RetweetedStatus != nil,
 				Author:        toSimpleUser(t.User),
 			}
 
 			list = append(list, item)
 
-			// tweets come in newest first order so just make sure we capture the highest number
-			// and start from there the next time
-			if t.ID >= c.SinceID {
-				c.SinceID = t.ID
-				qp.SinceID = t.ID
-			}
-
 		}
+
+		logger.Printf("Page size (List:%d, Page:%d)", len(list), len(search.Statuses))
 
 		// page has less than the max == last page
 		if len(search.Statuses) < qp.Count {
-			logger.Printf("Page size (List:%d, Page:%d)", len(list), len(search.Statuses))
 			return list, nil
 		}
 

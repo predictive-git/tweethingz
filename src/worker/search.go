@@ -8,18 +8,10 @@ import (
 )
 
 // ExecuteUserSearches runs the background service
-func ExecuteUserSearches(ctx context.Context, username string) error {
+func ExecuteUserSearches(ctx context.Context, forUser *store.AuthedUser) error {
 
-	// ============================================================================
-	// Config
-	// ============================================================================
-	logger.Printf("Getting config info for %s...", username)
-	forUser, err := store.GetAuthedUser(ctx, username)
-	if err != nil {
-		if err == store.ErrDataNotFound {
-			return err
-		}
-		return errors.Wrapf(err, "error getting authed user for: %s", username)
+	if forUser == nil {
+		return errors.New("authUser parameter required")
 	}
 
 	// ============================================================================
@@ -30,7 +22,7 @@ func ExecuteUserSearches(ctx context.Context, username string) error {
 		if err == store.ErrDataNotFound {
 			return nil
 		}
-		return errors.Wrapf(err, "error getting search criteria user for: %s", username)
+		return errors.Wrapf(err, "error getting search criteria user for: %s", forUser.Username)
 	}
 
 	if criteria == nil || len(criteria) == 0 {
@@ -40,7 +32,6 @@ func ExecuteUserSearches(ctx context.Context, username string) error {
 	for _, c := range criteria {
 
 		logger.Printf("executing criteria %s...", c.Name)
-
 		tweets, err := getSearchResults(ctx, forUser, c)
 		if err != nil {
 			return errors.Wrapf(err, "error executing search criteria %s user for %s: %v", c.ID, c.User, err)
@@ -50,7 +41,7 @@ func ExecuteUserSearches(ctx context.Context, username string) error {
 			return errors.Wrapf(err, "error saving search criteria %s results for %s: %v", c.ID, c.User, err)
 		}
 
-		// save the updated search criteria (lastID and exec time)
+		// save the updated search criteria (lastID and exec time, updated in getSearchResults)
 		if err = store.SaveSearchCriteria(ctx, c); err != nil {
 			return errors.Wrapf(err, "error saving search criteria %s for %s: %v", c.ID, c.User, err)
 		}

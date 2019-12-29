@@ -71,14 +71,14 @@ func AuthLoginHandler(c *gin.Context) {
 	userConfig := &oauth1a.UserConfig{}
 	if err := userConfig.GetRequestToken(service, httpClient); err != nil {
 		err := errors.Wrap(err, "could not get request token")
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	AuthURL, err := userConfig.GetAuthorizeURL(service)
 	if err != nil {
 		err := errors.Wrap(err, "could not get authorization URL")
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -102,7 +102,7 @@ func AuthCallbackHandler(c *gin.Context) {
 	sessionID, err := c.Cookie(authIDCookieName)
 	if err != nil {
 		err := errors.Wrap(err, "callback with no session id")
-		errorHandler(c, err, http.StatusUnauthorized)
+		viewErrorHandler(c, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -110,21 +110,21 @@ func AuthCallbackHandler(c *gin.Context) {
 	authSession, err := store.GetAuthSession(c.Request.Context(), sessionID)
 	if err != nil || authSession == nil {
 		err := errors.Wrapf(err, "unable to find auth config for this sessions ID: %s", sessionID)
-		errorHandler(c, err, http.StatusUnauthorized)
+		viewErrorHandler(c, http.StatusUnauthorized, err)
 		return
 	}
 
 	sessionAge := time.Now().UTC().Sub(authSession.On)
 	if sessionAge.Minutes() > maxSessionAge {
 		err := errors.Wrapf(err, "session %s expired. Age %v, expected %f min", sessionAge, maxSessionAge, maxSessionAge)
-		errorHandler(c, err, http.StatusUnauthorized)
+		viewErrorHandler(c, http.StatusUnauthorized, err)
 		return
 	}
 
 	userConfig, err := userConfigFromString(authSession.Config)
 	if err != nil {
 		err := errors.New("error decoding user config in sessions storage")
-		errorHandler(c, err, http.StatusUnauthorized)
+		viewErrorHandler(c, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -133,20 +133,20 @@ func AuthCallbackHandler(c *gin.Context) {
 	token, verifier, err := userConfig.ParseAuthorize(c.Request, service)
 	if err != nil {
 		err := errors.Wrap(err, "could not parse authorization")
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	httpClient := new(http.Client)
 	if err = userConfig.GetAccessToken(token, verifier, service, httpClient); err != nil {
 		err := errors.Wrap(err, "error getting access token")
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	if err := store.DeleteAuthSession(c.Request.Context(), sessionID); err != nil {
 		err := errors.Wrap(err, "error deleting session")
-		errorHandler(c, err, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -160,8 +160,7 @@ func AuthCallbackHandler(c *gin.Context) {
 	}
 
 	if err = store.SaveAuthUser(c.Request.Context(), authedUser); err != nil {
-		e := errors.Wrap(err, "error saving authenticated user")
-		errorHandler(c, e, http.StatusInternalServerError)
+		viewErrorHandler(c, http.StatusInternalServerError, errors.Wrap(err, "error saving authenticated user"))
 		return
 	}
 

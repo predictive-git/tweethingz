@@ -52,6 +52,14 @@ type SearchCriteria struct {
 	ExecutedOn time.Time `firestore:"updated_on" json:"executed_on" form:"executed_on"`
 }
 
+// FormatedExecutedOn returns RFC822 formated  ExecutedOn
+func (s *SearchCriteria) FormatedExecutedOn() string {
+	if s == nil {
+		return ""
+	}
+	return s.ExecutedOn.Format(time.RFC822)
+}
+
 // SearchCriteriaByName is a custom data structure for array of SearchCriteria
 type SearchCriteriaByName []*SearchCriteria
 
@@ -126,6 +134,7 @@ func GetSearchCriteria(ctx context.Context, username string) (data []*SearchCrit
 type SimpleTweet struct {
 	ID            string      `firestore:"id_str" json:"id_str"`
 	CriteriaID    string      `firestore:"criteria_id" json:"criteria_id"`
+	ExecutedOn    string      `firestore:"executed_on" json:"executed_on"`
 	CreatedAt     time.Time   `firestore:"created_at" json:"created_at"`
 	FavoriteCount int         `firestore:"favorite_count" json:"favorite_count"`
 	ReplyCount    int         `firestore:"reply_count" json:"reply_count"`
@@ -136,13 +145,12 @@ type SimpleTweet struct {
 	Key           string      `firestore:"key" json:"key"`
 }
 
-// ToSearchResultPagingKey builds search results paging key
-func ToSearchResultPagingKey(criteriaID string, periodDate time.Time, lastKey string) string {
-	if lastKey == "" {
-		return fmt.Sprintf("%s-%s", criteriaID, periodDate.Format(ISODateFormat))
-	} else {
-		return fmt.Sprintf("%s-%s-%s", criteriaID, periodDate.Format(ISODateFormat), lastKey)
+// FormatedCreatedAt returns RFC822 formated CreatedAt
+func (s *SimpleTweet) FormatedCreatedAt() string {
+	if s == nil {
+		return ""
 	}
+	return s.CreatedAt.Format(time.RFC822)
 }
 
 // SimpleTweetByDate is a custom data structure for array of SimpleTweet
@@ -151,6 +159,23 @@ type SimpleTweetByDate []*SimpleTweet
 func (s SimpleTweetByDate) Len() int           { return len(s) }
 func (s SimpleTweetByDate) Less(i, j int) bool { return s[i].CreatedAt.Before(s[j].CreatedAt) }
 func (s SimpleTweetByDate) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
+
+// ToSearchResultPagingKey builds search results paging key
+func ToSearchResultPagingKey(criteriaID string, periodDate time.Time, tweetID string) string {
+
+	if tweetID == "" {
+		return fmt.Sprintf("%s-%s", criteriaID, periodDate.Format(ISODateFormat))
+	}
+
+	return fmt.Sprintf("%s-%s-%s", criteriaID, periodDate.Format(ISODateFormat), tweetID)
+}
+
+/*
+S:
+id-504b147654d9a718473fc6fde7307b99-2019-12-28-1210266345738297344
+G:
+id-b997c168495a3c5be35362d0339108b6-2019-12-28-1210635342350561282
+*/
 
 // SaveSearchResults saves a list of search results
 func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
@@ -167,8 +192,11 @@ func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
 	batch := fsClient.Batch()
 
 	for _, t := range list {
-		t.Key = ToSearchResultPagingKey(t.CriteriaID, t.CreatedAt, t.ID)
-		docRef := col.Doc(ToID(t.ID))
+		t.Key = ToSearchResultPagingKey(t.CriteriaID, time.Now(), t.ID)
+		t.ExecutedOn = time.Now().Format(ISODateFormat)
+		// make sure the same tweet is saved as diff docs for diff criteria
+		docID := ToID(fmt.Sprintf("%s-%s", t.ID, t.CriteriaID))
+		docRef := col.Doc(docID)
 		batch.Set(docRef, t)
 	}
 
@@ -177,8 +205,29 @@ func SaveSearchResults(ctx context.Context, list []*SimpleTweet) error {
 
 }
 
-// GetSavedSearchResults gets saved search results based on either the date (current date for first time) or the last record key
-func GetSavedSearchResults(ctx context.Context, sinceKey string, limit int) (data []*SimpleTweet, err error) {
+// GetSearchResultsForDay gets saved search results based on search criteria and today's results
+func GetSearchResultsForDay(ctx context.Context, criteriaID string, date time.Time, limit int) (data []*SimpleTweet, err error) {
+
+	if criteriaID == "" {
+		return nil, errors.New("criteriaID required")
+	}
+
+	col, err := getCollection(ctx, searchResultCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	q := col.
+		Where("criteria_id", "==", criteriaID).
+		Where("executed_on", "==", date.Format(ISODateFormat)).
+		Limit(limit)
+
+	return getSavedTweets(ctx, q)
+
+}
+
+// GetSearchResultsFromKey gets saved search results based the last record key
+func GetSearchResultsFromKey(ctx context.Context, sinceKey string, limit int) (data []*SimpleTweet, err error) {
 
 	if sinceKey == "" {
 		return nil, errors.New("sinceKey required")
@@ -189,7 +238,18 @@ func GetSavedSearchResults(ctx context.Context, sinceKey string, limit int) (dat
 		return nil, err
 	}
 
-	docs := col.Where("key", ">", sinceKey).OrderBy("key", firestore.Asc).Limit(limit).Documents(ctx)
+	q := col.
+		Where("key", "<", sinceKey).
+		OrderBy("key", firestore.Desc).
+		Limit(limit)
+
+	return getSavedTweets(ctx, q)
+
+}
+
+func getSavedTweets(ctx context.Context, q firestore.Query) (data []*SimpleTweet, err error) {
+
+	docs := q.Documents(ctx)
 
 	data = make([]*SimpleTweet, 0)
 
@@ -210,6 +270,8 @@ func GetSavedSearchResults(ctx context.Context, sinceKey string, limit int) (dat
 	}
 
 	logger.Printf("found %d tweets", len(data))
+
+	sort.Sort(SimpleTweetByDate(data))
 
 	return
 

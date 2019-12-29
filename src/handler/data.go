@@ -9,13 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var (
-	errResult = gin.H{
-		"message": "Internal server error, see logs for details",
-		"status":  "Error",
-	}
-)
-
 // SearchDeleteHandler ...
 func SearchDeleteHandler(c *gin.Context) {
 
@@ -27,12 +20,13 @@ func SearchDeleteHandler(c *gin.Context) {
 			"message": "Missing parameter: ID",
 			"status":  "Bad Request",
 		})
+		c.Abort()
 		return
 	}
 
 	if err := store.DeleteSearchCriterion(c.Request.Context(), id); err != nil {
 		logger.Printf("Error getting criteria data: %v", err)
-		c.JSON(http.StatusInternalServerError, errResult)
+		errJSONAndAbort(c)
 		return
 	}
 
@@ -44,60 +38,41 @@ func SearchDeleteHandler(c *gin.Context) {
 
 }
 
-// SearchDataSubmitHandler ...
-func SearchDataSubmitHandler(c *gin.Context) {
+// DashboardDataHandler ...
+func DashboardDataHandler(c *gin.Context) {
 
 	username := getAuthedUsername(c)
-	sc := &store.SearchCriteria{}
-	if err := c.ShouldBind(&sc); err != nil {
-		logger.Printf("error binding: %v", err)
-	}
-
-	if sc.ID == "" {
-		sc.ID = store.NewID()
-	}
-	sc.User = username
-
-	// logger.Printf("Search Criteria: %+v", sc)
-	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
-		logger.Printf("error saving search criteria: %v", err)
-		c.HTML(http.StatusInternalServerError, "error", errResult)
-		return
-	}
-
-	c.Redirect(http.StatusSeeOther, "/view/search")
-	return
-
-}
-
-// ViewDashboardHandler ...
-func ViewDashboardHandler(c *gin.Context) {
-
-	username := getAuthedUsername(c)
-	result, err := store.GetSummaryForUser(c.Request.Context(), username)
+	result, err := worker.GetSummaryForUser(c.Request.Context(), username)
 	if err != nil {
 
 		logger.Printf("Error while quering data service: %v", err)
 
 		// if anything else by no data found, err
 		if !store.IsDataNotFoundError(err) {
-			c.JSON(http.StatusInternalServerError, errResult)
+			errJSONAndAbort(c)
 			return
 		}
 
 		// update only when need to
 		logger.Printf("No data found, updating data for: %v", username)
-		if err := worker.UpdateUserData(c.Request.Context(), username); err != nil {
+
+		forUser, err := store.GetAuthedUser(c.Request.Context(), username)
+		if err != nil {
+			errJSONAndAbort(c)
+			return
+		}
+
+		if err := worker.ExecuteFollowerUpdate(c.Request.Context(), forUser); err != nil {
 			logger.Printf("Error while updating after nil results: %v", err)
-			c.JSON(http.StatusInternalServerError, errResult)
+			errJSONAndAbort(c)
 			return
 		}
 
 		// get data once more after update
-		result, err = store.GetSummaryForUser(c.Request.Context(), username)
+		result, err = worker.GetSummaryForUser(c.Request.Context(), username)
 		if err != nil {
 			logger.Printf("Error while getting summary after nil results: %v", err)
-			c.JSON(http.StatusInternalServerError, errResult)
+			errJSONAndAbort(c)
 			return
 		}
 
@@ -105,4 +80,14 @@ func ViewDashboardHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, result)
 
+}
+
+// errJSONAndAbort throws JSON error and abort prevents pending handlers from being called
+func errJSONAndAbort(c *gin.Context) {
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"message": "Internal server error, see logs for details",
+		"status":  "Error",
+	})
+	c.Abort()
+	return
 }

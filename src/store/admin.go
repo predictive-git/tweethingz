@@ -4,12 +4,15 @@ import (
 	"context"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/pkg/errors"
+	"google.golang.org/api/iterator"
 )
 
 const (
 	sessionCollectionName = "thingz_session"
 	authCollectionName    = "thingz_auth"
+	maxAuthedUsers        = 100
 )
 
 //============================================================================
@@ -102,6 +105,40 @@ func GetAuthedUser(ctx context.Context, username string) (user *AuthedUser, err 
 
 	user = &AuthedUser{}
 	err = getByID(ctx, authCollectionName, ToID(username), user)
+
+	return
+}
+
+// GetAllAuthedUsers retreaves all authenticated users
+func GetAllAuthedUsers(ctx context.Context) (users []*AuthedUser, err error) {
+
+	users = make([]*AuthedUser, 0)
+
+	col, err := getCollection(ctx, authCollectionName)
+	if err != nil {
+		return nil, err
+	}
+
+	// all docs with the most recent updated authed user first
+	docs := col.OrderBy("updated_at", firestore.Desc).Limit(maxAuthedUsers).Documents(ctx)
+
+	for {
+		d, e := docs.Next()
+		if e == iterator.Done {
+			break
+		}
+		if e != nil {
+			return nil, e
+		}
+
+		item := &AuthedUser{}
+		if e := d.DataTo(item); e != nil {
+			return nil, e
+		}
+		users = append(users, item)
+	}
+
+	logger.Printf("found %d authenticated users", len(users))
 
 	return
 

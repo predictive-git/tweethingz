@@ -1,9 +1,7 @@
 package worker
 
 import (
-	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -71,51 +69,6 @@ func TestAuthorFilter(t *testing.T) {
 
 	tweet.User.FollowersCount = 11
 	assert.False(t, shouldFilterOut(tweet, filter))
-
-}
-
-func TestTwitterSearchWorker(t *testing.T) {
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	ctx := context.Background()
-	username := store.NormalizeString(os.Getenv("TEST_TW_ACCOUNT"))
-
-	usr, err := store.GetAuthedUser(ctx, username)
-	assert.Nil(t, err)
-
-	sc := &store.SearchCriteria{
-		ID:      store.NewID(),
-		User:    usr.Username,
-		Name:    "Test Search",
-		Value:   "serverless",
-		Lang:    "en",
-		SinceID: 0,
-	}
-
-	list, err := getSearchResults(ctx, usr, sc)
-	assert.Nil(t, err)
-	assert.NotNil(t, list)
-
-	err = store.SaveSearchResults(ctx, list)
-	assert.Nil(t, err)
-
-	pageSize := 10
-
-	// get full page size of records
-	initialPagingKey := store.ToSearchResultPagingKey(sc.ID, time.Now(), "")
-	list2, err := store.GetSavedSearchResults(ctx, initialPagingKey, pageSize)
-	assert.Nil(t, err)
-	assert.NotNil(t, list2)
-	assert.Len(t, list2, pageSize)
-
-	lastPageKey := list2[len(list2)-1].Key
-	pagingKey := store.ToSearchResultPagingKey(sc.ID, time.Now(), lastPageKey)
-	list4, err := store.GetSavedSearchResults(ctx, pagingKey, pageSize)
-	assert.Nil(t, err)
-	assert.NotNil(t, list4)
 
 }
 

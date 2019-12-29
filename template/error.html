@@ -1,16 +1,14 @@
 {{ define "error" }}
-
 {{ template "header" . }}
 
 <div id="middle-section">
+    <h3>Error</h3>
     {{if .error}}
-
-    <h3>{{.status_code}} - {{.status}}</h3>
     <p>{{.error}}</p>
-
+    {{else}}
+    <p>Please see logs for details</p>
     {{end}}
 </div>
 
 {{ template "footer" . }}
-
 {{ end }}
