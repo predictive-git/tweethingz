@@ -247,7 +247,7 @@ func isUserAllowed(user string) bool {
 	}
 
 	for _, u := range strings.Split(allowedUsers, ",") {
-		if strings.ToLower(strings.TrimSpace(u)) == strings.ToLower(strings.TrimSpace(user)) {
+		if strings.EqualFold(strings.TrimSpace(u), strings.TrimSpace(user)) {
 			return true
 		}
 	}

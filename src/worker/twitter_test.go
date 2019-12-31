@@ -1,9 +1,7 @@
 package worker
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/mchmarny/tweethingz/src/store"
@@ -70,18 +68,4 @@ func TestAuthorFilter(t *testing.T) {
 	tweet.User.FollowersCount = 11
 	assert.False(t, shouldFilterOut(tweet, filter))
 
-}
-
-func getTestSearchResults(criteriaID string, num int) []*store.SimpleTweet {
-	list := make([]*store.SimpleTweet, 0)
-	for i := 0; i < num; i++ {
-		item := &store.SimpleTweet{
-			ID:         fmt.Sprintf("id-%d-%s", i, store.NewID()),
-			CriteriaID: criteriaID,
-			CreatedAt:  time.Now().UTC(),
-			Text:       fmt.Sprintf("Test tweet %d", i),
-		}
-		list = append(list, item)
-	}
-	return list
 }

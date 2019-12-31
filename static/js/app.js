@@ -34,11 +34,13 @@ function loadDashboard() {
         console.log(data);
 
         // numbers
-        $("#follower-count .data").text(data.user.followers_count);
-        $("#following-count .data").text(data.user.following_count);
-        $("#follower-gained-count .data").text(data.recent_follower_count);
-        $("#follower-lost-count .data").text(data.recent_unfollower_count);
-        $("#listed-count .data").text(data.user.listed_count);
+        $("#follower-count .data").text(data.user.followers_count).digits();
+        $("#following-count .data").text(data.user.following_count).digits();
+        $("#follower-gained-count .data").text(data.recent_follower_count).digits();
+        $("#follower-lost-count .data").text(data.recent_unfollower_count).digits();
+        $("#listed-count .data").text(data.user.listed_count).digits();
+        $("#post-count .data").text(data.user.post_count).digits();
+
         $("#meta-updated-on").text(toLongTime(data.updated_on));
 
         $(".wait-load").hide();
@@ -62,7 +64,7 @@ function loadDashboard() {
                 maintainAspectRatio: false,
                 title: {
                     display: true,
-                    text: 'Daily Follower Count (UTC)',
+                    text: 'Daily Followers',
                     fontColor: 'rgba(250, 250, 250, 0.5)',
                     fontSize: 16,
                 },
@@ -87,11 +89,6 @@ function loadDashboard() {
                             }
                         }
                     ]
-                },
-                onClick: (evt, item) => {
-                    var model = item[0]._model;
-                    console.log("Date: ", model.label);
-                    redirectToDate(model.label);
                 }
             }
         });
@@ -105,14 +102,14 @@ function loadDashboard() {
                 datasets: [{
                     label: 'Followed',
                     data: Object.values(data.followed_event_series),
-                    backgroundColor: 'rgba(127, 201, 143,0.2)',
-                    borderColor: 'rgba(127, 201, 143,0.6)',
+                    backgroundColor: 'rgba(127, 201, 143,0.1)',
+                    borderColor: 'rgba(127, 201, 143,0.5)',
                     borderWidth: 1
                 }, {
                     label: 'Unfollowed',
                     data: Object.values(data.unfollowed_event_series),
-                    backgroundColor: 'rgba(206, 149, 166,0.2)',
-                    borderColor: 'rgba(206, 149, 166,0.6)',
+                    backgroundColor: 'rgba(206, 149, 166,0.1)',
+                    borderColor: 'rgba(206, 149, 166,0.5)',
                     borderWidth: 1
                 }]
             },
@@ -121,7 +118,7 @@ function loadDashboard() {
                 maintainAspectRatio: false,
                 title: {
                     display: true,
-                    text: 'Daily Follower Events (UTC)',
+                    text: 'Daily Follower Events',
                     fontColor: 'rgba(250, 250, 250, 0.5)',
                     fontSize: 16,
                 },
@@ -182,4 +179,10 @@ function makeLinks(e) {
             }
         );
     }
+}
+
+$.fn.digits = function () {
+    return this.each(function () {
+        $(this).text($(this).text().replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,"));
+    })
 }

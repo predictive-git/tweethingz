@@ -1,0 +1,10 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+go build -a -tags netgo \
+    -ldflags "-w -extldflags -static" \
+    -mod vendor \
+    -o ./service \
+    ./src/

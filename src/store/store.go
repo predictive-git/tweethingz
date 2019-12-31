@@ -13,8 +13,8 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"cloud.google.com/go/firestore"
 	"github.com/google/uuid"
@@ -35,7 +35,7 @@ var (
 	fsClient  *firestore.Client
 
 	// ErrDataNotFound is thrown when query does not find the requested data
-	ErrDataNotFound = errors.New("Data not found")
+	ErrDataNotFound = errors.New("data not found")
 )
 
 func getClient(ctx context.Context) (client *firestore.Client, err error) {
@@ -43,7 +43,7 @@ func getClient(ctx context.Context) (client *firestore.Client, err error) {
 	if fsClient == nil {
 		c, err := firestore.NewClient(ctx, projectID)
 		if err != nil {
-			return nil, fmt.Errorf("Error while creating Firestore client: %v", err)
+			return nil, fmt.Errorf("error while creating Firestore client: %v", err)
 		}
 		fsClient = c
 	}
@@ -54,12 +54,12 @@ func getClient(ctx context.Context) (client *firestore.Client, err error) {
 func getCollection(ctx context.Context, name string) (col *firestore.CollectionRef, err error) {
 
 	if name == "" {
-		return nil, errors.New("Nil name")
+		return nil, errors.New("nil name")
 	}
 
 	c, err := getClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Error while creating Firestore client: %v", err)
+		return nil, fmt.Errorf("error while creating Firestore client: %v", err)
 	}
 
 	return c.Collection(name), nil
@@ -68,7 +68,7 @@ func getCollection(ctx context.Context, name string) (col *firestore.CollectionR
 func deleteByID(ctx context.Context, col, id string) error {
 
 	if id == "" {
-		return errors.New("Nil id")
+		return errors.New("nil id")
 	}
 
 	c, err := getCollection(ctx, col)
@@ -78,12 +78,12 @@ func deleteByID(ctx context.Context, col, id string) error {
 
 	_, err = c.Doc(id).Delete(ctx)
 
-	if grpc.Code(err) == codes.NotFound {
+	if status.Code(err) == codes.NotFound {
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("Error getting state: %v", err)
+		return fmt.Errorf("error getting state: %v", err)
 	}
 
 	return nil
@@ -97,7 +97,7 @@ func IsDataNotFoundError(err error) bool {
 func getByID(ctx context.Context, col, id string, in interface{}) error {
 
 	if id == "" {
-		return errors.New("Nil id")
+		return errors.New("nil id")
 	}
 
 	c, err := getCollection(ctx, col)
@@ -107,10 +107,10 @@ func getByID(ctx context.Context, col, id string, in interface{}) error {
 
 	d, err := c.Doc(id).Get(ctx)
 	if err != nil {
-		if grpc.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound {
 			return ErrDataNotFound
 		}
-		return fmt.Errorf("Error getting state: %v", err)
+		return fmt.Errorf("error getting state: %v", err)
 	}
 
 	if d == nil || d.Data() == nil {
@@ -127,7 +127,7 @@ func getByID(ctx context.Context, col, id string, in interface{}) error {
 func save(ctx context.Context, col, id string, in interface{}) error {
 
 	if in == nil {
-		return errors.New("Nil state")
+		return errors.New("nil state")
 	}
 
 	c, err := getCollection(ctx, col)
@@ -137,7 +137,7 @@ func save(ctx context.Context, col, id string, in interface{}) error {
 
 	_, err = c.Doc(id).Set(ctx, in)
 	if err != nil {
-		return fmt.Errorf("Error on save: %v", err)
+		return fmt.Errorf("error on save: %v", err)
 	}
 	return nil
 }
@@ -177,10 +177,6 @@ func getDateRange(since time.Time) []time.Time {
 
 	return r
 }
-
-var (
-	units = []string{"years", "weeks", "days"}
-)
 
 // PrettyDurationSince prints pretty duration since date
 func PrettyDurationSince(a time.Time) string {

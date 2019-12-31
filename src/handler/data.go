@@ -82,5 +82,4 @@ func errJSONAndAbort(c *gin.Context) {
 		"status":  "Error",
 	})
 	c.Abort()
-	return
 }

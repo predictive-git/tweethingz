@@ -37,13 +37,13 @@ func GetTwitterUserDetails(byUser *store.AuthedUser) (user *store.SimpleUser, er
 		IncludeEntities: twitter.Bool(true),
 	})
 	if err != nil {
-		return nil, errors.Wrapf(err, "Error quering Twitter for user: %s", byUser.Username)
+		return nil, errors.Wrapf(err, "error quering Twitter for user: %s", byUser.Username)
 	}
 	if users == nil {
-		return nil, fmt.Errorf("Expected 1 user, found 0")
+		return nil, fmt.Errorf("expected 1 user, found 0")
 	}
 	if len(users) != 1 {
-		return nil, fmt.Errorf("Expected 1 user, found ")
+		return nil, fmt.Errorf("expected 1 user, found ")
 	}
 	return users[0], nil
 }
@@ -60,7 +60,7 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 
 	client, err := getClient(byUser)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error initializing client")
+		return nil, errors.Wrap(err, "error initializing client")
 	}
 
 	users = make([]*store.SimpleUser, 0)
@@ -70,7 +70,7 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 		if resp.StatusCode == 404 && strings.Contains(err.Error(), "No user matches") {
 			return users, nil
 		}
-		return nil, errors.Wrapf(err, "Error paging followers (%s): %v", resp.Status, err)
+		return nil, errors.Wrapf(err, "error paging followers (%s): %v", resp.Status, err)
 	}
 
 	for _, u := range items {
@@ -113,7 +113,7 @@ func GetTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 
 	client, err := getClient(byUser)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error initializing client")
+		return nil, errors.Wrap(err, "error initializing client")
 	}
 
 	listParam := &twitter.FollowerIDParams{
@@ -125,11 +125,11 @@ func GetTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 	for {
 		page, resp, err := client.Followers.IDs(listParam)
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error paging follower IDs (%s): %v", resp.Status, err)
+			return nil, errors.Wrapf(err, "error paging follower IDs (%s): %v", resp.Status, err)
 		}
 
 		// debug
-		logger.Printf("   Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
+		logger.Printf("Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
 
 		ids = append(ids, page.IDs...)
 
@@ -192,7 +192,7 @@ func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 
 	tc, err := getClient(u)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error initializing twitter client")
+		return nil, errors.Wrap(err, "error initializing twitter client")
 	}
 
 	resultType := "popular"
@@ -219,7 +219,7 @@ func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 		search, resp, err := tc.Search.Tweets(qp)
 
 		if err != nil {
-			return nil, errors.Wrapf(err, "Error executing search %+v - %v", qp, resp.Status)
+			return nil, errors.Wrapf(err, "error executing search %+v - %v", qp, resp.Status)
 		}
 
 		// page has no data, search has no results or previous page was exactly the size
@@ -283,7 +283,7 @@ func shouldFilterOut(t *twitter.Tweet, c *store.SearchCriteria) bool {
 	}
 
 	// RT
-	if c.IncludeRT == false && isRT {
+	if !c.IncludeRT && isRT {
 		return true
 	}
 

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"time"
 
@@ -13,8 +12,7 @@ import (
 )
 
 var (
-	version   = env.MustGetEnvVar("RELEASE", "v0.0.1-manual")
-	templates *template.Template
+	version = env.MustGetEnvVar("RELEASE", "v0.0.1-manual")
 )
 
 // DefaultHandler ...
@@ -116,11 +114,8 @@ func SearchDataSubmitHandler(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusSeeOther, "/view/search")
-	return
 
 }
-
-const tweetPageSize = 10
 
 // TweetHandler ...
 func TweetHandler(c *gin.Context) {
