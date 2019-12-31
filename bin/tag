@@ -1,0 +1,7 @@
+#!/bin/bash
+
+DIR="$(dirname "$0")"
+. "${DIR}/config"
+
+git tag "release-v${SERVICE_VERSION}"
+git push origin "release-v${SERVICE_VERSION}"

@@ -8,4 +8,3 @@ go mod vendor
 
 gcloud builds submit \
   --tag "gcr.io/${PROJECT_ID}/${SERVICE_NAME}:${SERVICE_VERSION}"
-
