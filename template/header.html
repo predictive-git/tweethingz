@@ -25,13 +25,14 @@
             <div id="header-nav">
                 <a href="https://twitter.com/{{ .user.Username }}" target="_blank">@{{ .user.Username }}</a>
                 <br />
-                <a href="/view/board">Followers</a> |
+                <a href="/view/board">Dashboard</a> |
                 <a href="/view/search">Search</a> |
                 <a href="/auth/logout">Log out</a>
             </div>
             {{ if .user.Profile }}
             {{ with .user.Profile }}
-            <img src="{{ .ProfileImage }}" id="header-pic" title="Profile image for {{ .Username }}" />
+            <img src="{{ .ProfileImage }}" id="header-pic" class="profile-image"
+                title="Profile image for {{ .Username }}" />
             {{ end }}
             {{ end }}
             {{ end }}

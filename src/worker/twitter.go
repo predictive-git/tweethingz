@@ -84,9 +84,9 @@ func getUsersByParams(byUser *store.AuthedUser, listParam *twitter.UserLookupPar
 func convertTwitterTime(v string) time.Time {
 	t, err := time.Parse(time.RubyDate, v)
 	if err != nil {
-		t = time.Now().UTC()
+		t = time.Now()
 	}
-	return t
+	return t.UTC()
 }
 
 func toSimpleUser(u *twitter.User) *store.SimpleUser {

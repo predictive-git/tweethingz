@@ -3,22 +3,36 @@
 
 <tr>
     <td class="user-img">
-        <img src="{{ .ProfileImage }}" />
+        <img src="{{ .ProfileImage }}" class="profile-image" />
     </td>
-    <td>
-        <div>
-            <a href="https://twitter.com/{{ .Username }}" target="_blank">
-                <b>@{{ .Username }}</b>
-            </a>
-            - {{ .Name }}, {{ .Location }} ({{ .Description }})
-        </div>
 
+    <td class="user-name">
+        <a href="https://twitter.com/{{ .Username }}" title="{{ .Description }} - User since: {{ .UserSince }}"
+            target="_blank">@{{ .Username }}</a>
         <div>
-            <b>Since:</b> {{ .UserSince }},
-            <b>Following:</b> {{ .FollowingCount }},
-            <b>Followers:</b> {{ .FollowerCount }}
-            <b>Tweets:</b> {{ .PostCount }}
+            {{ .Name }}<br />
+            {{ .Location }}
         </div>
+    </td>
+
+    <td class="user-data">
+        Following
+        <div>{{ .FollowingCount }}</div>
+    </td>
+
+    <td class="user-data">
+        Followers
+        <div>{{ .FollowerCount }}</div>
+    </td>
+
+    <td class="user-data">
+        Tweets
+        <div>{{ .PostCount }}</div>
+    </td>
+
+    <td class="user-data">
+        Listed
+        <div>{{ .ListedCount }}</div>
     </td>
 
 </tr>

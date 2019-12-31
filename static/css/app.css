@@ -53,7 +53,7 @@ a {
 	display: block;
 	position: absolute;
 	top: 13px;
-    right: 15px;
+	right: 15px;
 }
 
 #page-footer {
@@ -118,59 +118,63 @@ a {
 	height: 300px;
 }
 
-.user-table-wrapper {
+.list-table-wrapper {
 	width: 80%;
 	break-after: always;
 	display: inline-block;
 	margin-bottom: 25px;
 }
 
-.user-table-wrapper h3 {
+.list-table-wrapper h3 {
 	font-size: 1.2em;
   	color: rgb(250, 250, 250, 0.5);
 	padding: 5px;
 	margin: 5px 0 0 0;
 }
 
-.user-table td {
-	padding: 4px;
-	border-bottom: 1pt solid #999;
-}
-
-.user-table {
+.list-table {
 	width: 100%;
-	padding: 0 0 2px 0;
+	padding: 0;
+	margin: 0;
 	text-align: left;
+	margin-top: 25px;
 }
 
-.user-table div {
-	margin: 0 0 5px 0;
+.list-table td {
+	border-bottom: 1pt solid #999;
+	padding: 7px;
+	margin: 0;
 }
 
 .user-img {
 	text-align: right;
-	padding: 0 0 5px 0;
-	margin: 0;
+	width: 55px;
 }
 
-.user-img img {
-	border: 1pt solid #e4e4e4;
-	margin: 10px 10px 0 0;
-	filter: grayscale(80%);
+.user-name {
+	font-size: 0.8em;
+	vertical-align: top;
+	padding-top: 5px;
 }
 
-.user-info {
-	width: 100%;
-	padding: 3px 3px 3px 15px;
-	text-align: left;
+.user-name a {
+	font-size: 1.2em;
+	font-weight: bold;
 }
 
-.user-info-name {
+.user-name div {
+	margin-top: 3px;
+}
+
+.user-data {
+	text-align: center;
 	font-size: 0.9em;
 }
 
-.user-info-desc {
-	font-size: 0.8em;
+.user-data div {
+	font-weight: bold;
+	font-size: 1.4em;
+	margin-top: 3px;
 }
 
 .wait-load {
@@ -184,24 +188,26 @@ a {
 }
 
 #search-new {
-	margin-bottom: 20px;
+	margin-bottom: 10px;
 }
 
 #search-new-section {
-	margin-top: 20px;
-	width: 50%;
+	margin-top: 10px;
+	width: 80%;
 	break-after: always;
 	display: inline-block;
 }
 
 #search-new-section table {
 	border: 0;
+	width: 100%;
 	text-align: left;
 	font-size: 1.1em;
 }
 
 #search-new-section th {
-	padding-top: 30px;
+	padding-top: 20px;
+	padding-bottom: 5px;
 	color: 000000;
 	border-bottom: 1pt solid #999;
 }
@@ -210,33 +216,37 @@ a {
 	padding: 10px;
 }
 
-td.form-label {
+.form-label {
 	text-align: right;
 	width: 30%;
 }
 
-td.form-field input[type=text] {
+.form-field input, .form-field select {
+	font-size: 0.9em;
+}
+
+.form-field input[type=text], .form-field select {
 	width: 400px;
 }
 
-td.form-field input[type=number] {
-	width: 60px;
+.form-field input[type=number] {
+	width: 50px;
 	margin-right: 30px;
 }
 
-td.form-field input[type=checkbox] {
+.form-field input[type=checkbox] {
 	margin: 2px;
 }
 
-td.right {
+.right {
 	text-align: right;
 }
 
-td.left {
+.left {
 	text-align: left;
 }
 
-td.form-action input, td.form-action button {
+.form-action input, .form-action button {
 	border-bottom: 1pt solid #999;
 	color: #999;
 	background-color: #333;
@@ -244,6 +254,30 @@ td.form-action input, td.form-action button {
 	margin-right: 10px;
 	padding: 5px 10px;
 }
+
+
+.search-criterion-name {
+	font-size: 1em;
+	padding: 10px;
+}
+
+.search-criterion-name b {
+	font-size: 1.3em;
+	padding-bottom: 7px;
+}
+
+.search-criterion-action {
+	text-align: right;
+}
+
+.search-criterion-action a {
+	font-size: 1.3em;
+	font-weight: bold;
+	padding: 5px 20px;
+}
+
+
+
 
 .new-search-criterion-link {
 	margin-top: 5px;
@@ -255,62 +289,21 @@ td.form-action input, td.form-action button {
 	font-size: 0.8em;
 }
 
-.search-criterion {
-	margin-top: 20px;
-	width: 60%;
-	break-after: always;
-	display: inline-block;
-	text-align: left;
-	padding: 10px;
-	border-bottom: 1pt solid #999;
-	font-size: 0.8em;
-}
-
-.search-criterion b {
-	font-size: 1.2em;
-	margin-right: 20px;
-}
-
-.search-criterion a {
-	font-size: 1.2em;
-	margin-right: 20px;
-}
-
-.search-criterion div {
-	margin-top: 10px;
-}
-
-#tweet-list {
-	width: 70%;
-	break-after: always;
-	display: inline-block;
-	text-align: left;
-	font-size: 1.0em;
-	padding: 0;
-	margin: 0;
-}
-
-#tweet-list td {
-	padding: 10px 5px 10px 5px;
-	margin: 0;
-	border-bottom: 1pt solid #e4e4e4;
-	vertical-align: top;
-}
 
 .tweet-view-link {
-	text-align: center;
-	margin-top: 3px;
-	font-size: 0.9em;
+	text-align: right;
+	font-size: 1.2em;
+	font-weight: bold;
 }
 
 .tweet-text {
-	font-size: 1.1em;
-	line-height: 140%;
+	font-size: 1em;
+	line-height: 120%;
 	margin-bottom: 7px;
 	color: #e4e4e4;
 }
 
-#tweet-list img {
+.profile-image {
 	border: 1pt solid #e4e4e4;
 	filter: grayscale(80%);
 	padding: 0;
