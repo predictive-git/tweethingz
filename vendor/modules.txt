@@ -1,4 +1,4 @@
-# cloud.google.com/go v0.49.0
+# cloud.google.com/go v0.50.0
 cloud.google.com/go
 cloud.google.com/go/compute/metadata
 cloud.google.com/go/internal/btree
@@ -32,7 +32,7 @@ github.com/go-playground/locales
 github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.17.0
 github.com/go-playground/universal-translator
-# github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9
+# github.com/golang/groupcache v0.0.0-20191227052852-215e87163ea7
 github.com/golang/groupcache/lru
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/proto
@@ -61,7 +61,7 @@ github.com/google/go-querystring/query
 github.com/google/uuid
 # github.com/googleapis/gax-go/v2 v2.0.5
 github.com/googleapis/gax-go/v2
-# github.com/json-iterator/go v1.1.8
+# github.com/json-iterator/go v1.1.9
 github.com/json-iterator/go
 # github.com/jstemmer/go-junit-report v0.9.1
 github.com/jstemmer/go-junit-report
@@ -71,7 +71,7 @@ github.com/jstemmer/go-junit-report/parser
 github.com/kurrik/oauth1a
 # github.com/leodido/go-urn v1.2.0
 github.com/leodido/go-urn
-# github.com/mattn/go-isatty v0.0.10
+# github.com/mattn/go-isatty v0.0.11
 github.com/mattn/go-isatty
 # github.com/mchmarny/gcputil v0.3.3
 github.com/mchmarny/gcputil/env
@@ -107,7 +107,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/exp v0.0.0-20191129062945-2f5052295587
+# golang.org/x/exp v0.0.0-20191227195350-da58074b4299
 golang.org/x/exp/apidiff
 golang.org/x/exp/cmd/apidiff
 # golang.org/x/lint v0.0.0-20191125180803-fdd1cda4f05f
@@ -128,14 +128,14 @@ golang.org/x/oauth2/google
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.0.0-20191210023423-ac6580df4449
+# golang.org/x/sys v0.0.0-20191228213918-04cbcbbfeed8
 golang.org/x/sys/unix
 # golang.org/x/text v0.3.2
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.0.0-20191213221258-04c2e8eff935
+# golang.org/x/tools v0.0.0-20191227053925-7b8e75db28f4
 golang.org/x/tools/cmd/goimports
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/inspect
@@ -153,7 +153,7 @@ golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/module
 golang.org/x/tools/internal/semver
-# google.golang.org/api v0.14.0
+# google.golang.org/api v0.15.0
 google.golang.org/api/googleapi
 google.golang.org/api/googleapi/transport
 google.golang.org/api/internal
@@ -177,14 +177,15 @@ google.golang.org/appengine/internal/socket
 google.golang.org/appengine/internal/urlfetch
 google.golang.org/appengine/socket
 google.golang.org/appengine/urlfetch
-# google.golang.org/genproto v0.0.0-20191206224255-0243a4be9c8f
+# google.golang.org/genproto v0.0.0-20191223191004-3caeed10a8bf
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/firestore/v1
 google.golang.org/genproto/googleapis/rpc/code
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/type/latlng
-# google.golang.org/grpc v1.25.1
+# google.golang.org/grpc v1.26.0
 google.golang.org/grpc
+google.golang.org/grpc/attributes
 google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
@@ -230,7 +231,7 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# gopkg.in/go-playground/validator.v9 v9.30.2
+# gopkg.in/go-playground/validator.v9 v9.31.0
 gopkg.in/go-playground/validator.v9
 # gopkg.in/yaml.v2 v2.2.7
 gopkg.in/yaml.v2

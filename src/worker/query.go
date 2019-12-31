@@ -31,10 +31,10 @@ type QueryMetaData struct {
 }
 
 // GetSummaryForUser retreaves all summary data for that user
-func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData, err error) {
+func GetSummaryForUser(ctx context.Context, forUser *store.AuthedUser) (data *SummaryData, err error) {
 
-	if username == "" {
-		return nil, errors.New("username required")
+	if forUser == nil {
+		return nil, errors.New("user required")
 	}
 
 	// ============================================================================
@@ -47,15 +47,6 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 		Meta: &QueryMetaData{
 			NumDaysPeriod: recentEventDefaultPeriod,
 		},
-	}
-
-	// ============================================================================
-	// Config
-	// ============================================================================
-	logger.Printf("Getting config info for %s...", username)
-	forUser, err := store.GetAuthedUser(ctx, username)
-	if err != nil {
-		return nil, errors.Wrapf(err, "error getting authed user for: %s", username)
 	}
 
 	// ============================================================================
@@ -72,7 +63,7 @@ func GetSummaryForUser(ctx context.Context, username string) (data *SummaryData,
 	// User follower series
 	// ============================================================================
 	periodStartDate := time.Now().UTC().AddDate(0, 0, -data.Meta.NumDaysPeriod)
-	followerData, err := store.GetDailyFollowerStatesSince(ctx, username, periodStartDate)
+	followerData, err := store.GetDailyFollowerStatesSince(ctx, forUser.Username, periodStartDate)
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting followe count")
 	}

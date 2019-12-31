@@ -9,11 +9,7 @@ gcloud beta run services delete $SERVICE_NAME \
 	--region $SERVICE_REGION
 
 # schedule
-gcloud scheduler jobs delete "${SERVICE_NAME}-${SERVICE_REGION}-broadcast"
-
-# db
-gcloud spanner instances delete $SERVICE_NAME
+gcloud scheduler jobs delete "${SERVICE_NAME}-follower-update"
 
 # user
-gcloud iam service-accounts delete \
-	"${SERVICE_NAME}@${PROJECT}.iam.gserviceaccount.com"
+gcloud iam service-accounts delete $SA_EMAIL

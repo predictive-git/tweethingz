@@ -25,7 +25,7 @@
         </div>
         <div class="search-criterion-action">
             <a href="/view/search/{{ .ID }}">Edit Criteria</a>
-            <a href="/view/tweet/{{ .ID }}">View Results</a>
+            <a href="/view/tweet/{{ .ID }}">Execute Search</a>
         </div>
     </div>
 
@@ -127,15 +127,25 @@
 
             <tr>
                 <td class="form-field" colspan="2">
-                    <label for="has_link">Must include links:
-                        <input type="checkbox" name="has_link" value="true" {{ if .HasLink }} checked="true"
-                            {{ end }} />
-                    </label>
 
-                    <label for="include_rt">Allow Re-tweets:
-                        <input type="checkbox" name="include_rt" value="true" {{ if .IncludeRT }} checked="true"
-                            {{ end }} />
-                    </label>
+                    <input type="checkbox" name="latest" value="true" {{ if .Latest }} checked="true" {{ end }} />
+                    <label for="latest">Latest (otherwise favorites popular tweets):</label>
+                </td>
+            </tr>
+            <tr>
+                <td class="form-field" colspan="2">
+
+                    <input type="checkbox" name="has_link" value="true" {{ if .HasLink }} checked="true" {{ end }} />
+                    <label for="has_link">Has links (skips tweets without):</label>
+                </td>
+            </tr>
+
+            <tr>
+                <td class="form-field" colspan="2">
+                    <input type="checkbox" name="include_rt" value="true" {{ if .IncludeRT }} checked="true"
+                        {{ end }} />
+                    <label for="include_rt">Include re-tweets (otherwise RTs skipped):</label>
+
                 </td>
             </tr>
 

@@ -36,34 +36,33 @@ func DefaultHandler(c *gin.Context) {
 
 // DashboardHandler ...
 func DashboardHandler(c *gin.Context) {
-	username := getAuthedUsername(c)
+	forUser := getAuthedUser(c)
 	c.HTML(http.StatusOK, "view", gin.H{
-		"username": username,
-		"version":  version,
-		"refresh":  c.Query("refresh"),
+		"user":    forUser,
+		"version": version,
+		"refresh": c.Query("refresh"),
 	})
 }
 
 // SearchListHandler ...
 func SearchListHandler(c *gin.Context) {
-	username := getAuthedUsername(c)
-	list, err := store.GetSearchCriteria(c.Request.Context(), username)
+	forUser := getAuthedUser(c)
+	list, err := store.GetSearchCriteria(c.Request.Context(), forUser.Username)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	c.HTML(http.StatusOK, "search", gin.H{
-		"username": username,
-		"version":  version,
-		"list":     list,
+		"user":    forUser,
+		"version": version,
+		"list":    list,
 	})
 }
 
 // SearchDetailHandler ...
 func SearchDetailHandler(c *gin.Context) {
-
-	username := getAuthedUsername(c)
+	forUser := getAuthedUser(c)
 	id := c.Param("cid")
 	if id == "" {
 		viewErrorHandler(c, http.StatusInternalServerError, errors.New("Search ID required"))
@@ -87,9 +86,9 @@ func SearchDetailHandler(c *gin.Context) {
 	logger.Printf("Lang: %s", detail.Lang)
 
 	c.HTML(http.StatusOK, "search", gin.H{
-		"username": username,
-		"version":  version,
-		"detail":   detail,
+		"user":    forUser,
+		"version": version,
+		"detail":  detail,
 	})
 
 }
@@ -97,7 +96,7 @@ func SearchDetailHandler(c *gin.Context) {
 // SearchDataSubmitHandler ...
 func SearchDataSubmitHandler(c *gin.Context) {
 
-	username := getAuthedUsername(c)
+	forUser := getAuthedUser(c)
 	sc := &store.SearchCriteria{}
 	if err := c.ShouldBind(&sc); err != nil {
 		logger.Printf("error binding: %v", err)
@@ -106,7 +105,10 @@ func SearchDataSubmitHandler(c *gin.Context) {
 	if sc.ID == "" {
 		sc.ID = store.NewID()
 	}
-	sc.User = username
+
+	sc.User = forUser.Username
+	sc.SinceID = 0
+	sc.ExecutedOn = time.Time{}
 
 	// logger.Printf("Search Criteria: %+v", sc)
 	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
@@ -125,43 +127,42 @@ const tweetPageSize = 10
 // TweetHandler ...
 func TweetHandler(c *gin.Context) {
 
-	username := getAuthedUsername(c)
+	ctx := c.Request.Context()
+	forUser := getAuthedUser(c)
 	cid := c.Param("cid")
 	if cid == "" {
 		viewErrorHandler(c, http.StatusBadRequest, errors.New("Search query ID required (param: cid)"))
 		return
 	}
 
-	criteria, err := store.GetSearchCriterion(c.Request.Context(), cid)
+	criteria, err := store.GetSearchCriterion(ctx, cid)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
-	var results []*store.SimpleTweet
-	var resultsErr error
-
-	sinceKey := c.Query("key")
-	if sinceKey == "" {
-		results, resultsErr = store.GetSearchResultsForDay(c.Request.Context(), cid, time.Now().UTC(), tweetPageSize)
-	} else {
-		results, resultsErr = store.GetSearchResultsFromKey(c.Request.Context(), sinceKey, tweetPageSize)
+	view := c.Query("view")
+	if view == "latest" {
+		criteria.SinceID = 0
 	}
 
-	if resultsErr != nil {
+	results, err := worker.GetSearchResults(ctx, forUser, criteria)
+	if err != nil {
+		viewErrorHandler(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	logger.Printf("saving criteria %s (since: %d, on: %v)", criteria.Name, criteria.SinceID, criteria.ExecutedOn)
+	if err = store.SaveSearchCriteria(ctx, criteria); err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
 	}
 
 	data := gin.H{
-		"username": username,
+		"user":     forUser,
 		"version":  version,
 		"criteria": criteria,
 		"results":  results,
-	}
-
-	if len(results) == tweetPageSize {
-		data["next_key"] = results[len(results)-1].Key
 	}
 
 	c.HTML(http.StatusOK, "tweet", data)
@@ -171,13 +172,7 @@ func TweetHandler(c *gin.Context) {
 // DayHandler ...
 func DayHandler(c *gin.Context) {
 
-	username := getAuthedUsername(c)
-	forUser, err := store.GetAuthedUser(c.Request.Context(), username)
-	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
-		return
-	}
-
+	forUser := getAuthedUser(c)
 	isoDate := c.Param("day")
 	if isoDate == "" {
 		viewErrorHandler(c, http.StatusBadRequest, errors.New("Day required (param: day)"))
@@ -190,7 +185,7 @@ func DayHandler(c *gin.Context) {
 		return
 	}
 
-	dayState, err := store.GetDailyFollowerState(c.Request.Context(), username, day)
+	dayState, err := store.GetDailyFollowerState(c.Request.Context(), forUser.Username, day)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err)
 		return
@@ -209,7 +204,7 @@ func DayHandler(c *gin.Context) {
 	}
 
 	data := gin.H{
-		"username":    username,
+		"user":        forUser,
 		"version":     version,
 		"date":        isoDate,
 		"state":       dayState,

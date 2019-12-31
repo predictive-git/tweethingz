@@ -67,9 +67,6 @@ func main() {
 		{
 			// exec user follower update
 			v1.POST("/follower", handler.ExecuteFollowerUpdateHandler)
-
-			// exec all preconfigured searches for each user
-			v1.POST("/search", handler.ExecuteSearchHandler)
 		}
 	}
 

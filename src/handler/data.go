@@ -12,7 +12,7 @@ import (
 // SearchDeleteHandler ...
 func SearchDeleteHandler(c *gin.Context) {
 
-	username := getAuthedUsername(c)
+	user := getAuthedUser(c)
 
 	id := c.Param("id")
 	if id == "" {
@@ -31,9 +31,9 @@ func SearchDeleteHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":  "Search criterion deleted",
-		"status":   "Success",
-		"username": username,
+		"message": "Search criterion deleted",
+		"status":  "Success",
+		"user":    user,
 	})
 
 }
@@ -41,8 +41,8 @@ func SearchDeleteHandler(c *gin.Context) {
 // DashboardDataHandler ...
 func DashboardDataHandler(c *gin.Context) {
 
-	username := getAuthedUsername(c)
-	result, err := worker.GetSummaryForUser(c.Request.Context(), username)
+	forUser := getAuthedUser(c)
+	result, err := worker.GetSummaryForUser(c.Request.Context(), forUser)
 	if err != nil {
 
 		logger.Printf("Error while quering data service: %v", err)
@@ -54,14 +54,7 @@ func DashboardDataHandler(c *gin.Context) {
 		}
 
 		// update only when need to
-		logger.Printf("No data found, updating data for: %v", username)
-
-		forUser, err := store.GetAuthedUser(c.Request.Context(), username)
-		if err != nil {
-			errJSONAndAbort(c)
-			return
-		}
-
+		logger.Printf("No data found, updating data for: %v", forUser.Username)
 		if err := worker.ExecuteFollowerUpdate(c.Request.Context(), forUser); err != nil {
 			logger.Printf("Error while updating after nil results: %v", err)
 			errJSONAndAbort(c)
@@ -69,7 +62,7 @@ func DashboardDataHandler(c *gin.Context) {
 		}
 
 		// get data once more after update
-		result, err = worker.GetSummaryForUser(c.Request.Context(), username)
+		result, err = worker.GetSummaryForUser(c.Request.Context(), forUser)
 		if err != nil {
 			logger.Printf("Error while getting summary after nil results: %v", err)
 			errJSONAndAbort(c)

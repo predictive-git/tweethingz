@@ -14,40 +14,6 @@ var (
 	expectedToken = env.MustGetEnvVar("TOKEN", "")
 )
 
-// ExecuteSearchHandler ...
-func ExecuteSearchHandler(c *gin.Context) {
-
-	users, err := store.GetAllAuthedUsers(c.Request.Context())
-	if err != nil {
-		logger.Printf("error while getting authed users: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Error running worker",
-			"status":  "Internal Error",
-		})
-		c.Abort()
-		return
-	}
-
-	for _, user := range users {
-		logger.Printf("Starting background search worker for: %s...", user.Username)
-		if err := worker.ExecuteUserSearches(c.Request.Context(), user); err != nil {
-			logger.Printf("error while executing user search: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Error running worker",
-				"status":  "Internal Error",
-			})
-			c.Abort()
-			return
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Searches executed",
-		"status":  "Success",
-	})
-
-}
-
 // ExecuteFollowerUpdateHandler ...
 func ExecuteFollowerUpdateHandler(c *gin.Context) {
 

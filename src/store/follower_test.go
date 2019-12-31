@@ -27,10 +27,8 @@ func TestGetDailyFollowerStatesSince(t *testing.T) {
 		t.SkipNow()
 	}
 
-	ctx := context.Background()
 	yesterday := time.Now().UTC().AddDate(0, 0, -1)
-
-	data, err := GetDailyFollowerStatesSince(ctx, getTestTwitterAccount(), yesterday)
+	data, err := GetDailyFollowerStatesSince(context.Background(), getTestTwitterAccount(), yesterday)
 	assert.Nil(t, err)
 	assert.NotNil(t, data)
 

@@ -168,7 +168,11 @@ func isInFollowerRange(following, followers int, min, max float32) bool {
 		return true
 	}
 
-	v := float32(followers / following)
+	v := float32(0)
+
+	if following > 0 {
+		v = float32(followers / following)
+	}
 
 	if min > 0 && v < min {
 		return false
@@ -182,11 +186,17 @@ func isInFollowerRange(following, followers int, min, max float32) bool {
 
 }
 
-func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchCriteria) (list []*store.SimpleTweet, err error) {
+// GetSearchResults returns all
+func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchCriteria) (list []*store.SimpleTweet, err error) {
 
 	tc, err := getClient(u)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error initializing twitter client")
+	}
+
+	resultType := "popular"
+	if c.Latest {
+		resultType = "recent"
 	}
 
 	qp := &twitter.SearchTweetParams{
@@ -195,7 +205,7 @@ func getSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 		Count:           100,
 		SinceID:         c.SinceID,
 		IncludeEntities: twitter.Bool(true),
-		ResultType:      "popular",
+		ResultType:      resultType,
 		TweetMode:       "extended",
 	}
 

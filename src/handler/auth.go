@@ -14,6 +14,7 @@ import (
 	"github.com/kurrik/oauth1a"
 	"github.com/mchmarny/gcputil/env"
 	"github.com/mchmarny/tweethingz/src/store"
+	"github.com/mchmarny/tweethingz/src/worker"
 
 	"github.com/gin-gonic/gin"
 )
@@ -29,6 +30,7 @@ var (
 	logger                   = log.New(os.Stdout, "handler: ", 0)
 	authedUserCookieDuration = 30 * 24 * 60 // sec
 	maxSessionAge            = 5.0          // min
+	sessionCookieAge         = 5 * 60       // maxSessionAge in secs
 	consumerKey              = env.MustGetEnvVar("TW_KEY", "")
 	consumerSecret           = env.MustGetEnvVar("TW_SECRET", "")
 )
@@ -90,7 +92,7 @@ func AuthLoginHandler(c *gin.Context) {
 
 	store.SaveAuthSession(c.Request.Context(), authSession)
 
-	c.SetCookie(authIDCookieName, authSession.ID, 60, "/", c.Request.Host, false, true)
+	c.SetCookie(authIDCookieName, authSession.ID, sessionCookieAge, "/", c.Request.Host, false, true)
 
 	c.Redirect(http.StatusFound, AuthURL)
 
@@ -161,6 +163,14 @@ func AuthCallbackHandler(c *gin.Context) {
 		UpdatedAt:         time.Now().UTC(),
 	}
 
+	self, err := worker.GetTwitterUserDetails(authedUser)
+	if err != nil {
+		err := errors.Wrap(err, "error getting user twitter details")
+		viewErrorHandler(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	authedUser.Profile = self
 	if err = store.SaveAuthUser(c.Request.Context(), authedUser); err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, errors.Wrap(err, "error saving authenticated user"))
 		return
@@ -216,10 +226,16 @@ func AuthRequired(isJSON bool) gin.HandlerFunc {
 	}
 }
 
-func getAuthedUsername(c *gin.Context) string {
+func getAuthedUser(c *gin.Context) *store.AuthedUser {
 	username, _ := c.Cookie(userIDCookieName)
 	if username == "" {
 		logger.Fatalln("This should never happen, nil auth cookie")
 	}
-	return username
+
+	usr, err := store.GetAuthedUser(c.Request.Context(), username)
+	if err != nil || usr == nil {
+		logger.Fatalf("This should never happen, error getting authed user: %v", err)
+	}
+
+	return usr
 }

@@ -75,15 +75,15 @@ func DeleteAuthSession(ctx context.Context, id string) error {
 
 // AuthedUser represents authenticated user
 type AuthedUser struct {
-	Username          string    `firestore:"username" json:"username"`
-	AccessTokenKey    string    `firestore:"access_token_key" json:"access_token_key"`
-	AccessTokenSecret string    `firestore:"access_token_secret" json:"access_token_secret"`
-	UpdatedAt         time.Time `firestore:"updated_at" json:"updated_at"`
+	Username          string      `firestore:"username" json:"username"`
+	Profile           *SimpleUser `firestore:"profile" json:"profile"`
+	AccessTokenKey    string      `firestore:"access_token_key" json:"access_token_key"`
+	AccessTokenSecret string      `firestore:"access_token_secret" json:"access_token_secret"`
+	UpdatedAt         time.Time   `firestore:"updated_at" json:"updated_at"`
 }
 
 // SaveAuthUser saves multiple users
 func SaveAuthUser(ctx context.Context, u *AuthedUser) error {
-
 	if u == nil {
 		return errors.New("Nil user argument")
 	}
@@ -91,9 +91,7 @@ func SaveAuthUser(ctx context.Context, u *AuthedUser) error {
 	if err := save(ctx, authCollectionName, ToID(u.Username), u); err != nil {
 		return errors.Wrap(err, "Error executing save auth session")
 	}
-
 	return nil
-
 }
 
 // GetAuthedUser check if the authed username is in UI users and creates UI event

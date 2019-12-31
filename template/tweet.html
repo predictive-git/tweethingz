@@ -8,10 +8,13 @@
 
     {{with .criteria }}
     <div>
-        <b>Search results for: </b>
-        <a href="/view/search/{{ .ID }}" target="_blank">
-            {{ .Name }}
-        </a>
+        <b>New Search results for
+            <a href="/view/search/{{ .ID }}" target="_blank">{{ .Name }}</a>
+            since
+            <a href="https://twitter.com/i/web/status/{{ .SinceID }}" target="_blank">#{{ .SinceID }}</a>
+            -
+            <a href="/view/tweet/{{ .ID }}?view=latest">View latest</a>
+        </b>
     </div>
     {{end}}
 
@@ -21,37 +24,31 @@
         {{ range .results }}
         <tr>
             <td>
-                {{ with .Author }}
-                <a href="https://twitter.com/{{ .Username }}" target="_blank">
-                    <img src="{{ .ProfileImage }}" />
+                <a href="https://twitter.com/{{ .Author.Username }}" target="_blank">
+                    <img src="{{ .Author.ProfileImage }}" />
                 </a>
-                {{ end }}
+                <div class="tweet-view-link">
+                    <a href="https://twitter.com/{{ .Author.Username }}/status/{{ .ID }}" target="_blank">View</a>
+                </div>
             </td>
             <td>
                 <div class="tweet-text">
                     {{ .Text }}
                 </div>
-                <b>By: </b><a href="https://twitter.com/{{ .Author.Username }}"
-                    target="_blank">@{{ .Author.Username }}</a>
+                {{ with .Author }}
+                <b>By: </b><a href="https://twitter.com/{{ .Username }}" target="_blank" title="{{ .Name }} - {{ .Description }}
+                        (f:{{ .FollowerCount }}/{{ .FollowingCount }}, p:{{ .PostCount }})">@{{ .Username }}</a>
+                {{ end }}
                 <b>On: </b> {{ .FormatedCreatedAt }}
                 <b>Fave'd: </b> {{ .FavoriteCount }}
                 <b>Replies: </b> {{ .ReplyCount }}
-                <b>RT: </b> {{ .RetweetCount }} |
-                <a href="https://twitter.com/{{ .Author.Username }}/status/{{ .ID }}" target="_blank">View
-                    on Twitter</a>
+                <b>RT: </b> {{ .RetweetCount }}
+
             </td>
         </tr>
         {{ end }}
     </table>
     {{end}}
-
-    {{ if .next_key }}
-    <div class="bottom-link">
-        <a href="/view/tweet/{{ .criteria.ID }}?key={{ .next_key }}">
-            More
-        </a>
-    </div>
-    {{ end }}
 
 </div>
 

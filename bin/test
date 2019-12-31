@@ -3,8 +3,8 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
-# export TEST_TW_ACCOUNT="knativeproject"
-export TEST_TW_ACCOUNT="mchmarny"
+export TEST_TW_ACCOUNT="knativeproject"
+# export TEST_TW_ACCOUNT="mchmarny"
 export RELEASE="${IMAGE_VERSION}"
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
@@ -16,7 +16,7 @@ go mod vendor
 
 # full tests (short does not require DB)
 # go test -v -count=1 -race ./...
-# go test -v -count=1 -race -short ./...
+go test -v -count=1 -race -short ./...
 
 # twitter search criteria tess
 # go test -v -run TestLinkFilter ./src/worker
@@ -31,15 +31,12 @@ go mod vendor
 # go test -v -run TestSearchResultIDSort ./src/store
 # go test -v -run TestGetUserEventsByType ./src/store
 
-
-
 # handler
 # go test -v -run TestViewRedirectSansAuthCookie ./src/handler
 
 # worker
 # go test -v -run TestTwitterSearchWorker ./src/worker
 # go test -v -count=1 -run TestUpdateFollowerDataWorker ./src/worker
-go test -v -count=1 -run TestExecuteUserSearches ./src/worker
 
 
 

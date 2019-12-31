@@ -168,9 +168,7 @@ function toLongTime(v) {
 }
 
 function makeLinks(e) {
-
     var tweetText = $(".tweet-text");
-
     if (tweetText.length) {
         tweetText.each(
             function () {
@@ -184,5 +182,4 @@ function makeLinks(e) {
             }
         );
     }
-
 }

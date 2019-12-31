@@ -34,22 +34,26 @@ a {
 }
 
 #page-header {
-	padding: 10px 5px 15px 30px;
+	padding: 5px 20px;
 	margin: 0;
 	background-color: #333;
 	text-align: left;
 }
 
-#page-header b {
-	color: #999;
-	font-size: 2em;
-}
-
 #header-nav {
 	display: block;
 	position: absolute;
-	top: 10px;
-    right: 10px;
+	top: 13px;
+	right: 75px;
+	text-align: right;
+	line-height: 150%;
+}
+
+#header-pic {
+	display: block;
+	position: absolute;
+	top: 13px;
+    right: 15px;
 }
 
 #page-footer {
@@ -221,7 +225,7 @@ td.form-field input[type=number] {
 }
 
 td.form-field input[type=checkbox] {
-	margin-right: 30px;
+	margin: 2px;
 }
 
 td.right {
@@ -281,7 +285,7 @@ td.form-action input, td.form-action button {
 	break-after: always;
 	display: inline-block;
 	text-align: left;
-	font-size: 0.9em;
+	font-size: 1.0em;
 	padding: 0;
 	margin: 0;
 }
@@ -291,6 +295,12 @@ td.form-action input, td.form-action button {
 	margin: 0;
 	border-bottom: 1pt solid #e4e4e4;
 	vertical-align: top;
+}
+
+.tweet-view-link {
+	text-align: center;
+	margin-top: 3px;
+	font-size: 0.9em;
 }
 
 .tweet-text {
