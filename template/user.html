@@ -10,15 +10,14 @@
             <a href="https://twitter.com/{{ .Username }}" target="_blank">
                 <b>@{{ .Username }}</b>
             </a>
-            - {{ .Name }}
-            - {{ .Description }}
+            - {{ .Name }}, {{ .Location }} ({{ .Description }})
         </div>
 
         <div>
-            <b>Since:</b> {{ .FormatedCreatedAt }},
-            <b>Loc:</b> {{ .Location }},
-            <b>Follow:</b> {{ .FollowerCount }}/{{ .FollowingCount }},
-            <b>Post:</b> {{ .PostCount }},
+            <b>Since:</b> {{ .UserSince }},
+            <b>Following:</b> {{ .FollowingCount }},
+            <b>Followers:</b> {{ .FollowerCount }}
+            <b>Tweets:</b> {{ .PostCount }}
         </div>
     </td>
 

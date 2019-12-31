@@ -38,7 +38,7 @@ function loadDashboard() {
         $("#following-count .data").text(data.user.following_count);
         $("#follower-gained-count .data").text(data.recent_follower_count);
         $("#follower-lost-count .data").text(data.recent_unfollower_count);
-        $("#favorites-count .data").text(data.user.fave_count);
+        $("#listed-count .data").text(data.user.listed_count);
         $("#meta-updated-on").text(toLongTime(data.updated_on));
 
         $(".wait-load").hide();

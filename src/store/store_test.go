@@ -39,3 +39,23 @@ func TestDateRangeWeek(t *testing.T) {
 	assert.NotNil(t, r)
 	assert.Len(t, r, 8)
 }
+
+// func TestPrettyDurationSince(t *testing.T) {
+
+// 	d1 := time.Now().AddDate(0, 0, -1)
+// 	s1 := PrettyDurationSince(d1)
+// 	t.Logf("1 day: %s", s1)
+
+// 	d2 := time.Now().AddDate(0, 0, -29)
+// 	s2 := PrettyDurationSince(d2)
+// 	t.Logf("29 days: \n%s", s2)
+
+// 	d3 := time.Now().AddDate(0, -4, -3)
+// 	s3 := PrettyDurationSince(d3)
+// 	t.Logf("4 months, and 3 days: \n%s", s3)
+
+// 	d4 := time.Now().AddDate(-2, -3, -4)
+// 	s4 := PrettyDurationSince(d4)
+// 	t.Logf("2 years, 3 months, and 4 days: \n%s", s4)
+
+// }

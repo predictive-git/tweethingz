@@ -74,6 +74,7 @@ type SimpleUser struct {
 	FaveCount      int `firestore:"fave_count" json:"fave_count"`
 	FollowingCount int `firestore:"following_count" json:"following_count"`
 	FollowerCount  int `firestore:"followers_count" json:"followers_count"`
+	ListedCount    int `firestore:"listed_count" json:"listed_count"`
 }
 
 // FormatedCreatedAt returns RFC822 formated CreatedAt
@@ -82,6 +83,14 @@ func (s *SimpleUser) FormatedCreatedAt() string {
 		return ""
 	}
 	return s.CreatedAt.Format(time.RFC822)
+}
+
+// UserSince displays the length of time since the user joined Twitter s
+func (s *SimpleUser) UserSince() string {
+	if s == nil || s.CreatedAt.IsZero() {
+		return ""
+	}
+	return PrettyDurationSince(s.CreatedAt)
 }
 
 //============================================================================
