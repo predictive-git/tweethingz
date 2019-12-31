@@ -7,9 +7,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/kurrik/oauth1a"
 	"github.com/mchmarny/gcputil/env"
@@ -20,10 +19,11 @@ import (
 )
 
 const (
-	googleOAuthURL   = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
-	stateCookieName  = "tweethingz"
-	userIDCookieName = "user_id"
-	authIDCookieName = "auth_id"
+	googleOAuthURL        = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
+	stateCookieName       = "tweethingz"
+	userIDCookieName      = "user_id"
+	authIDCookieName      = "auth_id"
+	allowedUsersUndefined = "undefined"
 )
 
 var (
@@ -33,6 +33,7 @@ var (
 	sessionCookieAge         = 5 * 60       // maxSessionAge in secs
 	consumerKey              = env.MustGetEnvVar("TW_KEY", "")
 	consumerSecret           = env.MustGetEnvVar("TW_SECRET", "")
+	allowedUsers             = env.MustGetEnvVar("TW_USERS", allowedUsersUndefined)
 )
 
 func getOAuthService(r *http.Request) *oauth1a.Service {
@@ -72,15 +73,13 @@ func AuthLoginHandler(c *gin.Context) {
 	httpClient := new(http.Client)
 	userConfig := &oauth1a.UserConfig{}
 	if err := userConfig.GetRequestToken(service, httpClient); err != nil {
-		err := errors.Wrap(err, "could not get request token")
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting request token")
 		return
 	}
 
 	AuthURL, err := userConfig.GetAuthorizeURL(service)
 	if err != nil {
-		err := errors.Wrap(err, "could not get authorization URL")
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting authorization URL")
 		return
 	}
 
@@ -103,30 +102,25 @@ func AuthCallbackHandler(c *gin.Context) {
 
 	sessionID, err := c.Cookie(authIDCookieName)
 	if err != nil {
-		err := errors.Wrap(err, "callback with no session id")
-		viewErrorHandler(c, http.StatusUnauthorized, err)
+		viewErrorHandler(c, http.StatusUnauthorized, err, "Error handling callback with no session id")
 		return
 	}
 
-	// TODO: make the session age decision here
 	authSession, err := store.GetAuthSession(c.Request.Context(), sessionID)
 	if err != nil || authSession == nil {
-		err := errors.Wrapf(err, "unable to find auth config for this sessions ID: %s", sessionID)
-		viewErrorHandler(c, http.StatusUnauthorized, err)
+		viewErrorHandler(c, http.StatusUnauthorized, err, fmt.Sprintf("Unable to find auth config for this sessions ID: %s", sessionID))
 		return
 	}
 
 	sessionAge := time.Now().UTC().Sub(authSession.On)
 	if sessionAge.Minutes() > maxSessionAge {
-		err := errors.Wrapf(err, "session %s expired. Age %v, expected %f min", sessionAge, maxSessionAge, maxSessionAge)
-		viewErrorHandler(c, http.StatusUnauthorized, err)
+		viewErrorHandler(c, http.StatusUnauthorized, err, fmt.Sprintf("session %s expired. Age %v, expected %f min", sessionAge, maxSessionAge, maxSessionAge))
 		return
 	}
 
 	userConfig, err := userConfigFromString(authSession.Config)
 	if err != nil {
-		err := errors.New("error decoding user config in sessions storage")
-		viewErrorHandler(c, http.StatusUnauthorized, err)
+		viewErrorHandler(c, http.StatusUnauthorized, err, "Error decoding user config in sessions storage")
 		return
 	}
 
@@ -134,27 +128,29 @@ func AuthCallbackHandler(c *gin.Context) {
 
 	token, verifier, err := userConfig.ParseAuthorize(c.Request, service)
 	if err != nil {
-		err := errors.Wrap(err, "could not parse authorization")
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Could not parse authorization")
 		return
 	}
 
 	httpClient := new(http.Client)
 	if err = userConfig.GetAccessToken(token, verifier, service, httpClient); err != nil {
-		err := errors.Wrap(err, "error getting access token")
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting access token")
 		return
 	}
 
 	if err := store.DeleteAuthSession(c.Request.Context(), sessionID); err != nil {
-		err := errors.Wrap(err, "error deleting session")
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error deleting session")
 		return
 	}
 
 	c.SetCookie(authIDCookieName, "", 0, "/", c.Request.Host, false, true)
 
 	username := store.NormalizeString(userConfig.AccessValues.Get("screen_name"))
+
+	if !isUserAllowed(username) {
+		viewErrorHandler(c, http.StatusUnauthorized, nil, fmt.Sprintf("User %s not authorized to access this service", username))
+		return
+	}
 
 	authedUser := &store.AuthedUser{
 		Username:          username,
@@ -165,14 +161,13 @@ func AuthCallbackHandler(c *gin.Context) {
 
 	self, err := worker.GetTwitterUserDetails(authedUser)
 	if err != nil {
-		err := errors.Wrap(err, "error getting user twitter details")
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting user twitter details")
 		return
 	}
 
 	authedUser.Profile = self
 	if err = store.SaveAuthUser(c.Request.Context(), authedUser); err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, errors.Wrap(err, "error saving authenticated user"))
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error saving authenticated user")
 		return
 	}
 
@@ -238,4 +233,24 @@ func getAuthedUser(c *gin.Context) *store.AuthedUser {
 	}
 
 	return usr
+}
+
+func isUserAllowed(user string) bool {
+
+	if user == "" {
+		return false
+	}
+
+	// check if the user is allowed if allowedUsers defined
+	if allowedUsers == "" || allowedUsers == allowedUsersUndefined {
+		return true
+	}
+
+	for _, u := range strings.Split(allowedUsers, ",") {
+		if strings.ToLower(strings.TrimSpace(u)) == strings.ToLower(strings.TrimSpace(user)) {
+			return true
+		}
+	}
+
+	return false
 }

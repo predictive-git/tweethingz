@@ -10,7 +10,6 @@ import (
 	"github.com/mchmarny/gcputil/env"
 	"github.com/mchmarny/tweethingz/src/store"
 	"github.com/mchmarny/tweethingz/src/worker"
-	"github.com/pkg/errors"
 )
 
 var (
@@ -49,7 +48,7 @@ func SearchListHandler(c *gin.Context) {
 	forUser := getAuthedUser(c)
 	list, err := store.GetSearchCriteria(c.Request.Context(), forUser.Username)
 	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting search criteria")
 		return
 	}
 
@@ -65,7 +64,7 @@ func SearchDetailHandler(c *gin.Context) {
 	forUser := getAuthedUser(c)
 	id := c.Param("cid")
 	if id == "" {
-		viewErrorHandler(c, http.StatusInternalServerError, errors.New("Search ID required"))
+		viewErrorHandler(c, http.StatusInternalServerError, nil, "Search ID required")
 		return
 	}
 	logger.Printf("Search ID: %s", id)
@@ -78,7 +77,7 @@ func SearchDetailHandler(c *gin.Context) {
 	} else {
 		detail, err = store.GetSearchCriterion(c.Request.Context(), id)
 		if err != nil {
-			viewErrorHandler(c, http.StatusInternalServerError, err)
+			viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting search criteria")
 			return
 		}
 	}
@@ -112,8 +111,7 @@ func SearchDataSubmitHandler(c *gin.Context) {
 
 	// logger.Printf("Search Criteria: %+v", sc)
 	if err := store.SaveSearchCriteria(c.Request.Context(), sc); err != nil {
-		logger.Printf("error saving search criteria: %v", err)
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error saving search criteria")
 		return
 	}
 
@@ -131,13 +129,13 @@ func TweetHandler(c *gin.Context) {
 	forUser := getAuthedUser(c)
 	cid := c.Param("cid")
 	if cid == "" {
-		viewErrorHandler(c, http.StatusBadRequest, errors.New("Search query ID required (param: cid)"))
+		viewErrorHandler(c, http.StatusBadRequest, nil, "Search query ID required (param: cid)")
 		return
 	}
 
 	criteria, err := store.GetSearchCriterion(ctx, cid)
 	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, nil, "Error getting search criteria")
 		return
 	}
 
@@ -148,13 +146,13 @@ func TweetHandler(c *gin.Context) {
 
 	results, err := worker.GetSearchResults(ctx, forUser, criteria)
 	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting search results")
 		return
 	}
 
 	logger.Printf("saving criteria %s (since: %d, on: %v)", criteria.Name, criteria.SinceID, criteria.ExecutedOn)
 	if err = store.SaveSearchCriteria(ctx, criteria); err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting search criteria")
 		return
 	}
 
@@ -175,31 +173,31 @@ func DayHandler(c *gin.Context) {
 	forUser := getAuthedUser(c)
 	isoDate := c.Param("day")
 	if isoDate == "" {
-		viewErrorHandler(c, http.StatusBadRequest, errors.New("Day required (param: day)"))
+		viewErrorHandler(c, http.StatusBadRequest, nil, "Day required (param: day)")
 		return
 	}
 
 	day, err := time.Parse("2006-01-02", isoDate)
 	if err != nil {
-		viewErrorHandler(c, http.StatusBadRequest, fmt.Errorf("Invalid day parameter format (expected YYYY-MM-DD, got: %s)", isoDate))
+		viewErrorHandler(c, http.StatusBadRequest, nil, fmt.Sprintf("Invalid day parameter format (expected YYYY-MM-DD, got: %s)", isoDate))
 		return
 	}
 
 	dayState, err := store.GetDailyFollowerState(c.Request.Context(), forUser.Username, day)
 	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting daily follower state")
 		return
 	}
 
 	followers, err := ToUserEvent(forUser, dayState.NewFollowers, isoDate, store.FollowedEventType)
 	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting new follower events")
 		return
 	}
 
 	unfollowers, err := ToUserEvent(forUser, dayState.Unfollowers, isoDate, store.UnfollowedEventType)
 	if err != nil {
-		viewErrorHandler(c, http.StatusInternalServerError, err)
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting unfollower events")
 		return
 	}
 
@@ -241,11 +239,11 @@ func ToUserEvent(forUser *store.AuthedUser, ids []int64, isoDate, eventType stri
 
 }
 
-func viewErrorHandler(c *gin.Context, code int, err error) {
-	logger.Printf("Error: %v", err)
+func viewErrorHandler(c *gin.Context, code int, err error, msg string) {
+	logger.Printf("Error: %v - Msg: %s", err, msg)
 	c.HTML(code, "error", gin.H{
-		"error":  err.Error,
-		"status": "Internal Server Error",
+		"code": code,
+		"msg":  msg,
 	})
 	c.Abort()
 }

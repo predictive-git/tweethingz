@@ -3,6 +3,7 @@
 # Twitter API
 export TW_KEY=$TW_CONSUMER_KEY
 export TW_SECRET=$TW_CONSUMER_SECRET
+export TW_USERS=""
 
 # Cloud Scheduler
 export SCHEDULE_FREQUENCY="every 30 mins"
