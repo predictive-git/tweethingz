@@ -10,7 +10,7 @@ export SCHEDULE_FREQUENCY="every 30 mins"
 
 # Cloud Run
 export SERVICE_REGION="us-central1"
-export SERVICE_VERSION="0.4.9"
+export SERVICE_VERSION="0.4.10"
 
 # ====================================================================#
 # Derived values (don't edit)                                         #

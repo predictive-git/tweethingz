@@ -38,8 +38,8 @@ type SearchCriteria struct {
 	FaveCountMin int `firestore:"fave_count_min" json:"fave_count_min" form:"fave_count_min"`
 	FaveCountMax int `firestore:"fave_count_max" json:"fave_count_max" form:"fave_count_max"`
 
-	FollowingCountMin int `firestore:"following_count_min" json:"following_count_min" form:"following_count_min"`
-	FollowingCountMax int `firestore:"following_count_max" json:"following_count_max" form:"following_count_max"`
+	FriendCountMin int `firestore:"friend_count_min" json:"friend_count_min" form:"friend_count_min"`
+	FriendCountMax int `firestore:"friend_count_max" json:"friend_count_max" form:"friend_count_max"`
 
 	FollowerCountMin int `firestore:"follower_count_min" json:"follower_count_min" form:"follower_count_min"`
 	FollowerCountMax int `firestore:"follower_count_max" json:"follower_count_max" form:"follower_count_max"`
@@ -131,17 +131,18 @@ func GetSearchCriteria(ctx context.Context, username string) (data []*SearchCrit
 
 // SimpleTweet is the short version of twitter search result
 type SimpleTweet struct {
-	ID            string      `firestore:"id_str" json:"id_str"`
-	CriteriaID    string      `firestore:"criteria_id" json:"criteria_id"`
-	ExecutedOn    string      `firestore:"executed_on" json:"executed_on"`
-	CreatedAt     time.Time   `firestore:"created_at" json:"created_at"`
-	FavoriteCount int         `firestore:"favorite_count" json:"favorite_count"`
-	ReplyCount    int         `firestore:"reply_count" json:"reply_count"`
-	RetweetCount  int         `firestore:"retweet_count" json:"retweet_count"`
-	IsRT          bool        `firestore:"is_rt" json:"is_rt"`
-	Text          string      `firestore:"text" json:"text"`
-	Author        *SimpleUser `firestore:"author" json:"author"`
-	Key           string      `firestore:"key" json:"key"`
+	ID               string      `firestore:"id_str" json:"id_str"`
+	CriteriaID       string      `firestore:"criteria_id" json:"criteria_id"`
+	ExecutedOn       string      `firestore:"executed_on" json:"executed_on"`
+	CreatedAt        time.Time   `firestore:"created_at" json:"created_at"`
+	FavoriteCount    int         `firestore:"favorite_count" json:"favorite_count"`
+	ReplyCount       int         `firestore:"reply_count" json:"reply_count"`
+	RetweetCount     int         `firestore:"retweet_count" json:"retweet_count"`
+	IsRT             bool        `firestore:"is_rt" json:"is_rt"`
+	Text             string      `firestore:"text" json:"text"`
+	Author           *SimpleUser `firestore:"author" json:"author"`
+	AuthorIsFriend   bool        `firestore:"author_is_friend" json:"author_is_friend"`
+	AuthorIsFollower bool        `firestore:"author_is_follower" json:"author_is_follower"`
 }
 
 // FormatedCreatedAt returns RFC822 formated CreatedAt

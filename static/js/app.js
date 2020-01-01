@@ -37,7 +37,7 @@ function loadDashboard() {
 
         // numbers
         $("#follower-count .data").text(data.user.followers_count).digits();
-        $("#following-count .data").text(data.user.following_count).digits();
+        $("#friend-count .data").text(data.user.friend_count).digits();
         $("#follower-gained-count .data").text(data.recent_follower_count).digits();
         $("#follower-lost-count .data").text(data.recent_unfollower_count).digits();
         $("#listed-count .data").text(data.user.listed_count).digits();
@@ -147,9 +147,11 @@ function loadDashboard() {
                     ]
                 },
                 onClick: (evt, item) => {
-                    var model = item[0]._model;
-                    console.log("Date: ", model.label);
-                    redirectToDate(model.label);
+                    if (item.length) {
+                        var model = item[0]._model;
+                        console.log("Date: ", model.label);
+                        redirectToDate(model.label);
+                    }
                 }
             }
         });

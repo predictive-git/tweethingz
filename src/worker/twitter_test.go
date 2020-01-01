@@ -1,6 +1,8 @@
 package worker
 
 import (
+	"context"
+	"os"
 	"testing"
 
 	"github.com/dghubble/go-twitter/twitter"
@@ -67,5 +69,24 @@ func TestAuthorFilter(t *testing.T) {
 
 	tweet.User.FollowersCount = 11
 	assert.False(t, shouldFilterOut(tweet, filter))
+
+}
+
+func TestGetTwitterFriendIDs(t *testing.T) {
+
+	if testing.Short() {
+		t.SkipNow()
+	}
+
+	ctx := context.Background()
+	username := os.Getenv("TEST_TW_ACCOUNT")
+
+	forUser, err := store.GetAuthedUser(ctx, username)
+	assert.Nil(t, err)
+
+	list, err := GetTwitterFriendIDs(forUser)
+	assert.Nil(t, err)
+	assert.NotNil(t, list)
+	t.Logf("%s follows %d users", username, len(list))
 
 }

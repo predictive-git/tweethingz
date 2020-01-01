@@ -25,6 +25,8 @@ type DailyFollowerState struct {
 	StateOn          string  `firestore:"date" json:"date"`
 	Followers        []int64 `firestore:"followers" json:"followers"`
 	FollowerCount    int     `firestore:"follower_count" json:"follower_count"`
+	Friends          []int64 `firestore:"friends" json:"friends"`
+	FriendsCount     int     `firestore:"friend_count" json:"friend_count"`
 	NewFollowers     []int64 `firestore:"new_followers" json:"new_followers"`
 	NewFollowerCount int     `firestore:"new_follower_count" json:"new_follower_count"`
 	Unfollowers      []int64 `firestore:"unfollowers" json:"unfollowers"`
@@ -43,6 +45,7 @@ func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState 
 	return &DailyFollowerState{
 		Username:     username,
 		StateOn:      date.Format(ISODateFormat),
+		Friends:      make([]int64, 0),
 		Followers:    make([]int64, 0),
 		NewFollowers: make([]int64, 0),
 		Unfollowers:  make([]int64, 0),
@@ -70,11 +73,11 @@ type SimpleUser struct {
 	Timezone string `firestore:"time_zone" json:"time_zone"`
 
 	// counts
-	PostCount      int `firestore:"post_count" json:"post_count"`
-	FaveCount      int `firestore:"fave_count" json:"fave_count"`
-	FollowingCount int `firestore:"following_count" json:"following_count"`
-	FollowerCount  int `firestore:"followers_count" json:"followers_count"`
-	ListedCount    int `firestore:"listed_count" json:"listed_count"`
+	PostCount     int `firestore:"post_count" json:"post_count"`
+	FaveCount     int `firestore:"fave_count" json:"fave_count"`
+	FriendCount   int `firestore:"friend_count" json:"friend_count"`
+	FollowerCount int `firestore:"followers_count" json:"followers_count"`
+	ListedCount   int `firestore:"listed_count" json:"listed_count"`
 }
 
 // FormatedCreatedAt returns RFC822 formated CreatedAt

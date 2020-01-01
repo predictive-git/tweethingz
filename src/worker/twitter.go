@@ -91,20 +91,20 @@ func convertTwitterTime(v string) time.Time {
 
 func toSimpleUser(u *twitter.User) *store.SimpleUser {
 	return &store.SimpleUser{
-		Username:       store.NormalizeString(u.ScreenName),
-		Name:           u.Name,
-		Description:    u.Description,
-		ProfileImage:   u.ProfileImageURLHttps,
-		CreatedAt:      convertTwitterTime(u.CreatedAt),
-		Lang:           u.Lang,
-		Location:       u.Location,
-		Timezone:       u.Timezone,
-		PostCount:      u.StatusesCount,
-		FaveCount:      u.FavouritesCount,
-		FollowingCount: u.FriendsCount,
-		FollowerCount:  u.FollowersCount,
-		ListedCount:    u.ListedCount,
-		UpdatedAt:      time.Now().UTC(),
+		Username:      store.NormalizeString(u.ScreenName),
+		Name:          u.Name,
+		Description:   u.Description,
+		ProfileImage:  u.ProfileImageURLHttps,
+		CreatedAt:     convertTwitterTime(u.CreatedAt),
+		Lang:          u.Lang,
+		Location:      u.Location,
+		Timezone:      u.Timezone,
+		PostCount:     u.StatusesCount,
+		FaveCount:     u.FavouritesCount,
+		FriendCount:   u.FriendsCount,
+		FollowerCount: u.FollowersCount,
+		ListedCount:   u.ListedCount,
+		UpdatedAt:     time.Now().UTC(),
 	}
 }
 
@@ -129,7 +129,44 @@ func GetTwitterFollowerIDs(byUser *store.AuthedUser) (ids []int64, err error) {
 		}
 
 		// debug
-		logger.Printf("Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
+		// logger.Printf("Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
+
+		ids = append(ids, page.IDs...)
+
+		// has more IDs?
+		if page.NextCursor < 1 {
+			break
+		}
+
+		// reset cursor
+		listParam.Cursor = page.NextCursor
+	}
+
+	return
+}
+
+// GetTwitterFriendIDs returns all IDs users following authed user
+func GetTwitterFriendIDs(byUser *store.AuthedUser) (ids []int64, err error) {
+
+	client, err := getClient(byUser)
+	if err != nil {
+		return nil, errors.Wrap(err, "error initializing client")
+	}
+
+	listParam := &twitter.FriendIDParams{
+		ScreenName: byUser.Username,
+		Count:      5000, // max per page
+	}
+
+	ids = make([]int64, 0)
+	for {
+		page, resp, err := client.Friends.IDs(listParam)
+		if err != nil {
+			return nil, errors.Wrapf(err, "error paging following IDs (%s): %v", resp.Status, err)
+		}
+
+		// debug
+		// logger.Printf("Page size:%d, Next:%d", len(page.IDs), page.NextCursor)
 
 		ids = append(ids, page.IDs...)
 
@@ -188,7 +225,7 @@ func isInFollowerRange(following, followers int, min, max float32) bool {
 }
 
 // GetSearchResults returns all
-func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchCriteria) (list []*store.SimpleTweet, err error) {
+func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchCriteria, s *store.DailyFollowerState) (list []*store.SimpleTweet, err error) {
 
 	tc, err := getClient(u)
 	if err != nil {
@@ -214,8 +251,6 @@ func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 	list = make([]*store.SimpleTweet, 0)
 
 	for {
-
-		logger.Printf("Searching since ID: %d", c.SinceID)
 		search, resp, err := tc.Search.Tweets(qp)
 
 		if err != nil {
@@ -227,7 +262,7 @@ func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 			return list, nil
 		}
 
-		logger.Printf("Page processing (List:%d, Page:%d)", len(list), len(search.Statuses))
+		// logger.Printf("Page processing (List:%d, Page:%d)", len(list), len(search.Statuses))
 		for _, t := range search.Statuses {
 
 			// tweets come in newest first order so just make sure we capture the highest number
@@ -242,22 +277,24 @@ func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 			}
 
 			item := &store.SimpleTweet{
-				ID:            t.IDStr,
-				CriteriaID:    c.ID,
-				CreatedAt:     convertTwitterTime(t.CreatedAt),
-				FavoriteCount: t.FavoriteCount,
-				ReplyCount:    t.ReplyCount,
-				RetweetCount:  t.RetweetCount,
-				Text:          t.FullText,
-				IsRT:          t.RetweetedStatus != nil,
-				Author:        toSimpleUser(t.User),
+				ID:               t.IDStr,
+				CriteriaID:       c.ID,
+				CreatedAt:        convertTwitterTime(t.CreatedAt),
+				FavoriteCount:    t.FavoriteCount,
+				ReplyCount:       t.ReplyCount,
+				RetweetCount:     t.RetweetCount,
+				Text:             t.FullText,
+				IsRT:             t.RetweetedStatus != nil,
+				Author:           toSimpleUser(t.User),
+				AuthorIsFriend:   contains(s.Friends, t.User.ID),
+				AuthorIsFollower: contains(s.Followers, t.User.ID),
 			}
 
 			list = append(list, item)
 
 		}
 
-		logger.Printf("Page size (List:%d, Page:%d)", len(list), len(search.Statuses))
+		// logger.Printf("Page size (List:%d, Page:%d)", len(list), len(search.Statuses))
 
 		// page has less than the max == last page
 		if len(search.Statuses) < qp.Count {
@@ -297,8 +334,8 @@ func shouldFilterOut(t *twitter.Tweet, c *store.SearchCriteria) bool {
 		return true
 	}
 
-	// Following Count
-	if !isInIntRange(t.User.FriendsCount, c.FollowingCountMin, c.FollowingCountMax) {
+	// Friend Count
+	if !isInIntRange(t.User.FriendsCount, c.FriendCountMin, c.FriendCountMax) {
 		return true
 	}
 
@@ -314,4 +351,13 @@ func shouldFilterOut(t *twitter.Tweet, c *store.SearchCriteria) bool {
 
 	return false
 
+}
+
+func contains(list []int64, val int64) bool {
+	for _, item := range list {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }

@@ -65,7 +65,6 @@ func SearchDetailHandler(c *gin.Context) {
 		viewErrorHandler(c, http.StatusInternalServerError, nil, "Search ID required")
 		return
 	}
-	logger.Printf("Search ID: %s", id)
 
 	var detail *store.SearchCriteria
 	var err error
@@ -79,8 +78,6 @@ func SearchDetailHandler(c *gin.Context) {
 			return
 		}
 	}
-
-	logger.Printf("Lang: %s", detail.Lang)
 
 	c.HTML(http.StatusOK, "search", gin.H{
 		"user":    forUser,
@@ -139,13 +136,19 @@ func TweetHandler(c *gin.Context) {
 		criteria.SinceID = 0
 	}
 
-	results, err := worker.GetSearchResults(ctx, forUser, criteria)
+	state, err := store.GetDailyFollowerState(ctx, forUser.Username, time.Now())
+	if err != nil {
+		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting follower state")
+		return
+	}
+
+	results, err := worker.GetSearchResults(ctx, forUser, criteria, state)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting search results")
 		return
 	}
 
-	logger.Printf("saving criteria %s (since: %d, on: %v)", criteria.Name, criteria.SinceID, criteria.ExecutedOn)
+	// logger.Printf("saving criteria %s (since: %d, on: %v)", criteria.Name, criteria.SinceID, criteria.ExecutedOn)
 	if err = store.SaveSearchCriteria(ctx, criteria); err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting search criteria")
 		return
@@ -189,12 +192,14 @@ func DayHandler(c *gin.Context) {
 		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting new follower events")
 		return
 	}
+	logger.Printf("Followers:%d, expected:%d", len(followers), len(dayState.Followers))
 
 	unfollowers, err := ToUserEvent(forUser, dayState.Unfollowers, isoDate, store.UnfollowedEventType)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting unfollower events")
 		return
 	}
+	logger.Printf("Unfollowers:%d, expected:%d", len(unfollowers), len(dayState.Unfollowers))
 
 	data := gin.H{
 		"user":        forUser,

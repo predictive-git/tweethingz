@@ -33,7 +33,13 @@
                     </div>
                     {{ with .Author }}
                     By: <b><a href="https://twitter.com/{{ .Username }}" target="_blank" title="{{ .Name }} - {{ .Description }}
-                        (f:{{ .FollowerCount }}/{{ .FollowingCount }}, p:{{ .PostCount }})">@{{ .Username }}</a></b>
+                        (f:{{ .FollowerCount }}/{{ .FriendCount }}, p:{{ .PostCount }})">@{{ .Username }}</a></b>
+                    {{ end }}
+                    {{ if .AuthorIsFriend }}
+                    Friend,
+                    {{ end }}
+                    {{ if .AuthorIsFollower }}
+                    Follower,
                     {{ end }}
                     On: <b>{{ .FormatedCreatedAt }}</b>
                     Fave'd: <b>{{ .FavoriteCount }}</b>

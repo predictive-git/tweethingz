@@ -33,6 +33,16 @@ func ExecuteFollowerUpdate(ctx context.Context, forUser *store.AuthedUser) error
 		twitterUser.Username, twitterUser.FollowerCount, len(followerIDs))
 
 	// ============================================================================
+	// IDs of all friends from Twitter
+	// ============================================================================
+	friendIDs, err := GetTwitterFriendIDs(forUser)
+	if err != nil {
+		return errors.Wrap(err, "error getting friend IDs")
+	}
+	logger.Printf("Friend counts for %s (Profile:%d, IDs:%d)",
+		twitterUser.Username, twitterUser.FriendCount, len(friendIDs))
+
+	// ============================================================================
 	// Yesterday State
 	// ============================================================================
 	yesterday := time.Now().UTC().AddDate(0, 0, -1)
@@ -70,6 +80,8 @@ func ExecuteFollowerUpdate(ctx context.Context, forUser *store.AuthedUser) error
 	// ============================================================================
 	todayState.Followers = followerIDs
 	todayState.FollowerCount = len(followerIDs)
+	todayState.Friends = friendIDs
+	todayState.FriendsCount = len(friendIDs)
 
 	// populate diffs only if not first day
 	if yesterdayState.FollowerCount > 0 {
