@@ -4,7 +4,9 @@ $(function () {
     }
     $("#search-criteria-delete-button").click(handleDeleteSearchCriteria);
 
-    makeLinks();
+    if ($(".tweet-text").length) {
+        makeLinks();
+    }
 
 });
 
@@ -164,7 +166,7 @@ function toLongTime(v) {
     return ts.toTimeString()
 }
 
-function makeLinks(e) {
+function makeLinks() {
     var tweetText = $(".tweet-text");
     if (tweetText.length) {
         tweetText.each(
