@@ -171,6 +171,7 @@ a {
 .user-data {
 	text-align: center;
 	font-size: 0.9em;
+	width: 125px;
 }
 
 .user-data div {
