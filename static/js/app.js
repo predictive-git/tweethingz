@@ -49,6 +49,79 @@ function loadDashboard() {
         $(".after-load").show();
 
         // follower count chart
+        var followerChart = new Chart($("#follower-event-series")[0].getContext("2d"), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(data.followed_event_series),
+                datasets: [{
+                    label: 'Followed',
+                    data: Object.values(data.followed_event_series),
+                    backgroundColor: 'rgba(127, 201, 143,0.1)',
+                    borderColor: 'rgba(127, 201, 143,0.5)',
+                    borderWidth: 1,
+                    order: 1
+                }, {
+                    label: 'Unfollowed',
+                    data: Object.values(data.unfollowed_event_series),
+                    backgroundColor: 'rgba(206, 149, 166,0.1)',
+                    borderColor: 'rgba(206, 149, 166,0.5)',
+                    borderWidth: 1,
+                    order: 2
+                }, {
+                    label: 'Average',
+                    type: 'line',
+                    fill: false,
+                    data: Object.values(data.avg_event_series),
+                    backgroundColor: 'rgba(255, 255, 204,0.1)',
+                    borderColor: 'rgba(255, 255, 204,0.1)',
+                    fill: false,
+                    order: 3,
+                    borderWidth: 6,
+                }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                title: {
+                    display: true,
+                    text: 'Daily Follower Events',
+                    fontColor: 'rgba(250, 250, 250, 0.5)',
+                    fontSize: 16,
+                },
+                legend: {
+                    display: false
+                },
+                scales: {
+                    yAxes: [
+                        {
+                            ticks: {
+                                beginAtZero: true,
+                                fontColor: 'rgba(250, 250, 250, 0.5)',
+                                fontSize: 14
+                            }
+                        }
+                    ],
+                    xAxes: [
+                        {
+                            ticks: {
+                                fontColor: 'rgba(250, 250, 250, 0.5)',
+                                fontSize: 14
+                            }
+                        }
+                    ]
+                },
+                onClick: (evt, item) => {
+                    if (item.length) {
+                        var model = item[0]._model;
+                        console.log("Date: ", model.label);
+                        redirectToDate(model.label);
+                    }
+                }
+            }
+        });
+
+        // follower count chart
         var followerChart = new Chart($("#follower-count-series")[0].getContext("2d"), {
             type: 'bar',
             data: {
@@ -96,65 +169,7 @@ function loadDashboard() {
         });
 
 
-        // follower count chart
-        var followerChart = new Chart($("#follower-event-series")[0].getContext("2d"), {
-            type: 'bar',
-            data: {
-                labels: Object.keys(data.followed_event_series),
-                datasets: [{
-                    label: 'Followed',
-                    data: Object.values(data.followed_event_series),
-                    backgroundColor: 'rgba(127, 201, 143,0.1)',
-                    borderColor: 'rgba(127, 201, 143,0.5)',
-                    borderWidth: 1
-                }, {
-                    label: 'Unfollowed',
-                    data: Object.values(data.unfollowed_event_series),
-                    backgroundColor: 'rgba(206, 149, 166,0.1)',
-                    borderColor: 'rgba(206, 149, 166,0.5)',
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                title: {
-                    display: true,
-                    text: 'Daily Follower Events',
-                    fontColor: 'rgba(250, 250, 250, 0.5)',
-                    fontSize: 16,
-                },
-                legend: {
-                    display: false
-                },
-                scales: {
-                    yAxes: [
-                        {
-                            ticks: {
-                                beginAtZero: true,
-                                fontColor: 'rgba(250, 250, 250, 0.5)',
-                                fontSize: 14
-                            }
-                        }
-                    ],
-                    xAxes: [
-                        {
-                            ticks: {
-                                fontColor: 'rgba(250, 250, 250, 0.5)',
-                                fontSize: 14
-                            }
-                        }
-                    ]
-                },
-                onClick: (evt, item) => {
-                    if (item.length) {
-                        var model = item[0]._model;
-                        console.log("Date: ", model.label);
-                        redirectToDate(model.label);
-                    }
-                }
-            }
-        });
+
 
     });
 }

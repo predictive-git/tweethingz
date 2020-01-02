@@ -14,14 +14,15 @@ const (
 
 // SummaryData represents aggregate data view
 type SummaryData struct {
-	Self                  *store.SimpleUser `firestore:"user" json:"user"`
-	FollowerCountSeries   map[string]int    `firestore:"follower_count_series" json:"follower_count_series"`
-	FollowedEventSeries   map[string]int    `firestore:"followed_event_series" json:"followed_event_series"`
-	UnfollowedEventSeries map[string]int    `firestore:"unfollowed_event_series" json:"unfollowed_event_series"`
-	NewFollowerCount      int               `firestore:"recent_follower_count" json:"recent_follower_count"`
-	UnfollowerCount       int               `firestore:"recent_unfollower_count" json:"recent_unfollower_count"`
-	Meta                  *QueryMetaData    `firestore:"meta" json:"meta"`
-	UpdatedOn             time.Time         `firestore:"updated_on" json:"updated_on"`
+	Self                  *store.SimpleUser  `firestore:"user" json:"user"`
+	FollowerCountSeries   map[string]int     `firestore:"follower_count_series" json:"follower_count_series"`
+	FollowedEventSeries   map[string]int     `firestore:"followed_event_series" json:"followed_event_series"`
+	UnfollowedEventSeries map[string]int     `firestore:"unfollowed_event_series" json:"unfollowed_event_series"`
+	AvgEventSeries        map[string]float32 `firestore:"avg_event_series" json:"avg_event_series"`
+	NewFollowerCount      int                `firestore:"recent_follower_count" json:"recent_follower_count"`
+	UnfollowerCount       int                `firestore:"recent_unfollower_count" json:"recent_unfollower_count"`
+	Meta                  *QueryMetaData     `firestore:"meta" json:"meta"`
+	UpdatedOn             time.Time          `firestore:"updated_on" json:"updated_on"`
 }
 
 // QueryMetaData represents scope of the query
@@ -44,6 +45,7 @@ func GetSummaryForUser(ctx context.Context, forUser *store.AuthedUser) (data *Su
 		FollowerCountSeries:   map[string]int{},
 		FollowedEventSeries:   map[string]int{},
 		UnfollowedEventSeries: map[string]int{},
+		AvgEventSeries:        map[string]float32{},
 		Meta: &QueryMetaData{
 			NumDaysPeriod: recentEventDefaultPeriod,
 		},
@@ -67,11 +69,19 @@ func GetSummaryForUser(ctx context.Context, forUser *store.AuthedUser) (data *Su
 	if err != nil {
 		return nil, errors.Wrap(err, "error getting followe count")
 	}
-	for _, item := range followerData {
+	var runSum float32 = 0
+	for i, item := range followerData {
+		day := i + 1
+		// total
 		data.FollowerCountSeries[item.StateOn] = item.FollowerCount
+		// followers (+/-)
 		data.FollowedEventSeries[item.StateOn] = item.NewFollowerCount
 		data.UnfollowedEventSeries[item.StateOn] = -item.UnfollowerCount
-
+		// avg
+		runSum += float32(item.NewFollowerCount - item.UnfollowerCount)
+		data.AvgEventSeries[item.StateOn] = runSum / float32(day)
+		// logger.Printf("day[%d] +:%d -%d a:%f ra:%f",
+		//      day, item.NewFollowerCount, item.UnfollowerCount, runSum, data.AvgEventSeries[item.StateOn])
 	}
 
 	if followerData != nil {
