@@ -3,5 +3,8 @@
 DIR="$(dirname "$0")"
 . "${DIR}/config"
 
+COMMIT=$(git rev-parse --short HEAD)
+echo "Commit: ${COMMIT}"
+
 git tag "release-v${SERVICE_VERSION}"
 git push origin "release-v${SERVICE_VERSION}"

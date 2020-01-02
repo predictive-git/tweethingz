@@ -60,6 +60,7 @@ func NewDailyFollowerState(username string, date time.Time) *DailyFollowerState 
 type SimpleUser struct {
 
 	// User details
+	ID           int64     `firestore:"id" json:"id"`
 	Username     string    `firestore:"username" json:"username"`
 	Name         string    `firestore:"name" json:"name"`
 	Description  string    `firestore:"description" json:"description"`
@@ -106,6 +107,7 @@ type SimpleUserEvent struct {
 	EventDate string `firestore:"event_at" json:"event_at"`
 	EventType string `firestore:"event_type" json:"event_type"`
 	EventUser string `firestore:"event_user" json:"event_user"`
+	IsFriend  bool   `firestore:"is_friend" json:"is_friend"`
 }
 
 // UserEventByDate is a custom data structure for array of SimpleUserEvent

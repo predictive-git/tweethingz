@@ -6,8 +6,6 @@ One of the key features I'm not able to get from Twitter itself is a daily follo
 
 The other feature that I wanted to get easier access to was more robust search criteria (e.g. tweets that include links, author has certain number of follower ratio, and the ability to exclude RT).
 
-![](doc/search.png)
-
 You can see a live demo of this service at [tw.thingz.io](https://tw.thingz.io/)
 
 ## Overview

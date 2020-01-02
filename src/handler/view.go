@@ -187,14 +187,14 @@ func DayHandler(c *gin.Context) {
 		return
 	}
 
-	followers, err := ToUserEvent(forUser, dayState.NewFollowers, isoDate, store.FollowedEventType)
+	followers, err := ToUserEvent(forUser, dayState.NewFollowers, isoDate, store.FollowedEventType, dayState)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting new follower events")
 		return
 	}
 	logger.Printf("Followers:%d, expected:%d", len(followers), len(dayState.Followers))
 
-	unfollowers, err := ToUserEvent(forUser, dayState.Unfollowers, isoDate, store.UnfollowedEventType)
+	unfollowers, err := ToUserEvent(forUser, dayState.Unfollowers, isoDate, store.UnfollowedEventType, dayState)
 	if err != nil {
 		viewErrorHandler(c, http.StatusInternalServerError, err, "Error getting unfollower events")
 		return
@@ -215,7 +215,7 @@ func DayHandler(c *gin.Context) {
 }
 
 // ToUserEvent retreaves users and builds user events for list of IDs as
-func ToUserEvent(forUser *store.AuthedUser, ids []int64, isoDate, eventType string) (list []*store.SimpleUserEvent, err error) {
+func ToUserEvent(forUser *store.AuthedUser, ids []int64, isoDate, eventType string, s *store.DailyFollowerState) (list []*store.SimpleUserEvent, err error) {
 
 	list = make([]*store.SimpleUserEvent, 0)
 
@@ -230,6 +230,7 @@ func ToUserEvent(forUser *store.AuthedUser, ids []int64, isoDate, eventType stri
 				EventDate:  isoDate,
 				EventType:  eventType,
 				EventUser:  forUser.Username,
+				IsFriend:   store.Contains(s.Friends, u.ID),
 			}
 			list = append(list, event)
 		}

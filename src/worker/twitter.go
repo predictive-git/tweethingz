@@ -91,6 +91,7 @@ func convertTwitterTime(v string) time.Time {
 
 func toSimpleUser(u *twitter.User) *store.SimpleUser {
 	return &store.SimpleUser{
+		ID:            u.ID,
 		Username:      store.NormalizeString(u.ScreenName),
 		Name:          u.Name,
 		Description:   u.Description,
@@ -286,8 +287,8 @@ func GetSearchResults(ctx context.Context, u *store.AuthedUser, c *store.SearchC
 				Text:             t.FullText,
 				IsRT:             t.RetweetedStatus != nil,
 				Author:           toSimpleUser(t.User),
-				AuthorIsFriend:   contains(s.Friends, t.User.ID),
-				AuthorIsFollower: contains(s.Followers, t.User.ID),
+				AuthorIsFriend:   store.Contains(s.Friends, t.User.ID),
+				AuthorIsFollower: store.Contains(s.Followers, t.User.ID),
 			}
 
 			list = append(list, item)
@@ -351,13 +352,4 @@ func shouldFilterOut(t *twitter.Tweet, c *store.SearchCriteria) bool {
 
 	return false
 
-}
-
-func contains(list []int64, val int64) bool {
-	for _, item := range list {
-		if item == val {
-			return true
-		}
-	}
-	return false
 }

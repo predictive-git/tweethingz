@@ -223,3 +223,13 @@ func PrettyDurationSince(a time.Time) string {
 	return fmt.Sprintf("%d days", day)
 
 }
+
+// Contains checks for val in list
+func Contains(list []int64, val int64) bool {
+	for _, item := range list {
+		if item == val {
+			return true
+		}
+	}
+	return false
+}

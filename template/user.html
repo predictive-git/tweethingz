@@ -16,6 +16,11 @@
     </td>
 
     <td class="user-data">
+        You&nbsp;Follow
+        <div>{{ if .IsFriend }}Yes{{ else }}No{{ end }}</div>
+    </td>
+
+    <td class="user-data">
         Friends
         <div>{{ .FriendCount }}</div>
     </td>

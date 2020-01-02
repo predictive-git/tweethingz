@@ -8,7 +8,7 @@
 
     <!-- Table 1 -->
     <div class="list-table-wrapper">
-        <h3>{{ .state.NewFollowerCount }} new followers on {{ .date }}</h3>
+        <h3>{{ .state.NewFollowerCount }} New Followers on {{ .date }}</h3>
         <table class="list-table">
             {{ template "user" .followers }}
         </table>
@@ -16,7 +16,7 @@
 
     <!-- Table 2 -->
     <div class="list-table-wrapper">
-        <h3>{{ .state.UnfollowerCount }} unfollowers on {{ .date }}</h3>
+        <h3>{{ .state.UnfollowerCount }} Unfollowers on {{ .date }}</h3>
         <table class="list-table">
             {{ template "user" .unfollowers }}
         </table>
