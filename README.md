@@ -6,38 +6,41 @@ One of the data points I'm not able to get directly from Twitter is a daily hist
 
 In addition to the daily histogram of followers I also decided to include the ability to define more advanced search criteria for specific topic on Twitter (e.g. tweets that include links by author who has certain number of follower ratio excluding re-tweets).
 
-You can see a live demo of this service at [tw.thingz.io](https://tw.thingz.io/)
-
 ## Overview
 
-Once I decided to build `tweethingz` I set myself three "simple" objectives:
+I set myself three "simple" objectives for this service:
 
-1. Ability to support multiple Twitter accounts
-2. Automatic (i.e. daily histogram built without me needing to check)
-3. Serverless (specifically, per-usage charge model and zero compute, scheduling, and data infra to manage)
+1. Multiple Twitter account support
+2. Updated automatically without me needing to check the website
+3. Cost-effective when used by 1-2 users and able to scale to 100s of concurrent users if necessary
+4. API-based (zero compute, scheduling, or data infrastructure to manage)
 
-The resulting `tweethingz` is built in Go on Google's Cloud Run with Cloud Firestore data persistence and Cloud Scheduler execution ("cron").
+I built in using Go on Google's [Cloud Run](https://cloud.google.com/run/) with [Cloud Firestore](https://firebase.google.com/docs/firestore) data persistence and [Cloud Scheduler](https://cloud.google.com/scheduler/) execution ("cron").
+
+> I named the resulting service: `tweethingz` mostly because I already owned `thingz.io` domain... and yes, naming is hard
+
+You can see a live demo of this service at [tw.thingz.io](https://tw.thingz.io/)
 
 ## Setup
 
-If you want to deploy your own version of `tweethingz` you will fiirst need clone this repo:
+If you want to deploy your own version of `tweethingz`, you will first need clone this repo:
 
 ```shell
 git clone https://github.com/mchmarny/tweethingz.git
 cd tweethingz
 ```
 
-Once you clone the `tweethingz` repo you can follow these steps to deploy your own version of `tweethingz`:
+Once you clone the repo you can follow the below steps to deploy your own version of `tweethingz`:
 
 ### Configuration
 
-The `tweethingz` service exposes a few configuration values but only two are required to edit: Twitter API consumer keys (`TW_KEY` and `TW_SECRET`). You can you create your Twitter API credentials [here](https://developer.twitter.com/en/apps/create).
+The `tweethingz` service exposes a many configuration values but only two are required to edit: Twitter API consumer key and secret (`TW_KEY` and `TW_SECRET` respectively). You can create your own Twitter API credentials [here](https://developer.twitter.com/en/apps/create).
 
-Additionally, if you prefer, you can lock down `tweethingz` service to a list of specific users by defining the `TW_USERS` variable with all the specific Twitter usernames (separated by space) you wan to be able to use this service. If left empty, the `tweethingz` will allow all new users to register and use this service.
+Optionally, you can lock down `tweethingz` service to a list of specific users by defining the `TW_USERS` variable with all the permitted Twitter usernames (separated by space). If left empty, the `tweethingz` will allow all new users to register and use this service.
 
-> Note, every registered user uses their own API keys once they authorize tweethingz
+> Note, every registered user uses their own API access keys once they authorize tweethingz
 
-Both, the API keys, the user lists,  as well as a few other configuration values are defined in the [bin/config](bin/config):
+All of the configuration values are defined in the [bin/config](bin/config) file:
 
 ```shell
 export TW_KEY="" #Your Twitter API consumer key
