@@ -1,16 +1,16 @@
 # tweethingz
 
-One of the key features I'm not able to get from Twitter itself is a daily follower histogram. There are on-line services that provide that data but having used two of them already only to watch each one eventually shut down, or charge for that feature, I decide to write my own.
+One of the data points I'm not able to get directly from Twitter is a daily histogram of followers. Sure, there are on-line services that provide that features, but, having used two of them now only to watch each one of them either shut down or start charging for that feature, I decide to write my own.
 
 ![](doc/dashboard-histogram.png)
 
-The other feature that I wanted to get easier access to was more robust search criteria (e.g. tweets that include links, author has certain number of follower ratio, and the ability to exclude RT).
+In addition to the daily histogram of followers I also decided to include the ability to define more advanced search criteria for specific topic on Twitter (e.g. tweets that include links by author who has certain number of follower ratio excluding re-tweets).
 
 You can see a live demo of this service at [tw.thingz.io](https://tw.thingz.io/)
 
 ## Overview
 
-When I decided to build `tweethingz` I set myself three "simple" objectives:
+Once I decided to build `tweethingz` I set myself three "simple" objectives:
 
 1. Ability to support multiple Twitter accounts
 2. Automatic (i.e. daily histogram built without me needing to check)
