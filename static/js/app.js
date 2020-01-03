@@ -98,7 +98,9 @@ function loadDashboard() {
                             ticks: {
                                 beginAtZero: true,
                                 fontColor: 'rgba(250, 250, 250, 0.5)',
-                                fontSize: 14
+                                fontSize: 14,
+                                maxTicksLimit: 10,
+                                precision: 0
                             }
                         }
                     ],
@@ -152,7 +154,9 @@ function loadDashboard() {
                             ticks: {
                                 beginAtZero: false,
                                 fontColor: 'rgba(250, 250, 250, 0.5)',
-                                fontSize: 14
+                                fontSize: 14,
+                                maxTicksLimit: 10,
+                                precision: 0
                             }
                         }
                     ],
