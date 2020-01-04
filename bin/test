@@ -14,7 +14,7 @@ go mod tidy
 go mod vendor
 
 # full tests (short does not require DB)
-# go test -v -count=1 -race -short ./...
+go test -v -count=1 -race -short ./...
 # go test -v -count=1 -race ./...
 
 # twitter search criteria tess
@@ -36,7 +36,7 @@ go mod vendor
 
 # worker
 # go test -v -run TestTwitterSearchWorker ./src/worker
-go test -v -count=1 -run TestUpdateFollowerDataWorker ./src/worker
+# go test -v -count=1 -run TestUpdateFollowerDataWorker ./src/worker
 # go test -v -count=1 -run TestGetTwitterFriendIDs ./src/worker
 
 
