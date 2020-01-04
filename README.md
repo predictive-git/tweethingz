@@ -1,6 +1,6 @@
 # tweethingz
 
-One of the data points I'm not able to get directly from Twitter is a daily histogram of followers. Sure, there are on-line services that provide that features, but, having used two of them now only to watch each one of them either shut down or start charging for that feature, I decide to write my own.
+One of the data points I'm not able to get directly from Twitter is a daily histogram of followers. Sure, there are on-line services that provide that features, but, having used two of them now only to watch each either shut down or start charging for that feature, I decide to write my own.
 
 ![](doc/dashboard-histogram.png)
 
