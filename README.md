@@ -6,6 +6,8 @@ One of the data points I'm not able to get directly from Twitter is a daily hist
 
 In addition to the daily histogram of followers I also decided to include the ability to define more advanced search criteria for specific topic on Twitter (e.g. tweets that include links by author who has certain number of follower ratio excluding re-tweets).
 
+![](doc/search-criteria.png)
+
 ## Overview
 
 I set myself three "simple" objectives for this service:
@@ -128,9 +130,7 @@ The `tweethingz` is pretty much self-explanatory but here are few short steps to
 
 Before you will be able to access Twitter you will have to authorize `tweethingz` to invoke the API on your behalf. Just clock on the "Sign in with Twitter" button on the home page and follow the guide.
 
-> Note, the `tweethingz` service requires only read-only access to your Twitter profile. It uses only the data already available publicly to any of your followers and is unable to post on yur behalf.
-
-![](doc/twitter-auth.png)
+> Note, the `tweethingz` service requires only read-only access to your Twitter profile.
 
 ## Cleanup
 
