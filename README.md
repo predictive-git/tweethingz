@@ -6,8 +6,6 @@ One of the data points I'm not able to get directly from Twitter is a daily hist
 
 In addition to the daily histogram of followers I also decided to include the ability to define more advanced search criteria for specific topic on Twitter (e.g. tweets that include links by author who has certain number of follower ratio excluding re-tweets).
 
-![](doc/search-criteria.png)
-
 ## Overview
 
 Once I decided to develop this service, I've set myself few objectives:
