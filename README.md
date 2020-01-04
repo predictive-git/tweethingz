@@ -10,18 +10,19 @@ In addition to the daily histogram of followers I also decided to include the ab
 
 ## Overview
 
-I set myself three "simple" objectives for this service:
+Once I decided to develop this service, I've set myself few objectives:
 
 1. Multiple Twitter account support
-2. Updated automatically without me needing to check the website
-3. Cost-effective when used by 1-2 users and able to scale to 100s of concurrent users if necessary
-4. API-based (zero compute, scheduling, or data infrastructure to manage)
+2. Updated automatically without me needing to check
+3. Cost-effective when used just by me
+4. Able to scale to 100s of concurrent users if necessary
+5. API-based (zero compute, scheduling, or data infrastructure to manage)
 
-I built in using Go on Google's [Cloud Run](https://cloud.google.com/run/) with [Cloud Firestore](https://firebase.google.com/docs/firestore) data persistence and [Cloud Scheduler](https://cloud.google.com/scheduler/) execution ("cron").
+To develop this service I used Go (personal preference) on Google's [Cloud Run](https://cloud.google.com/run/) (because serverless containers with scale to 0) with [Cloud Firestore](https://firebase.google.com/docs/firestore) data persistence (ACID transactions, and powerful query engine) and [Cloud Scheduler](https://cloud.google.com/scheduler/) execution (Cron API). All of these services are based on per-use charge model (plus stored data in case of Firestore).
 
-> I named the resulting service: `tweethingz` mostly because I already owned `thingz.io` domain... and yes, naming is hard
+> I named the service `tweethingz` mostly because I already owned `thingz.io` domain... and yes, naming is hard.
 
-You can see a live demo of this service at [tw.thingz.io](https://tw.thingz.io/)
+You can see (and use) the resulting service at [tw.thingz.io](https://tw.thingz.io/)
 
 ## Setup
 
