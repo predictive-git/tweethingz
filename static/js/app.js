@@ -184,7 +184,7 @@ function redirectToDate(d) {
 
 function toLongTime(v) {
     var ts = new Date(v)
-    return ts.toTimeString()
+    return ts.toUTCString()
 }
 
 function makeLinks() {
