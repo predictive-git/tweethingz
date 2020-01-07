@@ -117,7 +117,7 @@ func GetAllAuthedUsers(ctx context.Context) (users []*AuthedUser, err error) {
 		return nil, err
 	}
 
-	// all docs with the most recent updated authed user first
+	// docs with the most recent updated authed user first
 	docs := col.OrderBy("updated_at", firestore.Desc).Limit(maxAuthedUsers).Documents(ctx)
 
 	for {
